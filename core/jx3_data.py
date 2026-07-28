@@ -59,14 +59,7 @@ ACHIEVEMENT_CHOICES = [
 ACHIEVEMENT_CHOICE_MAP = {index: (menu_id, title) for index, menu_id, title in ACHIEVEMENT_CHOICES}
 
 class JX3Service:
-    def __init__(self, api_data_path: str, config: AstrBotConfig, sqlite: AsyncSQLiteDB, cache_sqlite: Optional[AsyncSQLiteDB] = None):
-        # 加载API配置文件
-        try:
-            with open(api_data_path, 'r', encoding='utf-8') as f:
-                self._api_config = json.load(f) 
-        except FileNotFoundError as e:
-            logger.error(f"加载API配置文件失败: {e}")
-            self._api_config = {}
+    def __init__(self, config: AstrBotConfig, sqlite: AsyncSQLiteDB, cache_sqlite: Optional[AsyncSQLiteDB] = None):
         # 实例化 API Client
         self._api: APIClient = APIClient()
         # 引用插件配置文件
@@ -104,55 +97,33 @@ class JX3Service:
                 "temp": "",
                 "icons": {}
             }
-    
 
+    
     async def _base_request(
         self, 
-        config_key: str, 
-        method: str, 
+        api_path: str, 
         params: Optional[Dict[str, Any]] = None, 
-        out_key: Optional[str] = "data"
+        out: Optional[str] = "data"
     ) -> Optional[Any]:
         """
         基础请求封装，处理配置获取和API调用。
-        
-        :param config_key: 配置字典中对应 API 的键名。
-        :param method: HTTP方法 ('GET' 或 'POST')。
-        :param params: 请求参数或 Body 数据。
-        :param out_key: 响应数据中需要提取的字段。
-        :return: 成功时返回提取后的数据，失败时返回 None。
         """
         try:
             if not self._api:
                 logger.error("API client is not initialized")
                 return None
-                
-            api_config = self._api_config.get(config_key)
-            if not api_config:
-                logger.error(f"配置文件中未找到 key: {config_key}")
-                return None
-            
-            request_params = api_config.get("params", {}).copy()
-            if params:
-                request_params.update(params)
 
-            url = api_config.get("url", "")
-            if not url:
-                logger.error(f"API配置缺少 URL: {config_key}")
-                return None
-                
-            if method.upper() == 'POST':
-                data = await self._api.post(url, data=request_params, out_key=out_key)
-            else: # 默认为 GET
-                data = await self._api.get(url, params=request_params, out_key=out_key)
+            base_url = "https://www.jx3api.com"
+            api_url = base_url + api_path
+            data = await self._api.get(api_url, params=params, out_key=out)
             
             if not data:
-                logger.warning(f"获取接口信息失败或返回空数据: {config_key}")
+                logger.warning(f"获取接口信息失败或返回空数据: {api_url}")
             
             return data
             
         except Exception as e:
-            logger.error(f"基础请求调用出错 ({config_key}): {e}")
+            logger.error(f"基础请求调用出错 ({api_path}): {e}")
             return None
 
 
@@ -174,16 +145,16 @@ class JX3Service:
         return return_data
 
 
-    async def richang(self,server: str, num: int = 0) -> Dict[str, Any]:
-        """日常活动"""
+    async def richang(self,mode: str, num: int) -> Dict[str, Any]:
+        """活动日历"""
         return_data = self._init_return_data()
 
         # 1. 构造请求参数
-        params = {"server": server, "num": num}
+        params = {"mode": mode, "num": num}
 
         # 2. 调用基础请求
         data: Optional[Dict[str, Any]] = await self._base_request(
-            "jx3_richang", "GET", params=params
+            "/active/calendar", params
         )
         if not data:
             return_data["msg"] = "获取接口信息失败"
@@ -191,95 +162,71 @@ class JX3Service:
     
         # 3. 处理返回数据
         try:
-            # 格式化字符串，利用字典的 get 方法提供默认值
-            result_msg = (
-                f"{server}\n{data.get('date', '未知日期')} 星期{data.get('week', '未知')}\n"
-                f"大战：{data.get('war', '无')}\n"
-                f"战场：{data.get('battle', '无')}\n"
-                f"阵营：{data.get('orecar', '无')}\n"
-                f"宗门：{data.get('school', '无')}\n"
-                f"驰援：{data.get('rescue', '无')}\n"
-                f"画像：{data.get('draw', '无')}\n\n"
-            )
-            
-            # 安全地处理列表索引
-            luck = data.get('luck', [])
-            luck_msg = f"【宠物福缘】\n{', '.join(luck)}\n"
-            card = data.get('card', [])
-            card_msg = f"【家园声望·加倍道具】\n{', '.join(card)}\n"
-            team = data.get('team', [None, None, None])
-            team_msg = f"【武林通鉴·公共任务】\n{team[0] or '无'}\n【武林通鉴·团队秘境】\n{team[1] or '无'}\n"
+            if mode == "list":
+                items = []
+                num_richang  = week_to_num(data["today"]["week"]) or 0
 
-            return_data["data"] = result_msg + luck_msg + card_msg + team_msg
-            return_data["code"] = 200
+                # 空白数据
+                for _ in range(num_richang):
+                    items.append({
+                        "en": False,
+                        "compare": "",
+                        "date": "",
+                        "war": "",
+                        "battle": ""
+                    })
+
+                # 真实数据
+                for m in data["total"]:
+                    items.append({
+                        "en": True,
+                        "compare": compare_date_str(m.get("date", "")),
+                        "date": m.get("date", ""),
+                        "war": m.get("war", ""),
+                        "battle": m.get("battle", "")
+                    })
+
+                return_data["data"]["items"] = items
+                return_data["data"]["today"] = data["today"]            
+            else:
+                result_msg = (
+                    f"{data.get('date')} 星期{data.get('week')}\n"
+                    f"大战：{data.get('war')}\n"
+                    f"战场：{data.get('battle')}\n"
+                    f"阵营：{data.get('orecar')}\n"
+                    f"宗门：{data.get('school')}\n"
+                    f"驰援：{data.get('rescue')}\n"
+                )
+                
+                luck = data.get('lucky', [])
+                luck_msg = f"【宠物福缘】\n{', '.join(luck)}\n"
+                card = data.get('card', [])
+                card_msg = f"【家园声望·加倍道具】\n{', '.join(card)}\n"
+                weekly:Dict = data.get('weekly')
+                conn = weekly.get('conn')
+                raid = weekly.get('raid')
+                conn_msg = f"【武林通鉴·公共任务】\n{', '.join(conn)}\n"
+                raid_msg = f"【武林通鉴·公共任务】\n{', '.join(raid)}\n"
+                return_data["data"] = result_msg + luck_msg + card_msg + conn_msg + raid_msg
         except Exception as e:
             logger.error(f"数据处理时出错: {e}")
             return_data["msg"] = "处理接口返回信息时出错"
             return return_data
-        
-        return_data["code"] = 200
 
-        return return_data
-    
-    async def richangyuche(self) -> Dict[str, Any]:
-        """日常预测"""
-        return_data = self._init_return_data()
-
-        # 1. 构造请求参数
-        params = { "num": 30}
-
-        # 2. 调用基础请求
-        data: Optional[Dict[str, Any]] = await self._base_request(
-            "jx3_richangyuche", "GET", params=params
-        )
-        if not data:
-            return_data["msg"] = "获取接口信息失败"
-            return return_data
-    
-        # 3. 处理返回数据
-        try:
-            items = []
-            num_richang  = week_to_num(data["data"][0]["week"]) or 0
-            # 空白数据
-            for _ in range(num_richang):
-                items.append({
-                    "en": False,
-                    "compare": "",
-                    "date": "",
-                    "war": "",
-                    "battle": ""
-                })
-
-            # 真实数据
-            for m in data["data"]:
-                items.append({
-                    "en": True,
-                    "compare": compare_date_str(m.get("date", "")),
-                    "date": m.get("date", ""),
-                    "war": m.get("war", ""),
-                    "battle": m.get("battle", "")
-                })
-
-            return_data["data"]["items"] = items
-            return_data["data"]["today"] = data["today"]
-        except Exception as e:
-            logger.error(f"数据处理时出错: {e}")
-            return_data["msg"] = "处理接口返回信息时出错"
-            return return_data
-        
         # 加载模板
-        try:
-            return_data["temp"] = await load_template("richangyuche.html")
-        except FileNotFoundError as e:
-            logger.error(f"加载模板失败: {e}")
-            return_data["msg"] = "系统错误：模板文件不存在"
-            return return_data
-
+        if mode == "list":
+            try:
+                return_data["temp"] = await load_template("richangyuche.html")
+            except FileNotFoundError as e:
+                logger.error(f"加载模板失败: {e}")
+                return_data["msg"] = "系统错误：模板文件不存在"
+                return return_data
+        
         return_data["code"] = 200
 
         return return_data
-    
 
+    
     async def xingxiashijian(self,name: str) -> Dict[str, Any]:
         """行侠事件"""
         return_data = self._init_return_data()
