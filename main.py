@@ -108,7 +108,7 @@ class Jx3ApiPlugin(Star):
         # SQLite插件路径
         self.plugin_data_path = self.plugin_data_dir /"plugin_data.db"
         # API配置文件路径
-        self.api_data_path = self.plugin_data_dir / "api_config.json"
+        self.api_data_path = self.plugin_data_dir / "jx3api_config.json"
         # 图片文件路径
         self.plugin_temp_img = self.plugin_temp_dir / "img"
         self.plugin_temp_sect = self.plugin_temp_dir / "sect"
