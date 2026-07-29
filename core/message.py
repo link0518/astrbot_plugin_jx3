@@ -7,6 +7,7 @@ from astrbot.core.utils.session_waiter import (
 )
 
 from .jx3api_data import JX3APIService
+from .aijx3_data import AIJX3Service
 from .async_task import AsyncTask
 from .bilei_data import BiLeidata
 
@@ -36,9 +37,10 @@ class MessageBuilder:
         "18：剑侠录总览"
     )
 
-    def __init__(self, server: str, jx3api: JX3APIService, bilei: BiLeidata, jx3at: AsyncTask, icons: dict[str, dict[str, str]]):
+    def __init__(self, server: str, jx3api: JX3APIService, aijx3: AIJX3Service,bilei: BiLeidata, jx3at: AsyncTask, icons: dict[str, dict[str, str]]):
         self.server = server
         self.jx3api = jx3api
+        self.aijx3 = aijx3
         self.bilei = bilei
         self.jx3at = jx3at
         self.icons = icons
@@ -419,6 +421,36 @@ class MessageBuilder:
         """ 的卢 服务器"""
         return await self.T2I_image_msg(event, lambda: self.jx3api.dilujilu(server))
 
+    async def  jinjia(self, event: AstrMessageEvent,server: str , limit:str = "15"):
+        """ 金价 服务器"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.jinjia( server,limit))
+
+    async def  wujia(self, event: AstrMessageEvent,Name: str , server: str = ""):
+        """ 物价 外观名称 服务器"""    
+        return await self.T2I_image_msg(event, lambda: self.jx3api.wujia(Name, server)) 
+
+    async def  chengbeng(self, event: AstrMessageEvent, server: str ,Name: str ,source : int = 0):
+        """ 成本 服务器 物品名称 """    
+        return await self.T2I_image_msg(event, lambda: self.jx3api.chengbeng(Name, server,source)) 
+
+    async def  kanhao(self, event: AstrMessageEvent,id: str):
+        """ 看号 万宝楼编号 """    
+        return await self.plain_msg(event, lambda: self.jx3api.bianhao(id)) 
+
+    async def  bangzhanjilu(self, event: AstrMessageEvent, server: str):
+        """ 帮战 服务器"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.bangzhanjilu(server))
+
+    async def  shapan(self, event: AstrMessageEvent,server: str = ""):
+        """ 沙盘 服务器"""
+        return await self.image_msg(event, lambda: self.aijx3.shapan(server))  
+
+    async def  zhueevent(self, event: AstrMessageEvent, server: str):
+        """ 诛恶事件 服务器"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.zhueevent(server,20))
+
+
+
 
     async def  keju(self, event: AstrMessageEvent,subject: str, limit: int = 5):
         """ 科举"""
@@ -516,9 +548,7 @@ class MessageBuilder:
         return await self.plain_msg(event, self.jx3api.jiemi)
 
 
-    async def  shapan(self, event: AstrMessageEvent,server: str = ""):
-        """ 沙盘 服务器"""
-        return await self.image_msg(event, lambda: self.jx3api.shapan(self.serverdefault(server)))  
+
 
 
     async def  baizhan(self, event: AstrMessageEvent):
@@ -531,9 +561,6 @@ class MessageBuilder:
         return await self.plain_msg(event, lambda: self.jx3api.fuyaojjiutian( self.serverdefault(server)))
     
 
-    async def  zhueevent(self, event: AstrMessageEvent):
-        """ 诛恶事件"""
-        return await self.T2I_image_msg(event, self.jx3api.zhueevent)
 
 
 
@@ -546,9 +573,8 @@ class MessageBuilder:
 
 
 
-    async def  bangzhanjilu(self, event: AstrMessageEvent, server: str = ""):
-        """ 帮战记录 服务器"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.bangzhanjilu(self.serverdefault(server)))
+
+
 
 
     async def  tongzhanyy(self, event: AstrMessageEvent, server: str = ""):
@@ -650,14 +676,10 @@ class MessageBuilder:
 
 
 
-    async def  jinjia(self, event: AstrMessageEvent,server: str = "", limit:str = "15"):
-        """ 金价 服务器"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.jinjia( self.serverdefault(server),limit))
 
 
-    async def  wujia(self, event: AstrMessageEvent,Name: str = "秃盒", server: str = ""):
-        """ 物价 外观名称"""    
-        return await self.T2I_image_msg(event, lambda: self.jx3api.wujia(Name, self.serverdefault(server))) 
+
+
 
 
     async def  jiaoyihang(self, event: AstrMessageEvent,Name: str = "守缺式",server: str = ""):

@@ -1,4 +1,6 @@
 import json
+import html
+import re
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List, Union
 from inspect import isawaitable
@@ -561,6 +563,167 @@ class JX3APIService:
             processor=processor,
             template="dilujilu.html"
         ) 
+
+
+    async def jinjia(self, server: str, limit:str) -> Dict[str, Any]:
+        """金价行情"""
+        # 数据处理
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            return_data["data"]["items"] = data
+            
+        return await self._request_api(
+            path="/trade/demon",
+            params={"server": server, "limit": limit, "token": self.token},
+            processor=processor,
+            template="jinjia.html"
+        ) 
+
+
+    async def wujia(self, Name: str, server:str) -> Dict[str, Any]:
+        """物价查询"""
+        # 数据处理
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            return_data["data"] = data
+            
+        return await self._request_api(
+            path="/trade/records",
+            params={"name": Name,"token": self.token, "server": server},
+            processor=processor,
+            template="wujia.html"
+        ) 
+
+
+    async def chengbeng(self, Name: str, server:str, source: int) -> Dict[str, Any]:
+        """成本计算"""
+        # 数据处理
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            return_data["data"] = data
+            
+        return await self._request_api(
+            path="/trade/manufacture",
+            params={"name": Name,"token": self.token, "server": server, "source": source},
+            processor=processor,
+            template="chengbeng.html"
+        ) 
+
+    async def bianhao(self, id: str) -> Dict[str, Any]:
+        """编号搜索"""
+        # 数据处理
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            if not isinstance(data, dict):
+                return_data["data"] = "账号角色数据格式错误"
+                return
+
+            # 同时兼容完整接口数据和直接传入 data 字段
+            data = data.get("data", data)
+
+            if not isinstance(data, dict):
+                return_data["data"] = "账号角色数据为空"
+                return
+
+            # 将 replyContent 中的 HTML 转换为纯文本
+            detail = str(data.get("replyContent") or "")
+            detail = re.sub(r"<br\s*/?>", "\n", detail, flags=re.IGNORECASE)
+            detail = re.sub(r"<[^>]+>", "", detail)
+            detail = html.unescape(detail).strip() or "暂无账号详细信息"
+
+            # 交易状态
+            trade_status = {
+                1: "公示中",
+                2: "出售中",
+                3: "出售中",
+                4: "已售出",
+                5: "已下架",
+            }.get(data.get("tradeStatus"), f"状态码 {data.get('tradeStatus', '未知')}")
+
+            # 调价记录，接口中的时间为毫秒时间戳
+            update_prices = data.get("updatePrices") or []
+            update_price_text = "\n".join(
+                f"{index}. {format_time(int(item.get('updateTime') or 0) // 1000)}："
+                f"{item.get('updatePrice', 0)} 元"
+                for index, item in enumerate(update_prices, start=1)
+                if isinstance(item, dict)
+            ) or "暂无调价记录"
+
+            return_data["data"] = (
+                f"【万宝楼账号】\n"
+                f"{data.get('replyTitle') or '暂无标题'}\n\n"
+
+                f"【角色信息】\n"
+                f"区服：{data.get('serverName') or '未知'}\n"
+                f"角色：{data.get('roleName') or '未知'}\n"
+                f"等级：{data.get('roleLevel') or 0}\n"
+                f"门派：{data.get('forceName') or '未知'}\n"
+                f"体型：{data.get('bodyName') or '未知'}\n"
+                f"阵营：{data.get('campName') or '未知'}\n\n"
+
+                f"【账号数据】\n"
+                f"装备分数：{data.get('equipScore') or 0}\n"
+                f"江湖资历：{data.get('seniorityNum') or 0}\n"
+                f"约见次数：{data.get('meetingNum') or 0}\n"
+                f"关注人数：{data.get('followNum') or 0}\n\n"
+
+                f"【交易信息】\n"
+                f"挂牌价格：{data.get('priceNum') or 0} 元\n"
+                f"交易状态：{trade_status}\n"
+                f"商品编号：{data.get('id') or '未知'}\n"
+                f"发布时间：{format_time(data.get('replyTime') or 0)}\n\n"
+
+                f"【调价记录】\n"
+                f"{update_price_text}\n\n"
+
+                f"【账号详情】\n"
+                f"{detail}"
+            )
+            
+        return await self._request_api(
+            path="/trade/wanbaolou",
+            params={"id": id,"token": self.token},
+            processor=processor,
+            template=""
+        ) 
+
+
+    async def bangzhanjilu(self, server: str) -> Dict[str, Any]:
+        """帮战记录"""
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            for item in data:
+                item["startTime"] = format_time(item["startTime"])
+                item["durationSeconds"] = format_remaining(item["durationSeconds"])
+                item["endTime"] = format_time(item["endTime"])
+
+            return_data["data"] = {
+                "items": data,
+                "server": server,
+                "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            }
+            
+        return await self._request_api(
+            path="/battle/records",
+            params={"server": server},
+            processor=processor,
+            template="bangzhanjilu.html"
+        ) 
+
+
+    async def zhueevent(self,server: str,limit: str) -> Dict[str, Any]:
+        """诛恶事件"""
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            for item in data:
+                item["time"] = format_time(item["time"])
+
+            return_data["data"] = {
+                "items": data,
+                "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+        return await self._request_api(
+            path="/wicked/records",
+            params={"token": self.token, "server": server, "limit": limit},
+            processor=processor,
+            template="zhueevent.html"
+        ) 
+
 
 
 
@@ -1313,33 +1476,7 @@ class JX3APIService:
         return return_data
 
 
-    async def shapan(self, server: str ) -> Dict[str, Any]:
-        """区服沙盘"""
-        return_data = self._init_return_data()
-        
-        # 1. 构造请求参数
-        params = {"serverName": server}
-        
-        # 2. 调用基础请求
-        data: Optional[Dict[str, Any]] = await self._base_request(
-            "aijx3_shapan", "POST", params=params
-        )
-        
-        if not data:
-            return_data["msg"] = "获取接口信息失败"
-            return return_data
-            
-        # 3. 处理返回数据 (直接提取图片 URL)
-        pic_url = data.get("picUrl")
-        if pic_url:
-            return_data["data"] = pic_url
-        else:
-            return_data["msg"] = "接口未返回图片URL"
-            return return_data
-        
-        return_data["code"] = 200    
 
-        return return_data
 
 
 
@@ -1417,60 +1554,7 @@ class JX3APIService:
         return return_data
 
 
-    async def zhueevent(self) -> Dict[str, Any]:
-        """诛恶事件"""
-        return_data = self._init_return_data()
-        
-        params = {"token": self.token}
-        
-        data: Optional[List[Dict[str, Any]]] = await self._base_request(
-            "jx3_zhueevent", "GET", params=params
-        )
-        
-        if not data or not isinstance(data, list):
-            return_data["msg"] = "未查询到诛恶事件信息"
-            return return_data
-            
-        try:
-            items = []
-            for item in data:
-                if not isinstance(item, dict):
-                    continue
 
-                event_time = item.get("time")
-                if event_time:
-                    try:
-                        item["time"] = datetime.fromtimestamp(int(event_time)).strftime("%Y-%m-%d %H:%M:%S")
-                    except (TypeError, ValueError, OSError):
-                        item["time"] = str(event_time)
-                else:
-                    item["time"] = ""
-
-                items.append(item)
-
-            if not items:
-                return_data["msg"] = "未查询到诛恶事件信息"
-                return return_data
-
-            return_data["data"] = {
-                "items": items,
-                "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-        except Exception as e:
-            logger.error(f"处理诛恶事件数据失败: {e}")
-            return_data["msg"] = "处理诛恶事件数据失败"
-            return return_data
-
-        try:
-            return_data["temp"] = await load_template("zhueevent.html")
-        except FileNotFoundError as e:
-            logger.error(f"加载模板失败: {e}")
-            return_data["msg"] = "系统错误：模板文件不存在"
-            return return_data
-
-        return_data["code"] = 200
-        
-        return return_data
 
 
 
@@ -1488,84 +1572,7 @@ class JX3APIService:
 
 
 
-    async def bangzhanjilu(self, server: str) -> Dict[str, Any]:
-        """帮战记录"""
-        return_data = self._init_return_data()
 
-        params = {
-            "server": server,
-            "token": self.token,
-        }
-
-        data: Optional[List[Dict[str, Any]]] = await self._base_request(
-            "jx3_bangzhanjilu", "GET", params=params
-        )
-
-        if not data or not isinstance(data, list):
-            return_data["msg"] = "未查询到帮战记录"
-            return return_data
-
-        try:
-            def format_time(value: Any) -> str:
-                if not value:
-                    return ""
-                try:
-                    return datetime.fromtimestamp(int(value)).strftime("%Y-%m-%d %H:%M:%S")
-                except (TypeError, ValueError, OSError):
-                    return str(value)
-
-            def format_duration(value: Any) -> str:
-                if value in (None, ""):
-                    return ""
-                try:
-                    seconds = max(0, int(value))
-                except (TypeError, ValueError):
-                    return str(value)
-
-                hours = seconds // 3600
-                minutes = (seconds % 3600) // 60
-                secs = seconds % 60
-                return f"{hours}时{minutes:02d}分{secs:02d}秒"
-
-            items = []
-            for item in data:
-                if not isinstance(item, dict):
-                    continue
-
-                items.append({
-                    "zoneName": item.get("zoneName", ""),
-                    "serverName": item.get("serverName", ""),
-                    "declaringTongName": item.get("declaringTongName", ""),
-                    "acceptingTongName": item.get("acceptingTongName", ""),
-                    "startTime": format_time(item.get("startTime")),
-                    "matchDuration": format_duration(item.get("matchDuration")),
-                    "endTime": format_time(item.get("endTime")),
-                })
-
-            if not items:
-                return_data["msg"] = "未查询到帮战记录"
-                return return_data
-
-            return_data["data"] = {
-                "items": items,
-                "server": server,
-                "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            }
-        except Exception as e:
-            logger.error(f"处理帮战记录数据失败: {e}")
-            return_data["msg"] = "处理帮战记录数据失败"
-            return return_data
-
-        try:
-            return_data["temp"] = await load_template("bangzhanjilu.html")
-        except FileNotFoundError as e:
-            logger.error(f"加载模板失败: {e}")
-            return_data["msg"] = "系统错误：模板文件不存在"
-            return return_data
-
-        return_data["code"] = 200
-        
-        return return_data
 
 
     async def tongzhanyy(self, server: str) -> Dict[str, Any]:
@@ -2626,65 +2633,9 @@ class JX3APIService:
 
     
 
-    async def jinjia(self, server: str, limit:str) -> Dict[str, Any]:
-        """区服金价"""
-        return_data = self._init_return_data()
-        
-
-        params = {"server": server, "limit": limit, "token": self.token}
-        data_list: Optional[List[Dict[str, Any]]] = await self._base_request("jx3_jinjia", "GET", params=params)
-        
-        if not data_list or not isinstance(data_list, list):
-            return_data["msg"] = "获取接口信息失败或数据格式错误"
-            return return_data
-        
-        # 加载模板
-        try:
-            return_data["temp"] = await load_template("jinjia.html")
-        except FileNotFoundError as e:
-            logger.error(f"加载模板失败: {e}")
-            return_data["msg"] = "系统错误：模板文件不存在"
-            return return_data
-            
-        # 准备模板渲染数据
-        try:
-            return_data["data"]["items"] = data_list
-
-        except Exception as e:
-            logger.error(f"模板数据准备失败: {e}")
-            return_data["msg"] = "系统错误：模板渲染数据准备失败"
-            return return_data
-        
-        return_data["code"] = 200  
-
-        return return_data
 
 
-    async def wujia(self, Name: str, server:str) -> Dict[str, Any]:
-        """物价查询"""
-        return_data = self._init_return_data()
-        
-        # 2. 确定外观名称和 ID
 
-        params_search = {"name": Name,"token": self.token, "server": server}
-        search_data: Optional[Dict[str, Any]] = await self._base_request("jx3_wujia", "GET", params=params_search)
-
-        if not search_data:
-            return_data["msg"] = "未找到该外观"
-            return return_data
-        
-        return_data["data"] = search_data
-            
-        # 5. 加载模板
-        try:
-            return_data["temp"] = await load_template("wujia.html")
-            return_data["code"] = 200
-        except FileNotFoundError as e:
-            logger.error(f"加载模板失败: {e}")
-            return_data["msg"] = "系统错误：模板文件不存在"
-            return return_data 
-            
-        return return_data
 
 
     async def jiaoyihang(self, name: str , server: str) -> Dict[str, Any]:

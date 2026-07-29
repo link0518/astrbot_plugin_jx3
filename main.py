@@ -9,6 +9,7 @@ from astrbot.api import AstrBotConfig
 
 from .core.sqlite import AsyncSQLiteDB
 from .core.jx3api_data import JX3APIService
+from .core.aijx3_data import AIJX3Service
 from .core.async_task import AsyncTask
 from .core.bilei_data import BiLeidata
 from .core.message import MessageBuilder
@@ -85,7 +86,10 @@ class Jx3ApiPlugin(Star):
 
         if self.jx3api:
             await self.jx3api.close()
-            
+
+        if self.aijx3:
+            await self.aijx3.close()
+
         if self.local_sql_db:
             await self.local_sql_db.close()
             
@@ -144,8 +148,9 @@ class Jx3ApiPlugin(Star):
         # 剑网三功能实例化
         self.bilei = BiLeidata(self.local_sql_db)
         self.jx3api = JX3APIService(self.conf, self.plugin_sql_db, self.local_sql_db)
+        self.aijx3 = AIJX3Service(self.conf, self.plugin_sql_db, self.local_sql_db)
         self.jx3at = AsyncTask(cast(Context, self.context), self.conf, self.jx3api, self.local_sql_db)
-        self.jx3cmd = MessageBuilder(self.server, self.jx3api, self.bilei, self.jx3at, self.icons)
+        self.jx3cmd = MessageBuilder(self.server, self.jx3api, self.aijx3, self.bilei, self.jx3at, self.icons)
 
 
     async def init_bilei_data(self):
@@ -233,6 +238,13 @@ class Jx3ApiPlugin(Star):
             "试炼排行": self. jx3cmd.shilianpaixing,
             "阵营拍卖": self. jx3cmd.zhengyingpaimai,
             "的卢": self. jx3cmd.dilujilu,
+            "金价": self. jx3cmd.jinjia,
+            "物价": self. jx3cmd.wujia,
+            "成本": self. jx3cmd.chengbeng,
+            "看号": self. jx3cmd.kanhao,
+            "帮战": self. jx3cmd.bangzhanjilu,
+            "沙盘": self. jx3cmd.shapan,
+            "诛恶": self. jx3cmd.zhueevent,
 
 
             "科举": self. jx3cmd.keju,
@@ -255,17 +267,17 @@ class Jx3ApiPlugin(Star):
             "骚话": self. jx3cmd.shaohua,
             "资历": self. jx3cmd.zili,
             "解密": self. jx3cmd.jiemi,
-            "沙盘": self. jx3cmd.shapan,
+            
             "攻略": self. jx3cmd.qiyugonglue,
             "宏": self. jx3cmd.hong,
             "配装": self. jx3cmd.peizhuang,
             "百战": self. jx3cmd.baizhan,
             "扶摇": self. jx3cmd.fuyaojjiutian,
-            "诛恶": self. jx3cmd.zhueevent,
+
 
            
 
-            "帮战记录": self. jx3cmd.bangzhanjilu,
+            
             "统战": self. jx3cmd.tongzhanyy,
          
 
@@ -286,8 +298,8 @@ class Jx3ApiPlugin(Star):
             "所有名片": self. jx3cmd.shuoyoumingpian,
             "随机名片": self. jx3cmd.shuijimingpian,
 
-            "金价": self. jx3cmd.jinjia,
-            "物价": self. jx3cmd.wujia,
+           
+            
             "八卦": self. jx3cmd.bagua,
             "交易行": self. jx3cmd.jiaoyihang,
             "贴吧物价": self. jx3cmd.tiebawujia,

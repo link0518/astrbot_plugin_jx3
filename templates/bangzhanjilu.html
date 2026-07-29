@@ -104,8 +104,6 @@
     <table>
         <thead>
             <tr>
-                <th>区服</th>
-                <th>服务器</th>
                 <th>宣战帮会</th>
                 <th>应战帮会</th>
                 <th>开始时间</th>
@@ -117,12 +115,10 @@
         <tbody>
         {% for item in items %}
             <tr>
-                <td class="zone-col">{{ item.zoneName }}</td>
-                <td class="server-col">{{ item.serverName }}</td>
-                <td class="tong-col">{{ item.declaringTongName }}</td>
-                <td class="tong-col">{{ item.acceptingTongName }}</td>
+                <td class="tong-col">{{ item.declaringName }}</td>
+                <td class="tong-col">{{ item.acceptingName }}</td>
                 <td class="time-col">{{ item.startTime }}</td>
-                <td class="duration-col">{{ item.matchDuration }}</td>
+                <td class="duration-col">{{ item.durationSeconds }}</td>
                 <td class="time-col">{{ item.endTime }}</td>
             </tr>
         {% endfor %}
