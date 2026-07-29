@@ -126,11 +126,11 @@
         {% for item in items %}
             <tr>
                 <td class="rank-col">{{ loop.index }}</td>
-                <td class="tong-col">{{ item.tong_name }}</td>
-                <td class="master-col">{{ item.master_name }}</td>
-                <td class="castle-col">{{ item.castle_name }}</td>
-                <td class="people-col">{{ item.now_count }}/{{ item.max_count }}</td>
-                <td class="score-col">{{ item.total_score }}</td>
+                <td class="tong-col">{{ item.tongName }}</td>
+                <td class="master-col">{{ item.masterName }}</td>
+                <td class="castle-col">{{ item.castleName }}</td>
+                <td class="people-col">{{ item.memberCount }}/{{ item.maxMemberCount }}</td>
+                <td class="score-col">{{ item.titlePoint }}</td>
             </tr>
         {% endfor %}
         </tbody>

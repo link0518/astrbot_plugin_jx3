@@ -275,24 +275,17 @@ tbody tr:nth-child(odd) {
 </div>
 <script>
 document.querySelectorAll(".start-time").forEach(function (cell) {
-    var raw = cell.dataset.ts || cell.textContent.trim();
-    var ts = Number(raw);
+    const ts = Number(cell.dataset.ts);
+
     if (!Number.isFinite(ts) || ts <= 0) {
-        cell.textContent = raw || "-";
+        cell.textContent = "-";
         return;
     }
 
-    var date = new Date(ts * 1000);
-    var pad = function (n) { return String(n).padStart(2, "0"); };
-    cell.textContent = [
-        date.getFullYear(),
-        pad(date.getMonth() + 1),
-        pad(date.getDate())
-    ].join("-") + " " + [
-        pad(date.getHours()),
-        pad(date.getMinutes()),
-        pad(date.getSeconds())
-    ].join(":");
+    cell.textContent = new Date(ts * 1000).toLocaleString("zh-CN", {
+        timeZone: "Asia/Shanghai",
+        hour12: false
+    });
 });
 </script>
 </body>

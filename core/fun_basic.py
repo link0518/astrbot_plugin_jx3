@@ -1,5 +1,7 @@
 from pathlib import Path
 from datetime import datetime,date
+from zoneinfo import ZoneInfo
+
 import aiofiles
 import base64
 import os
@@ -142,3 +144,21 @@ def load_as_base64(icons_dir: str) -> dict[str, str]:
         icons[display_name] = f"data:{mime};base64,{data}"
 
     return icons
+
+
+def format_time(ts):
+    try:
+        return datetime.fromtimestamp(int(ts),
+            tz=ZoneInfo("Asia/Shanghai")
+            ).strftime("%Y-%m-%d %H:%M:%S")
+    except (TypeError, ValueError, OSError):
+        return ""
+
+def format_remaining(ts):
+    try:
+        seconds = max(0, int(ts) - int(datetime.now().timestamp()))
+        hours, seconds = divmod(seconds, 3600)
+        minutes, seconds = divmod(seconds, 60)
+        return f"{hours}时{minutes:02d}分{seconds:02d}秒"
+    except (TypeError, ValueError):
+        return ""

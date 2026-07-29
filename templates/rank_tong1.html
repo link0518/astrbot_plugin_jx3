@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>角色榜单</title>
+<title>帮会榜单</title>
 
 <style>
     body {
@@ -14,7 +14,7 @@
     }
 
     .container {
-        max-width: 1120px;
+        max-width: 1040px;
         margin: 0 auto;
     }
 
@@ -61,8 +61,7 @@
     }
 
     .rank-col,
-    .level-col,
-    .camp-col,
+    .people-col,
     .score-col {
         white-space: nowrap;
         text-align: center;
@@ -74,35 +73,28 @@
         font-weight: 800;
     }
 
-    .force {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        min-width: 108px;
-        font-weight: 700;
-        color: #333;
-        white-space: nowrap;
-    }
-
-    .force-icon {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        object-fit: contain;
-        flex: 0 0 auto;
-    }
-
-    .role-col {
-        min-width: 120px;
-        font-weight: 700;
-        color: #333;
-        white-space: nowrap;
-    }
-
     .tong-col {
-        max-width: 260px;
-        word-break: break-word;
+        min-width: 220px;
+        font-weight: 800;
         color: #333;
+        word-break: break-word;
+    }
+
+    .master-col {
+        min-width: 150px;
+        color: #333;
+        word-break: break-word;
+    }
+
+    .castle-col {
+        min-width: 110px;
+        color: #60657a;
+        word-break: break-word;
+    }
+
+    .people-col {
+        color: #333;
+        font-variant-numeric: tabular-nums;
     }
 
     .score-col {
@@ -122,11 +114,9 @@
         <thead>
             <tr>
                 <th>排名</th>
-                <th>职业</th>
-                <th>角色名称</th>
-                <th>等级</th>
-                <th>阵营</th>
-                <th>帮会</th>
+                <th>帮会名称</th>
+                <th>帮主</th>
+                <th>人数</th>
                 <th>排行积分</th>
             </tr>
         </thead>
@@ -135,18 +125,9 @@
         {% for item in items %}
             <tr>
                 <td class="rank-col">{{ loop.index }}</td>
-                <td>
-                    <div class="force">
-                        {% if icons.sect.get(item.forceName) %}
-                        <img class="force-icon" src="{{ icons.sect[item.forceName] }}" alt="{{ item.forceName }}">
-                        {% endif %}
-                        <span>{{ item.forceName }}</span>
-                    </div>
-                </td>
-                <td class="role-col">{{ item.name }}</td>
-                <td class="level-col">{{ item.level }}</td>
-                <td class="camp-col">{{ item.campName }}</td>
                 <td class="tong-col">{{ item.tongName }}</td>
+                <td class="master-col">{{ item.masterName }}</td>
+                <td class="people-col">{{ item.maxLimit }}</td>
                 <td class="score-col">{{ item.totalScore }}</td>
             </tr>
         {% endfor %}
