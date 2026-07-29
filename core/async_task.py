@@ -10,7 +10,7 @@ from astrbot.api import logger
 from astrbot.api import AstrBotConfig
 
 
-from .jx3_data import JX3Service
+from .jx3api_data import JX3APIService
 from .sqlite import AsyncSQLiteDB
 
 class AsyncTask:
@@ -18,7 +18,7 @@ class AsyncTask:
     基于 APScheduler 的后台异步监控任务管理类
     """
 
-    def __init__(self, context: Context, config: AstrBotConfig, jx3api: JX3Service, sqlite: AsyncSQLiteDB):
+    def __init__(self, context: Context, config: AstrBotConfig, jx3api: JX3APIService, sqlite: AsyncSQLiteDB):
         self.context = context
         self.conf = config
         self.jx3fun = jx3api

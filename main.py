@@ -8,7 +8,7 @@ from astrbot.api import logger
 from astrbot.api import AstrBotConfig
 
 from .core.sqlite import AsyncSQLiteDB
-from .core.jx3_data import JX3Service
+from .core.jx3api_data import JX3APIService
 from .core.async_task import AsyncTask
 from .core.bilei_data import BiLeidata
 from .core.message import MessageBuilder
@@ -143,7 +143,7 @@ class Jx3ApiPlugin(Star):
         self.plugin_sql_db = AsyncSQLiteDB(str(self.plugin_data_path))
         # 剑网三功能实例化
         self.bilei = BiLeidata(self.local_sql_db)
-        self.jx3api = JX3Service(self.conf, self.plugin_sql_db, self.local_sql_db)
+        self.jx3api = JX3APIService(self.conf, self.plugin_sql_db, self.local_sql_db)
         self.jx3at = AsyncTask(cast(Context, self.context), self.conf, self.jx3api, self.local_sql_db)
         self.jx3cmd = MessageBuilder(self.server, self.jx3api, self.bilei, self.jx3at, self.icons)
 
@@ -231,6 +231,8 @@ class Jx3ApiPlugin(Star):
             "本周恶人五十强": self. jx3cmd.benzhouerenwushiqiang,
             "本周浩气五十强": self. jx3cmd.benzhouhaoqiwushiqiang,
             "试炼排行": self. jx3cmd.shilianpaixing,
+            "阵营拍卖": self. jx3cmd.zhengyingpaimai,
+            "的卢": self. jx3cmd.dilujilu,
 
 
             "科举": self. jx3cmd.keju,
@@ -261,11 +263,11 @@ class Jx3ApiPlugin(Star):
             "扶摇": self. jx3cmd.fuyaojjiutian,
             "诛恶": self. jx3cmd.zhueevent,
 
-            "拍卖": self. jx3cmd.zhengyingpaimai,
+           
 
             "帮战记录": self. jx3cmd.bangzhanjilu,
             "统战": self. jx3cmd.tongzhanyy,
-            "的卢": self. jx3cmd.dilujilu,
+         
 
             "骗子": self. jx3cmd.pianzhi,
             "奇遇": self. jx3cmd.juesheqiyu,

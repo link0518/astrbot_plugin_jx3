@@ -94,21 +94,21 @@
         <tbody>
         {% for m in list %}
             <tr
-                {% if m.capture_camp_name == '浩气盟' %}
+                {% if m.captureCampName == '浩气盟' %}
                     class="camp-haoqi"
-                {% elif m.capture_camp_name == '恶人谷' %}
+                {% elif m.captureCampName == '恶人谷' %}
                     class="camp-eren"
                 {% endif %}
             >
                 <td>{{ m.server }}</td>
-                <td>{{ m.refresh_time }}</td>
-                <td>{{ m.capture_time }}</td>
-                <td>{{ m.capture_role_name }}</td>
-                <td>{{ m.capture_camp_name }}</td>
-                <td>{{ m.auction_time }}</td>
-                <td>{{ m.auction_amount }}</td>
-                <td>{{ m.auction_role_name }}</td>
-                <td>{{ m.auction_camp_name }}</td>
+                <td>{{ m.refreshTime }}</td>
+                <td>{{ m.captureTime }}</td>
+                <td>{{ m.captureRoleName }}</td>
+                <td>{{ m.captureCampName }}</td>
+                <td>{{ m.auctionTime }}</td>
+                <td>{{ m.auctionAmount }}</td>
+                <td>{{ m.auctionRoleName }}</td>
+                <td>{{ m.auctionCampName }}</td>
             </tr>
         {% endfor %}
         </tbody>

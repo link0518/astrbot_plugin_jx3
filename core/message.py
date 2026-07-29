@@ -6,7 +6,7 @@ from astrbot.core.utils.session_waiter import (
     session_waiter,
 )
 
-from .jx3_data import JX3Service
+from .jx3api_data import JX3APIService
 from .async_task import AsyncTask
 from .bilei_data import BiLeidata
 
@@ -36,7 +36,7 @@ class MessageBuilder:
         "18：剑侠录总览"
     )
 
-    def __init__(self, server: str, jx3api: JX3Service, bilei: BiLeidata, jx3at: AsyncTask, icons: dict[str, dict[str, str]]):
+    def __init__(self, server: str, jx3api: JX3APIService, bilei: BiLeidata, jx3at: AsyncTask, icons: dict[str, dict[str, str]]):
         self.server = server
         self.jx3api = jx3api
         self.bilei = bilei
@@ -411,8 +411,13 @@ class MessageBuilder:
         """ 试炼排行 服务器 心法 """
         return await self.T2I_image_msg(event, lambda: self.jx3api.shilianpaixing(name, server))
 
+    async def  zhengyingpaimai(self, event: AstrMessageEvent,server: str , name: str = "", limit: int = 50 ):
+        """ 阵营拍卖 物品名称 服务器"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.zhengyingpaimai(server, name, limit))
 
-
+    async def  dilujilu(self, event: AstrMessageEvent,server: str ):
+        """ 的卢 服务器"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.dilujilu(server))
 
 
     async def  keju(self, event: AstrMessageEvent,subject: str, limit: int = 5):
@@ -534,9 +539,6 @@ class MessageBuilder:
 
 
 
-    async def  zhengyingpaimai(self, event: AstrMessageEvent,name: str = "玄晶", server: str = ""):
-        """ 阵营拍卖 物品名称 服务器"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.zhengyingpaimai( self.serverdefault(server), name))
 
 
 
@@ -554,9 +556,7 @@ class MessageBuilder:
         return await self.plain_msg(event, lambda: self.jx3api.tongzhanyy(self.serverdefault(server)))
 
 
-    async def  dilujilu(self, event: AstrMessageEvent,server: str = ""):
-        """ 的卢 服务器"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.dilujilu( self.serverdefault(server)))
+
 
 
 

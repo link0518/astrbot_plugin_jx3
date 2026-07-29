@@ -91,17 +91,17 @@
         <tbody>
         {% for m in list %}
             <tr
-                {% if m.camp_name == '浩气盟' %}
+                {% if m.campName == '浩气盟' %}
                     class="camp-haoqi"
-                {% elif m.camp_name == '恶人谷' %}
+                {% elif m.campName == '恶人谷' %}
                     class="camp-eren"
                 {% endif %}
             >
                 <td>{{ m.server }}</td>
-                <td>{{ m.name }}</td>
-                <td>{{ m.role_name }}</td>
-                <td>{{ m.camp_name }}</td>
-                <td>{{ m.amount }}</td>
+                <td>{{ m.itemName }}</td>
+                <td>{{ m.roleName }}</td>
+                <td>{{ m.campName }}</td>
+                <td>{{ m.itemAmount }}</td>
                 <td>{{ m.time }}</td>
             </tr>
         {% endfor %}

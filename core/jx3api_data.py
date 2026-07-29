@@ -38,7 +38,7 @@ ACHIEVEMENT_CHOICES = [
 
 ACHIEVEMENT_CHOICE_MAP = {index: (menu_id, title) for index, menu_id, title in ACHIEVEMENT_CHOICES}
 
-class JX3Service:
+class JX3APIService:
     def __init__(self, config: AstrBotConfig, sqlite: AsyncSQLiteDB, cache_sqlite: Optional[AsyncSQLiteDB] = None):
         # 实例化 API Client
         self._api: APIClient = APIClient()
@@ -528,6 +528,39 @@ class JX3Service:
             template="shilianpaixing.html"
         )   
 
+
+    async def zhengyingpaimai(self, server: str, name: str, limit: int) -> Dict[str, Any]:
+        """阵营拍卖"""
+        # 数据处理
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            for item in data:
+                item["time"] =  format_time(item["time"])
+            return_data["data"]["list"] = data
+            
+        return await self._request_api(
+            path="/auction/records",
+            params={"server": server, "name": name, "limit": limit, "token": self.token},
+            processor=processor,
+            template="zhengyingpaimai.html"
+        )           
+
+
+    async def dilujilu(self, server: str) -> Dict[str, Any]:
+        """的卢拍卖"""
+        # 数据处理
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            for item in data:
+                item["refreshTime"] = format_time(item["refreshTime"]) 
+                item["captureTime"] = format_time(item["captureTime"])
+                item["auctionTime"] = format_time(item["auctionTime"])
+            return_data["data"]["list"] = data
+            
+        return await self._request_api(
+            path="/steed/records",
+            params={"server": server, "token": self.token},
+            processor=processor,
+            template="dilujilu.html"
+        ) 
 
 
 
@@ -1446,44 +1479,7 @@ class JX3Service:
 
 
 
-    async def zhengyingpaimai(self, server: str, name: str) -> Dict[str, Any]:
-        """阵营拍卖"""
-        return_data = self._init_return_data()
-        
-        # 1. 构造请求参数
-        params = {"server": server, "name": name, "token": self.token}
-        
-        # 2. 调用基础请求
-        data: Optional[List[Dict[str, Any]]] = await self._base_request(
-            "jx3_zhengyingpaimai", "GET", params=params
-        )
-        
-        if not data:
-            return_data["msg"] = "获取接口信息失败"
-            return return_data
-            
-        # 3. 处理返回数据  
-        try: 
-            for item in data:
-                item["time"] = datetime.fromtimestamp(item["time"]).strftime("%Y-%m-%d %H:%M:%S")
-            return_data["data"]["list"] = data
-        except Exception as e:
-            logger.error(f"处理返回数据失败: {e}")
-            return_data["msg"] = "处理返回数据失败"
-            return return_data
 
-        # 4. 加载模板
-        try:
-            return_data["temp"] = await load_template("zhengyingpaimai.html")
-        except FileNotFoundError as e:
-            logger.error(f"加载模板失败: {e}")
-            return_data["msg"] = "系统错误：模板文件不存在"
-            return return_data
-        
-        
-        return_data["code"] = 200
-        
-        return return_data
     
 
 
@@ -1636,45 +1632,7 @@ class JX3Service:
         return return_data
 
 
-    async def dilujilu(self, server: str) -> Dict[str, Any]:
-        """的卢记录"""
-        return_data = self._init_return_data()
-        
-        # 1. 构造请求参数
-        params = {"server": server, "token": self.token}
-        
-        # 2. 调用基础请求
-        data: Optional[List[Dict[str, Any]]] = await self._base_request(
-            "jx3_dilujilu", "GET", params=params
-        )
-        
-        if not data:
-            return_data["msg"] = "获取接口信息失败"
-            return return_data
 
-        # 3. 处理返回数据 
-        try:              
-            for item in data:
-                item["refresh_time"] = datetime.fromtimestamp(item["refresh_time"]).strftime("%Y-%m-%d %H:%M:%S")
-                item["capture_time"] = datetime.fromtimestamp(item["capture_time"]).strftime("%Y-%m-%d %H:%M:%S")
-                item["auction_time"] = datetime.fromtimestamp(item["auction_time"]).strftime("%Y-%m-%d %H:%M:%S")
-            return_data["data"]["list"] = data
-        except Exception as e:
-            logger.error(f"数据处理时出错: {e}")
-            return_data["msg"] = "处理接口返回信息时出错" 
-            return return_data
-
-        # 4. 加载模板
-        try:
-            return_data["temp"] = await load_template("dilujilu.html")
-        except FileNotFoundError as e:
-            logger.error(f"加载模板失败: {e}")
-            return_data["msg"] = "系统错误：模板文件不存在"
-            return return_data
-        
-        return_data["code"] = 200
-        
-        return return_data
 
 
 
