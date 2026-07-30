@@ -10,6 +10,7 @@ from astrbot.api import AstrBotConfig
 from .core.sqlite import AsyncSQLiteDB
 from .core.jx3api_data import JX3APIService
 from .core.aijx3_data import AIJX3Service
+from .core.jx3box_data import JX3BOXService
 from .core.async_task import AsyncTask
 from .core.bilei_data import BiLeidata
 from .core.message import MessageBuilder
@@ -90,6 +91,9 @@ class Jx3ApiPlugin(Star):
         if self.aijx3:
             await self.aijx3.close()
 
+        if self.jx3box:
+            await self.jx3box.close()
+
         if self.local_sql_db:
             await self.local_sql_db.close()
             
@@ -149,8 +153,9 @@ class Jx3ApiPlugin(Star):
         self.bilei = BiLeidata(self.local_sql_db)
         self.jx3api = JX3APIService(self.conf, self.plugin_sql_db, self.local_sql_db)
         self.aijx3 = AIJX3Service(self.conf, self.plugin_sql_db, self.local_sql_db)
+        self.jx3box = JX3BOXService(self.conf, self.plugin_sql_db, self.local_sql_db)
         self.jx3at = AsyncTask(cast(Context, self.context), self.conf, self.jx3api, self.local_sql_db)
-        self.jx3cmd = MessageBuilder(self.server, self.jx3api, self.aijx3, self.bilei, self.jx3at, self.icons)
+        self.jx3cmd = MessageBuilder(self.server, self.jx3api, self.aijx3, self.jx3box, self.bilei, self.jx3at, self.icons)
 
 
     async def init_bilei_data(self):
@@ -245,6 +250,16 @@ class Jx3ApiPlugin(Star):
             "帮战": self. jx3cmd.bangzhanjilu,
             "沙盘": self. jx3cmd.shapan,
             "诛恶": self. jx3cmd.zhueevent,
+            "名片": self. jx3cmd.jueshemingpian,
+            "全名片": self. jx3cmd.shuoyoumingpian,
+            "随机秀": self. jx3cmd.shuijimingpian,
+            "奇遇": self. jx3cmd.juesheqiyu,
+            "查询": self. jx3cmd.juesheqiyu,
+            "未出": self. jx3cmd.weizuoqiyu,
+            "汇总": self. jx3cmd.qiyuhuizong,
+            "近期": self. jx3cmd.jinqiqiyu,
+            "统计": self. jx3cmd.qiyutongji,
+            "攻略": self. jx3cmd.qiyugonglue,
 
 
             "科举": self. jx3cmd.keju,
@@ -268,7 +283,7 @@ class Jx3ApiPlugin(Star):
             "资历": self. jx3cmd.zili,
             "解密": self. jx3cmd.jiemi,
             
-            "攻略": self. jx3cmd.qiyugonglue,
+
             "宏": self. jx3cmd.hong,
             "配装": self. jx3cmd.peizhuang,
             "百战": self. jx3cmd.baizhan,
@@ -282,21 +297,21 @@ class Jx3ApiPlugin(Star):
          
 
             "骗子": self. jx3cmd.pianzhi,
-            "奇遇": self. jx3cmd.juesheqiyu,
-            "未做奇遇": self. jx3cmd.weizuoqiyu,
-            "奇遇统计": self. jx3cmd.qiyutongji,
-            "近期奇遇": self. jx3cmd.jinqiqiyu,
-            "奇遇汇总": self. jx3cmd.qiyuhuizong,
+  
+
+
+
+
 
             "招募": self. jx3cmd.tuanduizhaomu,
             "拜师": self. jx3cmd.baishi,
             "收徒": self. jx3cmd.shoutu,
 
             "角色": self. jx3cmd.jueshe,
-            "名片": self. jx3cmd.jueshemingpian,
+
             "精耐": self. jx3cmd.jingnai,
-            "所有名片": self. jx3cmd.shuoyoumingpian,
-            "随机名片": self. jx3cmd.shuijimingpian,
+
+
 
            
             

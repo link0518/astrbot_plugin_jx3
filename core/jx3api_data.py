@@ -725,6 +725,213 @@ class JX3APIService:
         ) 
 
 
+    async def jueshemingpian(self, server: str, name: str) -> Dict[str, Any]:
+        """名片缓存"""
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            url = data.get("showAvatar")
+            if not url:
+                return_data["msg"] = "未获取到名片图片"
+                return return_data
+
+            server_name = data.get("serverName", server)
+            role_name = data.get("roleName", name)
+            show_like = data.get("showLike", 0)
+            msg0 = f"{server_name}-{role_name}"
+            msg1 = f"点赞：{show_like}"
+
+            return_data["data"] = [
+                Comp.Plain(msg0),
+                Comp.Image.fromURL(url),
+                Comp.Plain(msg1)
+            ]
+            
+        return await self._request_api(
+            path="/card/cached",
+            params={"server": server, "name": name, "token": self.token},
+            processor=processor,
+            template=""
+        ) 
+
+
+    async def shuijimingpian(self, server:str, force: str, body:str,) -> Dict[str, Any]:
+        """随机名片"""
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            url = data.get("showAvatar")
+            if not url:
+                return_data["msg"] = "未获取到名片图片"
+                return return_data
+
+            server_name = data.get("serverName")
+            role_name = data.get("roleName")
+            msg = f"{server_name}-{role_name}"
+
+            return_data["data"] = [
+                Comp.Plain(msg),
+                Comp.Image.fromURL(url),
+            ]
+            
+        return await self._request_api(
+            path="/card/random",
+            params={"server": server, "body": body, "force":force, "token": self.token},
+            processor=processor,
+            template=""
+        ) 
+
+
+    async def shuoyoumingpian(self, server: str, name: str) -> Dict[str, Any]:
+        """名片历史"""
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            chain = []
+            for m in data:
+                status = "当前展示" if m.get("showActive") else "未展示"
+                msg = f"第{m.get('showIndex')}张 {status}"
+                url = m.get("showAvatar")
+
+                if not url:
+                    logger.warning(f"第{m.get('showIndex')}张名片缺少图片URL，已跳过")
+                    continue
+
+                chain.extend([
+                    Comp.Plain(msg),
+                    Comp.Image.fromURL(url),
+                ])
+
+            if not chain:
+                return_data["msg"] = "未获取到有效的名片数据"
+                return return_data
+
+            return_data["data"] = chain
+
+        return await self._request_api(
+            path="/card/records",
+            params={"server": server, "name": name, "token": self.token},
+            processor=processor,
+            template=""
+        ) 
+
+
+    async def qiyuhuizong(self, server: str, num: int) -> Dict[str, Any]:
+        """奇遇汇总"""
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            for item in data:
+                latest = item.get("last")
+                item["latest_name"] = latest.get("name")
+                item["latest_time"] = format_time(latest.get("time"))
+
+            return_data["data"] = {
+                "items": data,
+                "server": server,
+                "num": num,
+                "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+        return await self._request_api(
+            path="/event/collect",
+            params={"server": server, "num": num, "token": self.token},
+            processor=processor,
+            template="qiyuhuizong.html"
+        ) 
+
+
+    async def weizuoqiyu(self, server: str, name: str, ) -> Dict[str, Any]:
+        """未出奇遇"""
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            return_data["data"]["ptqy"] = []
+            return_data["data"]["jsqy"] = []
+            return_data["data"]["name"] = name
+            return_data["data"]["server"] = server
+
+            for item in data:
+                try:
+                    level = int(item.get("level", 0))
+                except (TypeError, ValueError):
+                    continue
+
+                event_item = {
+                    "event": item.get("name"),
+                    "time": "未触发"
+                }
+
+                if level == 1:
+                    return_data["data"]["ptqy"].append(event_item)
+                elif level == 2:
+                    return_data["data"]["jsqy"].append(event_item)
+
+            if not return_data["data"]["ptqy"] and not return_data["data"]["jsqy"]:
+                return_data["msg"] = "未查询到未做普通或绝世奇遇"
+                return return_data
+            
+        return await self._request_api(
+            path="/event/missing",
+            params={"server": server, "name": name, "token": self.token},
+            processor=processor,
+            template="weizuoqiyu.html"
+        ) 
+
+
+    async def jinqiqiyu(self, server: str, limit: int) -> Dict[str, Any]:
+        """近期奇遇"""
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            for item in data:
+                item["time"] = format_time(item.get("time"))
+
+            return_data["data"] = {
+                "items": data,
+                "server": server,
+                "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+
+        return await self._request_api(
+            path="/event/recent",
+            params={"server": server, "limit": limit, "token": self.token},
+            processor=processor,
+            template="jinqiqiyu.html"
+        ) 
+
+    
+    async def juesheqiyu(self, server: str, name: str, full: int) -> Dict[str, Any]:
+        """角色奇遇"""
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            return_data["data"]["ptqy"] = []
+            return_data["data"]["jsqy"] = []
+            return_data["data"]["cwqy"] = []
+
+            for item in data:
+                item["time"] = datetime.fromtimestamp(item["time"]).strftime("%Y-%m-%d %H:%M:%S")
+                if item["level"] == 1:
+                    return_data["data"]["ptqy"].append(item)
+                if item["level"] == 2:
+                    return_data["data"]["jsqy"].append(item)
+                if item["level"] == 3:
+                    return_data["data"]["cwqy"].append(item)
+            
+        return await self._request_api(
+            path="/event/records",
+            params= {"server": server, "name": name, "full": full, "token": self.token},
+            processor=processor,
+            template="juesheqiyu.html"
+        ) 
+
+
+    async def qiyutongji(self, name: str, server: str, limit: int) -> Dict[str, Any]:
+        """奇遇统计"""
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            for item in data:
+                item["time"] = format_time(item.get("time"))
+
+            return_data["data"] = {
+                "items": data,
+                "server": server,
+                "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "qiyuname": name
+            }
+
+        return await self._request_api(
+            path="/event/statistics",
+            params={"name": name, "server": server, "limit": limit, "token": self.token},
+            processor=processor,
+            template="qiyuliebiao.html"
+        ) 
 
 
 
@@ -1694,294 +1901,19 @@ class JX3APIService:
         return return_data
 
 
-    async def juesheqiyu(self, name: str, server: str) -> Dict[str, Any]:
-        """角色奇遇"""
-        return_data = self._init_return_data()
-        
-        # 1. 构造请求参数
-        params = {"server": server, "name": name, "token": self.token}
-        
-        # 2. 调用基础请求
-        data: Optional[List[Dict[str, Any]]] = await self._base_request(
-            "jx3_juesheqiyu", "GET", params=params
-        )
-
-        if not data:
-            return_data["msg"] = "未找到改角色奇遇信息"
-            return return_data   
-        
-        # 3. 处理返回数据 
-        try:
-            return_data["data"]["ptqy"] = []
-            return_data["data"]["jsqy"] = []
-            return_data["data"]["cwqy"] = []
-
-            for item in data:
-                item["time"] = datetime.fromtimestamp(item["time"]).strftime("%Y-%m-%d %H:%M:%S")
-                if item["level"] == 1:
-                    return_data["data"]["ptqy"].append(item)
-                if item["level"] == 2:
-                    return_data["data"]["jsqy"].append(item)
-                if item["level"] == 3:
-                    return_data["data"]["cwqy"].append(item)
-        except Exception as e:
-            logger.error(f"处理返回数据失败: {e}")
-            return_data["msg"] = "处理返回数据失败"
-            return return_data
-
-        # 4. 加载模板
-        try:
-            return_data["temp"] = await load_template("juesheqiyu.html")
-        except FileNotFoundError as e:
-            logger.error(f"加载模板失败: {e}")
-            return_data["msg"] = "系统错误：模板文件不存在"
-            return return_data
-        
-        return_data["code"] = 200
-        
-        return return_data
 
 
-    async def weizuoqiyu(self, name: str, server: str) -> Dict[str, Any]:
-        """未做奇遇"""
-        return_data = self._init_return_data()
-        
-        # 1. 构造请求参数
-        params = {"server": server, "name": name, "token": self.token}
-        
-        # 2. 调用基础请求
-        data: Optional[List[Dict[str, Any]]] = await self._base_request(
-            "jx3_weizuoqiyu", "GET", params=params
-        )
-
-        if not data:
-            return_data["msg"] = "未查询到未做奇遇信息"
-            return return_data
-
-        if not isinstance(data, list):
-            return_data["msg"] = "获取接口信息失败或数据格式错误"
-            return return_data
-        
-        # 3. 处理返回数据
-        try:
-            return_data["data"]["ptqy"] = []
-            return_data["data"]["jsqy"] = []
-            return_data["data"]["name"] = name
-            return_data["data"]["server"] = server
-
-            for item in data:
-                event_name = item.get("name") or item.get("event")
-                if not event_name:
-                    continue
-
-                try:
-                    level = int(item.get("level", 0))
-                except (TypeError, ValueError):
-                    continue
-
-                event_item = {
-                    "event": event_name,
-                    "time": "未触发"
-                }
-
-                if level == 1:
-                    return_data["data"]["ptqy"].append(event_item)
-                elif level == 2:
-                    return_data["data"]["jsqy"].append(event_item)
-
-            if not return_data["data"]["ptqy"] and not return_data["data"]["jsqy"]:
-                return_data["msg"] = "未查询到未做普通或绝世奇遇"
-                return return_data
-        except Exception as e:
-            logger.error(f"处理返回数据失败: {e}")
-            return_data["msg"] = "处理返回数据失败"
-            return return_data
-
-        # 4. 加载模板
-        try:
-            return_data["temp"] = await load_template("weizuoqiyu.html")
-        except FileNotFoundError as e:
-            logger.error(f"加载模板失败: {e}")
-            return_data["msg"] = "系统错误：模板文件不存在"
-            return return_data
-        
-        return_data["code"] = 200
-        
-        return return_data
 
 
-    async def qiyutongji(self, name: str, server: str) -> Dict[str, Any]:
-        """奇遇统计"""
-        return_data = self._init_return_data()
-        
-        params = {"server": server, "name": name, "token": self.token}
-        
-        data_list: Optional[List[Dict[str, Any]]] = await self._base_request("jx3_qiyutongji", "GET", params=params)
-        
-        if not data_list or not isinstance(data_list, list):
-            return_data["msg"] = "获取接口信息失败或数据格式错误"
-            return return_data
-            
-        # 格式化时间
-        try:
-            for item in data_list:
-                item["time"] = datetime.fromtimestamp(item["time"]).strftime("%Y-%m-%d %H:%M:%S")
-
-        except Exception as e:
-            logger.error(f"数据处理时出错: {e}")
-            return_data["msg"] = "处理接口返回信息时出错"
-            return return_data     
-
-        # 准备模板渲染数据
-        try: 
-            return_data["data"] = {
-                "items": data_list,
-                "server": server,
-                "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "qiyuname": name
-            }
-
-        except Exception as e:
-            logger.error(f"模板数据准备失败: {e}")
-            return_data["msg"] = "系统错误：模板渲染数据准备失败"
-            return return_data
-        
-        # 加载模板
-        try:
-            return_data["temp"] = await  load_template("qiyuliebiao.html")
-        except FileNotFoundError as e:
-            logger.error(f"加载模板失败: {e}")
-            return_data["msg"] = "系统错误：模板文件不存在"
-            return return_data
-
-        return_data["code"] = 200
-
-        return return_data
 
 
-    async def jinqiqiyu(self, server: str) -> Dict[str, Any]:
-        """近期奇遇"""
-        return_data = self._init_return_data()
-        
-        params = {"server": server, "token": self.token}
-        
-        data_list: Optional[List[Dict[str, Any]]] = await self._base_request(
-            "jx3_jinqiqiyu", "GET", params=params
-        )
-        
-        if not data_list or not isinstance(data_list, list):
-            return_data["msg"] = "未查询到近期奇遇信息"
-            return return_data
-            
-        # 格式化时间
-        try:
-            for item in data_list:
-                event_time = item.get("time")
-                if event_time:
-                    try:
-                        item["time"] = datetime.fromtimestamp(int(event_time)).strftime("%Y-%m-%d %H:%M:%S")
-                    except (TypeError, ValueError, OSError):
-                        item["time"] = str(event_time)
-                else:
-                    item["time"] = ""
-
-        except Exception as e:
-            logger.error(f"数据处理时出错: {e}")
-            return_data["msg"] = "处理接口返回信息时出错"
-            return return_data     
-
-        # 准备模板渲染数据
-        try: 
-            return_data["data"] = {
-                "items": data_list,
-                "server": server,
-                "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-
-        except Exception as e:
-            logger.error(f"模板数据准备失败: {e}")
-            return_data["msg"] = "系统错误：模板渲染数据准备失败"
-            return return_data
-        
-        # 加载模板
-        try:
-            return_data["temp"] = await load_template("jinqiqiyu.html")
-        except FileNotFoundError as e:
-            logger.error(f"加载模板失败: {e}")
-            return_data["msg"] = "系统错误：模板文件不存在"
-            return return_data
-
-        return_data["code"] = 200
-
-        return return_data
 
 
-    async def qiyuhuizong(self, server: str, num: int = 7) -> Dict[str, Any]:
-        """奇遇汇总"""
-        return_data = self._init_return_data()
 
-        if num < 1 or num > 30:
-            return_data["msg"] = "汇总天数需在 1-30 天之间"
-            return return_data
-        
-        params = {"server": server, "num": num, "token": self.token}
-        
-        data_list: Optional[List[Dict[str, Any]]] = await self._base_request(
-            "jx3_qiyuhuizong", "GET", params=params
-        )
-        
-        if not data_list or not isinstance(data_list, list):
-            return_data["msg"] = "未查询到奇遇汇总信息"
-            return return_data
-            
-        # 整理最近一次触发信息
-        try:
-            for item in data_list:
-                latest = item.get("data")
-                if not isinstance(latest, dict):
-                    latest = {}
 
-                item["latest_name"] = latest.get("name", "")
 
-                latest_time = latest.get("time")
-                if latest_time:
-                    try:
-                        item["latest_time"] = datetime.fromtimestamp(int(latest_time)).strftime("%Y-%m-%d %H:%M:%S")
-                    except (TypeError, ValueError, OSError):
-                        item["latest_time"] = str(latest_time)
-                else:
-                    item["latest_time"] = ""
 
-        except Exception as e:
-            logger.error(f"数据处理时出错: {e}")
-            return_data["msg"] = "处理接口返回信息时出错"
-            return return_data     
 
-        # 准备模板渲染数据
-        try: 
-            return_data["data"] = {
-                "items": data_list,
-                "server": server,
-                "num": num,
-                "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-
-        except Exception as e:
-            logger.error(f"模板数据准备失败: {e}")
-            return_data["msg"] = "系统错误：模板渲染数据准备失败"
-            return return_data
-        
-        # 加载模板
-        try:
-            return_data["temp"] = await load_template("qiyuhuizong.html")
-        except FileNotFoundError as e:
-            logger.error(f"加载模板失败: {e}")
-            return_data["msg"] = "系统错误：模板文件不存在"
-            return return_data
-
-        return_data["code"] = 200
-
-        return return_data
 
 
 
@@ -2436,46 +2368,7 @@ class JX3APIService:
         return return_data
 
 
-    async def jueshemingpian(self, server: str, name: str) -> Dict[str, Any]:
-        """单张名片"""
-        return_data = self._init_return_data()
 
-        # 1. 构造请求参数
-        params = {"server": server, "name": name, "token": self.token}
-
-        # 2. 调用基础请求
-        data: Optional[Dict[str, Any]] = await self._base_request(
-            "jx3_jieshemingpian", "GET", params=params
-        )
-
-        if not data or not isinstance(data, dict):
-            return_data["msg"] = "未找到该角色名片"
-            return return_data
-
-        # 3. 处理返回数据
-        try:
-            url = data.get("showAvatar")
-            if not url:
-                return_data["msg"] = "未获取到名片图片"
-                return return_data
-
-            server_name = data.get("serverName", server)
-            role_name = data.get("roleName", name)
-            show_like = data.get("showLike", 0)
-            msg = f"{server_name}-{role_name} 点赞：{show_like}"
-
-            return_data["data"] = [
-                Comp.Plain(msg),
-                Comp.Image.fromURL(url),
-            ]
-        except Exception as e:
-            logger.error(f"数据处理时出错: {e}")
-            return_data["msg"] = "处理接口返回信息时出错"
-            return return_data
-
-        return_data["code"] = 200
-
-        return return_data
 
 
     async def jingnai(self, name: str, server: str) -> Dict[str, Any]:
@@ -2558,76 +2451,10 @@ class JX3APIService:
         return return_data
 
 
-    async def shuoyoumingpian(self, server: str, name: str) -> Dict[str, Any]:
-        """所有名片"""
-        return_data = self._init_return_data()
-
-        # 1. 构造请求参数
-        params = {"server": server, "name": name, "token": self.token}
-
-        # 2. 调用基础请求
-        data: Optional[list[Dict[str, Any]]] = await self._base_request(
-            "jx3_allmingpian", "GET", params=params
-        )
-
-        if not data:
-            return_data["msg"] = "未找到该角色"
-            return return_data
-
-        # 3. 处理返回数据
-        try:
-            chain = []
-            for m in data:
-                status = "已启用" if m.get("showActive") else "未启用"
-                msg = f"第{m.get('showIndex')}张 {status}"
-                url = m.get("showAvatar")
-
-                if not url:
-                    logger.warning(f"第{m.get('showIndex')}张名片缺少图片URL，已跳过")
-                    continue
-
-                chain.extend([
-                    Comp.Plain(msg),
-                    Comp.Image.fromURL(url),
-                ])
-
-            if not chain:
-                return_data["msg"] = "未获取到有效的名片数据"
-                return return_data
-
-        except Exception as e:
-            logger.error(f"数据处理时出错: {e}")
-            return_data["msg"] = "处理接口返回信息时出错"
-            return return_data
-
-        return_data["data"] = chain
-        return_data["code"] = 200
-
-        return return_data
 
 
-    async def shuijimingpian(self, force: str, body:str, server:str) -> Dict[str, Any]:
-        """随机名片"""
-        return_data = self._init_return_data()
 
-        # 1. 构造请求参数
-        params = {"server": server, "body": body, "force":force, "token": self.token}
-        
-        # 2. 调用基础请求
-        data: Optional[Dict[str, Any]] = await self._base_request(
-            "jx3_shuijimingpian", "GET", params=params
-        )
-        
-        if not data:
-            return_data["msg"] = "获取接口信息失败"
-            return return_data
-            
-        # 3. 处理返回数据 (直接提取图片 URL)
-        return_data["data"] = data['showAvatar']
 
-        return_data["code"] = 200
-        
-        return return_data
 
 
 
@@ -2901,50 +2728,7 @@ class JX3APIService:
         return return_data
 
 
-    async def qiyugonglue(self, name: str) -> Dict[str, Any]:
-        """奇遇攻略"""
-        return_data = self._init_return_data()
-        
-        # 1. 构造请求参数
-        params = {"name": name}
-        
-        # 2. 调用基础请求
-        data: Optional[list[Dict[str, Any]]] = await self._base_request(
-            "jx3box_qiyugonglue", "GET", params=params, out_key="list"
-        )
-        
-        if not data:
-            return_data["msg"] = "未找到该奇遇"
-            return return_data
-        
-        # 提取dwID
-        dwID = data[0]["dwID"]
-        url = f"https://node.jx3box.com/serendipity/{dwID}/achievement"
-        logger.debug(f"获取ID接口地址：{url}")
 
-        data1 = await self._api.get(url)
-        url1 = f"https://cms.jx3box.com/api/cms/wiki/post/type/achievement/source/{data1['achievement_id']}"
-        logger.debug(f"获取攻略接口地址：{url1}")
-
-        # 获取奇遇攻略
-        data2 = await self._api.get(url1, out_key="data")
-        if not data2:
-            return_data["msg"] = "获取攻略数据异常"
-            return return_data
-        
-        # 4. 处理数据
-        try:
-            return_data["data"] = {}
-            content = data2["post"]["content"]
-            return_data["temp"] = content
-        except Exception as e:
-            logger.exception("处理返回数据失败")
-            return_data["msg"] = "处理返回数据失败"
-            return return_data
-
-        return_data["code"] = 200
-
-        return return_data
     
 
     async def hong1(self, name: str) -> Dict[str, Any]:

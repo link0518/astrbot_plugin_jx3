@@ -125,29 +125,4 @@ class AIJX3Service:
             processor=processor,
             template=""
         ) 
-        return_data = self._init_return_data()
-        
-        # 1. 构造请求参数
-        params = {"serverName": server}
-        
-        # 2. 调用基础请求
-        data: Optional[Dict[str, Any]] = await self._base_request(
-            "aijx3_shapan", "POST", params=params
-        )
-        
-        if not data:
-            return_data["msg"] = "获取接口信息失败"
-            return return_data
-            
-        # 3. 处理返回数据 (直接提取图片 URL)
-        pic_url = data.get("picUrl")
-        if pic_url:
-            return_data["data"] = pic_url
-        else:
-            return_data["msg"] = "接口未返回图片URL"
-            return return_data
-        
-        return_data["code"] = 200    
-
-        return return_data   
         

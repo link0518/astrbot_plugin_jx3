@@ -8,6 +8,7 @@ from astrbot.core.utils.session_waiter import (
 
 from .jx3api_data import JX3APIService
 from .aijx3_data import AIJX3Service
+from .jx3box_data import JX3BOXService
 from .async_task import AsyncTask
 from .bilei_data import BiLeidata
 
@@ -37,10 +38,19 @@ class MessageBuilder:
         "18：剑侠录总览"
     )
 
-    def __init__(self, server: str, jx3api: JX3APIService, aijx3: AIJX3Service,bilei: BiLeidata, jx3at: AsyncTask, icons: dict[str, dict[str, str]]):
+    def __init__(self, 
+                 server: str, 
+                 jx3api: JX3APIService, 
+                 aijx3: AIJX3Service,
+                 jx3box: JX3BOXService,  
+                 bilei: BiLeidata, 
+                 jx3at: AsyncTask, 
+                 icons: dict[str, dict[str, str]]
+            ):
         self.server = server
         self.jx3api = jx3api
         self.aijx3 = aijx3
+        self.jx3box = jx3box
         self.bilei = bilei
         self.jx3at = jx3at
         self.icons = icons
@@ -449,6 +459,45 @@ class MessageBuilder:
         """ 诛恶事件 服务器"""
         return await self.T2I_image_msg(event, lambda: self.jx3api.zhueevent(server,20))
 
+    async def  jueshemingpian(self, event: AstrMessageEvent, server: str , name: str , ):
+        """ 名片 服务器 角色 """
+        return await self.plain_chain(event, lambda: self.jx3api.jueshemingpian(server, name)) 
+
+    async def  shuoyoumingpian(self, event: AstrMessageEvent, server: str, name: str, ):
+        """ 全名片 服务器 角色 """
+        return await self.plain_chain(event, lambda: self.jx3api.shuoyoumingpian(server,name)) 
+
+    async def  shuijimingpian(self, event: AstrMessageEvent,server: str, force: str = "", body: str = "", ):
+        """ 随机秀 服务器 门派 体型 """
+        return await self.plain_chain(event, lambda: self.jx3api.shuijimingpian(server,force,body))
+
+    async def  qiyuhuizong(self, event: AstrMessageEvent,server: str, num: str = "7" ):
+        """ 汇总 服务器 天数 """
+        return await self.T2I_image_msg(event, lambda: self.jx3api.qiyuhuizong(server, num))
+
+    async def  weizuoqiyu(self, event: AstrMessageEvent,server: str, name: str, ):
+        """ 未出 服务器 角色 """
+        return await self.T2I_image_msg(event, lambda: self.jx3api.weizuoqiyu(server,name))
+
+    async def  jinqiqiyu(self, event: AstrMessageEvent,server: str, limit: int = 20):
+        """ 近期 服务器 数量"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.jinqiqiyu(server,limit))
+
+    async def  juesheqiyu(self, event: AstrMessageEvent, server: str, name: str):
+        """ 奇遇 服务器 角色 """
+        return await self.T2I_image_msg(event, lambda: self.jx3api.juesheqiyu(server,name, 0))
+
+    async def  qiyutongji(self, event: AstrMessageEvent,adventureName: str, server: str = "",limit: int = 20):
+        """ 统计 奇遇 服务器 数量"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.qiyutongji(adventureName,server,limit))
+
+    async def  qiyugonglue(self, event: AstrMessageEvent,name: str):
+        """ 攻略 奇遇"""
+        return await self.T2I_image_msg(event, lambda: self.jx3box.qiyugonglue(name))
+
+
+
+
 
 
 
@@ -593,37 +642,18 @@ class MessageBuilder:
         return await self.plain_msg(event, lambda: self.jx3api.pianzhi(qq))
 
 
-    async def  juesheqiyu(self, event: AstrMessageEvent,name: str = "飞翔大野猪", server: str = ""):
-        """ 奇遇 角色名称 服务器"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.juesheqiyu(name, self.serverdefault(server)))
+
     
 
-    async def  weizuoqiyu(self, event: AstrMessageEvent,name: str = "飞翔大野猪", server: str = ""):
-        """ 未做奇遇 角色名称 服务器"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.weizuoqiyu(name, self.serverdefault(server)))
+
     
 
-    async def  qiyutongji(self, event: AstrMessageEvent,adventureName: str = "阴阳两界", server: str = ""):
-        """ 奇遇统计 奇遇名称 服务器"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.qiyutongji(adventureName,self.serverdefault(server)))
 
 
-    async def  jinqiqiyu(self, event: AstrMessageEvent,server: str = ""):
-        """ 近期奇遇 服务器"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.jinqiqiyu(self.serverdefault(server)))
 
 
-    async def  qiyuhuizong(self, event: AstrMessageEvent,num_or_server: str = "7", server: str = ""):
-        """ 奇遇汇总 天数 服务器"""
-        num = 7
-        target_server = server
 
-        if str(num_or_server).isdigit():
-            num = int(num_or_server)
-        else:
-            target_server = num_or_server
 
-        return await self.T2I_image_msg(event, lambda: self.jx3api.qiyuhuizong(self.serverdefault(target_server), num))
 
 
 
@@ -653,9 +683,7 @@ class MessageBuilder:
         return await self.plain_msg(event, lambda: self.jx3api.jueshe(name, self.serverdefault(server)))
 
 
-    async def  jueshemingpian(self, event: AstrMessageEvent, name: str = "飞翔大野猪", server: str = ""):
-        """ 名片 角色 服务器"""
-        return await self.plain_chain(event, lambda: self.jx3api.jueshemingpian(self.serverdefault(server), name)) 
+
 
 
     async def  jingnai(self, event: AstrMessageEvent, name: str = "飞翔大野猪", server: str = ""):
@@ -663,14 +691,10 @@ class MessageBuilder:
         return await self.T2I_image_msg(event, lambda: self.jx3api.jingnai(name, self.serverdefault(server)))
 
 
-    async def  shuoyoumingpian(self, event: AstrMessageEvent, name: str = "飞翔大野猪", server: str = ""):
-        """ 所有名片 角色 服务器"""
-        return await self.plain_chain(event, lambda: self.jx3api.shuoyoumingpian( self.serverdefault(server),name)) 
 
 
-    async def  shuijimingpian(self, event: AstrMessageEvent,force: str = "万花", body: str = "萝莉", server: str = ""):
-        """ 随机名片 职业 体型 服务器"""
-        return await self.image_msg(event, lambda: self.jx3api.shuijimingpian(force,body, self.serverdefault(server)))
+
+
 
 
 
@@ -718,9 +742,7 @@ class MessageBuilder:
         return await self.plain_msg(event, lambda: self.jx3api.bagua(name))
 
 
-    async def  qiyugonglue(self, event: AstrMessageEvent,name: str):
-        """ 奇遇攻略 奇遇名称"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.qiyugonglue(name))
+
 
 
     async def  hong(self, event: AstrMessageEvent,name: str = "易筋经"):
