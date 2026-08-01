@@ -260,6 +260,19 @@ class Jx3ApiPlugin(Star):
             "近期": self. jx3cmd.jinqiqiyu,
             "统计": self. jx3cmd.qiyutongji,
             "攻略": self. jx3cmd.qiyugonglue,
+            "精耐": self. jx3cmd.jingnai,
+            "百战": self. jx3cmd.baizhan,
+            "成就": self. jx3cmd.chengjiu,
+            "角色": self. jx3cmd.jueshe,
+            "阵眼": self. jx3cmd.zhenyan,
+            "配装": self. jx3cmd.peizhuang,
+            "资历排行": self. jx3cmd.zilipaixing,
+            "技能": self. jx3cmd.jineng,
+            "奇穴": self. jx3cmd.qixue,
+            "聊天": self. jx3cmd.liaotian,
+            
+
+
 
 
             "科举": self. jx3cmd.keju,
@@ -273,10 +286,8 @@ class Jx3ApiPlugin(Star):
             "状态": self. jx3cmd.zhuangtai,
             "技改": self. jx3cmd.jigai,
             "小药": self. jx3cmd.xiaoyao,
-            "阵眼": self. jx3cmd.zhenyan,
-            "奇穴": self. jx3cmd.qixue,
-            "技能": self. jx3cmd.jineng,
-            "资历排行": self. jx3cmd.zilipaixing,
+
+
             "全服资历排行": self. jx3cmd.zilipaihang,
             
             "骚话": self. jx3cmd.shaohua,
@@ -285,8 +296,8 @@ class Jx3ApiPlugin(Star):
             
 
             "宏": self. jx3cmd.hong,
-            "配装": self. jx3cmd.peizhuang,
-            "百战": self. jx3cmd.baizhan,
+            
+            
             "扶摇": self. jx3cmd.fuyaojjiutian,
 
 
@@ -307,9 +318,9 @@ class Jx3ApiPlugin(Star):
             "拜师": self. jx3cmd.baishi,
             "收徒": self. jx3cmd.shoutu,
 
-            "角色": self. jx3cmd.jueshe,
 
-            "精耐": self. jx3cmd.jingnai,
+
+            
 
 
 

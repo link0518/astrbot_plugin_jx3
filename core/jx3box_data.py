@@ -83,3 +83,64 @@ class JX3BOXService:
         return_data["code"] = 200
 
         return return_data        
+
+
+    async def peizhuang(self, name: str, tags: str) -> Dict[str, Any]:
+        """配装"""
+        return_data = self._init_return_data()
+        
+        # 数据库查询数据
+        result = await self._sql_db.select_one(
+                "kungfu",
+                "name=? OR name1=? OR name2=? OR name3=? OR name4=? OR name5=?",
+                (name, name, name, name, name, name)
+            )
+        logger.debug(result)
+        if result is None:
+            return_data["msg"] = "未找到该心法"
+            return return_data
+        
+        mount = result.get("pzid", None)
+        if not mount:
+            return_data["msg"] = "未找到该心法"
+            return return_data
+        
+        logger.debug(f"查询到数据：{mount}")
+
+        # 1. 构造请求参数
+        params = {
+            "per": "10",
+            "page": "1",
+            "tags": "",
+            "client": "std",
+            "global_level": "130",
+            "mount": mount,
+            "star": "1"
+        }
+        
+        # 2. 调用基础请求
+        api_url = "https://cms.jx3box.com/api/cms/app/pz"
+        data: Optional[Dict[str, Any]] = await self._api.get(api_url, params=params, out_key="data")
+
+        # 验证数据
+        if not data:
+            return_data["msg"] = "配装数据获取异常"
+            return return_data
+        
+        # 3. 处理返回数据
+        try:
+            result_msg = f"{name}--配装\n"        
+            for item in data["list"]:
+                result_msg += f"【{item['zlp']}】--{item['title']}\n"
+                result_msg += f"链接：https://www.jx3box.com/pz/view/{item['id']}\n\n"
+
+            return_data["data"] = result_msg
+
+        except Exception as e:
+            logger.exception("处理返回数据失败:",e)
+            return_data["msg"] = "处理返回数据失败"
+            return return_data    
+
+        return_data["code"] = 200
+        
+        return return_data

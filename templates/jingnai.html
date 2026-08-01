@@ -151,10 +151,10 @@
         <tbody>
         {% for item in items %}
             <tr>
-                <td class="skill-col">{{ item.skill_name }}</td>
-                <td class="leader-col">{{ item.leader_name }}</td>
+                <td class="skill-col">{{ item.szSkillName }}</td>
+                <td class="leader-col">{{ item.szBossName }}</td>
                 <td class="color-col">{{ item.skill_color_text }}</td>
-                <td class="level-col">{{ item.skill_level }}</td>
+                <td class="level-col">{{ item.nLevel }}</td>
             </tr>
         {% endfor %}
         </tbody>

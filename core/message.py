@@ -495,9 +495,45 @@ class MessageBuilder:
         """ 攻略 奇遇"""
         return await self.T2I_image_msg(event, lambda: self.jx3box.qiyugonglue(name))
 
+    async def  jingnai(self, event: AstrMessageEvent, server: str, name: str):
+        """ 精耐 服务器 角色 """
+        return await self.T2I_image_msg(event, lambda: self.jx3api.jingnai(name, server))
+    
+    async def  baizhan(self, event: AstrMessageEvent):
+        """ 百战"""
+        return await self.T2I_image_msg(event, self.jx3api.baizhan)
+    
+    async def  chengjiu(self, event: AstrMessageEvent, server:str, role:str, name:str):
+        """ 成就 服务器 角色 成就"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.chengjiuchaxun(server,role,name))
 
+    async def  jueshe(self, event: AstrMessageEvent,server: str, name: str):
+        """ 角色 服务器 名称 """
+        return await self.plain_msg(event, lambda: self.jx3api.jueshe(server, name, 1))
 
+    async def  zhenyan(self, event: AstrMessageEvent, name: str):
+        """ 阵眼 心法"""
+        return await self.plain_msg(event, lambda: self.jx3api.zhenyan(name))
 
+    async def  peizhuang(self, event: AstrMessageEvent,name: str, tags: str = ""):
+        """ 配装 心法 类型"""
+        return await self.plain_msg(event, lambda: self.jx3box.peizhuang(name,tags))
+
+    async def  zilipaixing(self, event: AstrMessageEvent, server: str = "", school: str = ""):
+        """ 资历排行 服务器 门派 """
+        return await self.T2I_image_msg(event, lambda: self.jx3api.zilipaixing(server, school))
+
+    async def  jineng(self, event: AstrMessageEvent, name: str):
+        """ 技能 心法"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.jineng(name,0))
+
+    async def  qixue(self, event: AstrMessageEvent, name: str):
+        """ 奇穴 心法"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.qixue(name,0))
+
+    async def  liaotian(self, event: AstrMessageEvent, server:str, name: str, limit:int = 20, page:int = 1):
+        """ 奇穴 心法"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.juesheliaotian(server,name,limit,page))
 
 
 
@@ -556,24 +592,16 @@ class MessageBuilder:
         return await self.T2I_image_msg(event, self.jx3api.xiaoyao)
 
 
-    async def  zhenyan(self, event: AstrMessageEvent, name: str):
-        """ 阵眼 心法"""
-        return await self.plain_msg(event, lambda: self.jx3api.zhenyan(name))
 
 
-    async def  qixue(self, event: AstrMessageEvent, name: str):
-        """ 奇穴 心法"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.qixue(name))
 
 
-    async def  jineng(self, event: AstrMessageEvent, name: str):
-        """ 技能 心法"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.jineng(name))
 
 
-    async def  zilipaixing(self, event: AstrMessageEvent, school: str, server: str = ""):
-        """ 资历排行 职业 服务器"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.zilipaixing(school, self.serverdefault(server)))
+
+
+
+
 
     async def  zilipaihang(self, event: AstrMessageEvent):
         """ 资历排行  """
@@ -600,9 +628,7 @@ class MessageBuilder:
 
 
 
-    async def  baizhan(self, event: AstrMessageEvent):
-        """ 百战"""
-        return await self.T2I_image_msg(event, self.jx3api.baizhan)
+
 
 
     async def  fuyaojjiutian(self, event: AstrMessageEvent,server: str = ""):
@@ -678,17 +704,13 @@ class MessageBuilder:
   
 
 
-    async def  jueshe(self, event: AstrMessageEvent,name: str, server: str = ""):
-        """ 角色 名称 服务器"""
-        return await self.plain_msg(event, lambda: self.jx3api.jueshe(name, self.serverdefault(server)))
 
 
 
 
 
-    async def  jingnai(self, event: AstrMessageEvent, name: str = "飞翔大野猪", server: str = ""):
-        """ 精耐 角色 服务器"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.jingnai(name, self.serverdefault(server)))
+
+
 
 
 
@@ -750,9 +772,6 @@ class MessageBuilder:
         return await self.handler_plain_image_msg(event, lambda: self.jx3api.hong1(name), self.jx3api.hong2)
 
 
-    async def  peizhuang(self, event: AstrMessageEvent,name: str = "易筋经", tags: str = ""):
-        """ 配装 心法"""
-        return await self.plain_msg(event, lambda: self.jx3api.peizhuang( name,tags))
 
     
     async def bilei_add(self, event: AstrMessageEvent,name: str, text: str):
