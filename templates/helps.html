@@ -1,1403 +1,757 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>剑三机器人功能指令</title>
-<style>
-:root {
-    --ink: #172033;
-    --muted: #697287;
-    --line: rgba(31, 42, 68, 0.10);
-    --paper: #ffffff;
-    --blue-2: #3b82f6;
-    --amber-2: #f97316;
-    --shadow: 0 12px 30px rgba(31, 42, 68, 0.08);
-}
+    <meta charset="UTF-8">
+    <title>剑网三插件功能介绍</title>
 
-* { box-sizing: border-box; }
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-body {
-    margin: 0;
-    padding: 24px;
-    background:
-        radial-gradient(circle at 10% 0%, rgba(109, 93, 252, 0.18), transparent 34%),
-        radial-gradient(circle at 90% 8%, rgba(59, 130, 246, 0.16), transparent 32%),
-        linear-gradient(180deg, #f5f7fb 0%, #edf1f8 100%);
-    color: var(--ink);
-    font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif;
-}
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+        }
 
-.page {
-    width: 1320px;
-    margin: 0 auto;
-}
+        body {
+            min-width: 1400px;
+            padding: 24px;
+            font-family:
+                "Microsoft YaHei",
+                "PingFang SC",
+                Arial,
+                sans-serif;
+            color: #edf4ff;
+            background:
+                radial-gradient(
+                    circle at 50% 0%,
+                    rgba(88, 135, 202, 0.65),
+                    transparent 34%
+                ),
+                linear-gradient(
+                    180deg,
+                    #294d7c 0%,
+                    #18335a 38%,
+                    #102541 100%
+                );
+        }
 
-.hero {
-    position: relative;
-    overflow: hidden;
-    min-height: 210px;
-    border-radius: 28px;
-    padding: 34px 38px;
-    color: #fff;
-    background:
-        linear-gradient(135deg, rgba(22, 30, 50, 0.96) 0%, rgba(37, 49, 89, 0.96) 55%, rgba(65, 87, 160, 0.95) 100%);
-    box-shadow: var(--shadow);
-}
+        .page {
+            position: relative;
+            width: 1520px;
+            margin: 0 auto;
+            padding: 22px;
+            overflow: hidden;
+            border: 2px solid rgba(222, 200, 145, 0.82);
+            border-radius: 24px;
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(255, 255, 255, 0.04),
+                    transparent 26%
+                ),
+                rgba(13, 31, 59, 0.94);
+            box-shadow:
+                0 20px 55px rgba(0, 0, 0, 0.34),
+                inset 0 0 35px rgba(126, 161, 216, 0.08);
+        }
 
-.hero::after {
-    content: "";
-    position: absolute;
-    width: 460px;
-    height: 460px;
-    right: -140px;
-    top: -180px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,255,255,.18), transparent 66%);
-}
+        .top-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 18px;
+            padding: 14px 18px;
+            border: 1px solid rgba(221, 200, 147, 0.35);
+            border-radius: 13px;
+            background: rgba(34, 59, 101, 0.6);
+        }
 
-.hero .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 999px;
-    color: rgba(255,255,255,.82);
-    font-size: 14px;
-    letter-spacing: 0.08em;
-}
+        .top-name {
+            font-size: 23px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #fff0c8;
+        }
 
-.hero h1 {
-    margin: 18px 0 10px;
-    font-size: 48px;
-    line-height: 1.08;
-    letter-spacing: -0.04em;
-}
+        .top-desc {
+            font-size: 14px;
+            color: #b9cae9;
+            text-align: right;
+            line-height: 1.7;
+        }
 
-.hero p {
-    width: 820px;
-    margin: 0;
-    font-size: 19px;
-    line-height: 1.7;
-    color: rgba(255,255,255,.80);
-}
+        .section-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 15px;
+            align-items: start;
+        }
 
-.hero-stats {
-    position: absolute;
-    right: 36px;
-    bottom: 30px;
-    display: grid;
-    grid-template-columns: repeat(2, 118px);
-    gap: 12px;
-}
+        .section {
+            overflow: hidden;
+            border: 1px solid rgba(217, 197, 144, 0.42);
+            border-radius: 13px;
+            background:
+                linear-gradient(
+                    180deg,
+                    rgba(45, 72, 119, 0.62),
+                    rgba(20, 43, 79, 0.78)
+                );
+            box-shadow:
+                0 7px 18px rgba(0, 0, 0, 0.18),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
 
-.stat {
-    padding: 16px 14px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.11);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(8px);
-}
+        .section.wide {
+            grid-column: span 2;
+        }
 
-.stat b {
-    display: block;
-    font-size: 30px;
-    line-height: 1;
-}
+        .section-title {
+            padding: 11px 14px;
+            border-bottom: 1px solid rgba(220, 199, 145, 0.28);
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #fff0c6;
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(198, 165, 93, 0.26),
+                    rgba(105, 138, 194, 0.1)
+                );
+        }
 
-.stat span {
-    display: block;
-    margin-top: 7px;
-    font-size: 13px;
-    color: rgba(255,255,255,.74);
-}
+        .section-body {
+            padding: 7px 12px 10px;
+        }
 
-.legend {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    margin: 18px 0 18px;
-    padding: 14px 18px;
-    border-radius: 20px;
-    background: rgba(255,255,255,.72);
-    border: 1px solid rgba(255,255,255,.78);
-    box-shadow: 0 10px 22px rgba(31, 42, 68, 0.05);
-}
+        .feature {
+            display: grid;
+            grid-template-columns: 82px minmax(0, 1fr);
+            gap: 8px;
+            align-items: start;
+            padding: 7px 0;
+            border-bottom: 1px dashed rgba(186, 205, 239, 0.15);
+        }
 
-.legend-left,
-.legend-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
+        .feature:last-child {
+            border-bottom: none;
+        }
 
-.legend-title {
-    font-weight: 800;
-    color: #1f2a44;
-}
+        .feature-name {
+            padding-top: 4px;
+            font-size: 14px;
+            line-height: 1.45;
+            font-weight: 700;
+            color: #f4f7ff;
+        }
 
-.pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    height: 32px;
-    padding: 0 12px;
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 700;
-    border: 1px solid transparent;
-}
+        .commands {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
 
-.dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 99px;
-    display: inline-block;
-}
+        .command {
+            display: inline-block;
+            padding: 3px 7px;
+            border: 1px solid rgba(157, 184, 228, 0.22);
+            border-radius: 5px;
+            font-size: 12px;
+            line-height: 1.45;
+            color: #d2e0ff;
+            background: rgba(77, 108, 163, 0.2);
+            word-break: break-all;
+        }
 
-.pill.basic {
-    color: #1e4f92;
-    background: #eef6ff;
-    border-color: #d7eaff;
-}
+        .ranking-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 5px;
+        }
 
-.pill.basic .dot { background: var(--blue-2); }
+        .ranking-list .command {
+            width: 100%;
+        }
 
-.pill.advanced {
-    color: #9a4a00;
-    background: #fff4e7;
-    border-color: #ffe0bd;
-}
+        .footer {
+            margin-top: 17px;
+            padding: 13px 16px 2px;
+            border-top: 1px solid rgba(216, 195, 140, 0.24);
+            text-align: center;
+            font-size: 13px;
+            line-height: 1.8;
+            color: #96add5;
+        }
 
-.pill.advanced .dot { background: var(--amber-2); }
+        .footer strong {
+            color: #e6d4a4;
+        }
 
-.tips {
-    color: #4f5b73;
-    font-size: 13px;
-}
+        @media (max-width: 1450px) {
+            body {
+                min-width: 0;
+                padding: 12px;
+            }
 
-.sections {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 16px;
-}
+            .page {
+                width: 100%;
+            }
 
-.section {
-    background: rgba(255,255,255,.82);
-    border: 1px solid rgba(255,255,255,.86);
-    border-radius: 24px;
-    box-shadow: 0 8px 24px rgba(31, 42, 68, 0.06);
-    overflow: hidden;
-}
+            .section-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
 
-.section-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 18px 14px 18px;
-    border-bottom: 1px solid var(--line);
-    background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.64));
-}
-
-.title-wrap {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.icon {
-    width: 36px;
-    height: 36px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 14px;
-    font-weight: 900;
-    color: #fff;
-    background: linear-gradient(135deg, #6478ff, #22a3ff);
-    box-shadow: 0 8px 18px rgba(59, 130, 246, .22);
-}
-
-.section h2 {
-    margin: 0;
-    font-size: 24px;
-    letter-spacing: -0.02em;
-}
-
-.section-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #6b7280;
-    font-size: 13px;
-}
-
-.mini {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 8px;
-    border-radius: 999px;
-    border: 1px solid var(--line);
-    background: rgba(255,255,255,.68);
-}
-
-.command-grid {
-    padding: 14px;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
-}
-
-.cmd-card {
-    position: relative;
-    min-height: 96px;
-    padding: 12px 12px 10px 14px;
-    border-radius: 16px;
-    border: 1px solid var(--line);
-    overflow: hidden;
-}
-
-.cmd-card.basic-source {
-    background: linear-gradient(135deg, #f3f9ff 0%, #ffffff 80%);
-}
-
-.cmd-card.advanced-source {
-    background: linear-gradient(135deg, #fff7ec 0%, #ffffff 80%);
-}
-
-.cmd-card::before {
-    content: "";
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 4px;
-}
-
-.cmd-card.basic-source::before {
-    background: linear-gradient(180deg, #60a5fa, #2563eb);
-}
-
-.cmd-card.advanced-source::before {
-    background: linear-gradient(180deg, #fb923c, #ea580c);
-}
-
-.cmd-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 7px;
-}
-
-.cmd-name {
-    min-width: 0;
-    font-size: 17px;
-    font-weight: 900;
-    line-height: 1.25;
-    color: #162033;
-}
-
-.source-tag {
-    flex: 0 0 auto;
-    padding: 3px 7px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 800;
-    line-height: 1.3;
-}
-
-.basic-source .source-tag {
-    color: #2563eb;
-    background: #e8f2ff;
-}
-
-.advanced-source .source-tag {
-    color: #c2410c;
-    background: #fff0df;
-}
-
-.usage {
-    display: inline-block;
-    max-width: 100%;
-    padding: 6px 9px;
-    border-radius: 9px;
-    background: rgba(23, 32, 51, 0.055);
-    color: #24324f;
-    font-family: Consolas, "SFMono-Regular", "Courier New", monospace;
-    font-size: 14px;
-    line-height: 1.4;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.desc {
-    margin: 7px 0 0;
-    color: var(--muted);
-    font-size: 12.5px;
-    line-height: 1.45;
-}
-
-.footer-note {
-    margin: 18px 0 0;
-    padding: 16px 20px;
-    border-radius: 20px;
-    border: 1px solid rgba(255,255,255,.88);
-    background: rgba(255,255,255,.76);
-    color: #566178;
-    font-size: 14px;
-    line-height: 1.8;
-    box-shadow: 0 8px 22px rgba(31, 42, 68, 0.05);
-}
-
-.footer-note b {
-    color: #1f2a44;
-}
-
-@media print {
-    body { padding: 0; background: #f5f7fb; }
-    .page { width: 1320px; }
-}
-</style>
+            .section.wide {
+                grid-column: span 2;
+            }
+        }
+    </style>
 </head>
+
 <body>
-<main class="page">
-    <section class="hero">
-        <div class="eyebrow">ASTRBOT · JX3 COMMAND GUIDE</div>
-        <h1>剑三机器人功能指令</h1>
-        <p>按使用场景重新分组，保留每条指令的名称、使用示例与说明。卡片底色表示指令是否需要令牌，免令牌与需令牌功能一眼区分。</p>
-        <div class="hero-stats">
-            <div class="stat"><b>88</b><span>条指令</span></div>
-            <div class="stat"><b>13</b><span>个功能分组</span></div>
+<div class="page">
+
+    <div class="top-info">
+        <div class="top-name">剑网三综合查询插件</div>
+
+        <div class="top-desc">
+            指令与参数之间使用空格分隔<br>
+            带有 [ ] 的参数为可选参数
         </div>
-    </section>
+    </div>
 
-    <section class="legend">
-        <div class="legend-left">
-            <span class="legend-title">底色说明</span>
-            <span class="pill basic"><span class="dot"></span>免令牌</span>
-            <span class="pill advanced"><span class="dot"></span>需令牌</span>
-        </div>
-        <div class="legend-right">
-            <span class="tips">[] 为可选参数；未填写服务器时使用默认服务器。</span>
-        </div>
-    </section>
+    <main class="section-grid">
 
-    <section class="sections">
-    
-        <div class="section">
-            <div class="section-head">
-                <div class="title-wrap">
-                    <span class="icon">日</span>
-                    <h2>日常功能</h2>
+        <section class="section">
+            <div class="section-title">活动情报</div>
+            <div class="section-body">
+
+                <div class="feature">
+                    <div class="feature-name">活动日历</div>
+                    <div class="commands">
+                        <span class="command">日常 [延后天数]</span>
+                        <span class="command">日常预测</span>
+                    </div>
                 </div>
-                <div class="section-meta">
-                    <span class="mini">4 条</span>
-                    <span class="mini">免令牌 3</span>
-                    <span class="mini">需令牌 1</span>
+
+                <div class="feature">
+                    <div class="feature-name">声望社</div>
+                    <div class="commands">
+                        <span class="command">楚天社</span>
+                        <span class="command">云从社</span>
+                        <span class="command">披风会</span>
+                        <span class="command">穹野卫</span>
+                    </div>
                 </div>
-            </div>
-            <div class="command-grid">
 
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">日常活动</div>
-                        <div class="source-tag">免令牌</div>
+                <div class="feature">
+                    <div class="feature-name">关隘首领</div>
+                    <div class="commands">
+                        <span class="command">关隘</span>
                     </div>
-                    <code class="usage">日常 [服务器] [天数]</code>
-                    <p class="desc">查询指定日期的日常活动。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">日常预测</div>
-                        <div class="source-tag">免令牌</div>
+                <div class="feature">
+                    <div class="feature-name">赤兔</div>
+                    <div class="commands">
+                        <span class="command">赤兔</span>
+                        <span class="command">本周赤兔</span>
                     </div>
-                    <code class="usage">月历</code>
-                    <p class="desc">查看当前日期前后 15 天日常安排。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">名望事件</div>
-                        <div class="source-tag">免令牌</div>
+                <div class="feature">
+                    <div class="feature-name">阵营事件</div>
+                    <div class="commands">
+                        <span class="command">阵营奉献 [阵营]</span>
                     </div>
-                    <code class="usage">名望 [穹野卫]</code>
-                    <p class="desc">查询指定名望势力事件。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">诛恶</div>
-                        <div class="source-tag">需令牌</div>
+                <div class="feature">
+                    <div class="feature-name">烟花记录</div>
+                    <div class="commands">
+                        <span class="command">烟花 区服 角色</span>
                     </div>
-                    <code class="usage">诛恶</code>
-                    <p class="desc">查询诛恶事件服务器、地图和时间记录。</p>
-                </article>
+                </div>
+
+                <div class="feature">
+                    <div class="feature-name">马场查询</div>
+                    <div class="commands">
+                        <span class="command">刷马</span>
+                        <span class="command">马场</span>
+                    </div>
+                </div>
 
             </div>
-        </div>
-    
-        <div class="section">
-            <div class="section-head">
-                <div class="title-wrap">
-                    <span class="icon">官</span>
-                    <h2>官方功能</h2>
+        </section>
+
+        <section class="section">
+            <div class="section-title">名剑相关</div>
+            <div class="section-body">
+
+                <div class="feature">
+                    <div class="feature-name">名剑战绩</div>
+                    <div class="commands">
+                        <span class="command">战绩 服务器 角色 [模式]</span>
+                    </div>
                 </div>
-                <div class="section-meta">
-                    <span class="mini">6 条</span>
-                    <span class="mini">免令牌 6</span>
+
+                <div class="feature">
+                    <div class="feature-name">名剑排行</div>
+                    <div class="commands">
+                        <span class="command">名剑排行 [模式] [数量]</span>
+                    </div>
                 </div>
-            </div>
-            <div class="command-grid">
 
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">新闻资讯</div>
-                        <div class="source-tag">免令牌</div>
+                <div class="feature">
+                    <div class="feature-name">名剑统计</div>
+                    <div class="commands">
+                        <span class="command">名剑统计 [模式]</span>
                     </div>
-                    <code class="usage">公告 [数量]</code>
-                    <p class="desc">获取最新官方公告，数量默认为 5 条。</p>
-                </article>
-
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">维护公告</div>
-                        <div class="source-tag">免令牌</div>
-                    </div>
-                    <code class="usage">维护 [数量]</code>
-                    <p class="desc">获取最新官方维护公告，数量默认为 5 条。</p>
-                </article>
-
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">最新技改</div>
-                        <div class="source-tag">免令牌</div>
-                    </div>
-                    <code class="usage">技改</code>
-                    <p class="desc">获取最近一次官方职业技改内容。</p>
-                </article>
-
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">搜索区服</div>
-                        <div class="source-tag">免令牌</div>
-                    </div>
-                    <code class="usage">区服 [服务器]</code>
-                    <p class="desc">查询服务器基础信息。</p>
-                </article>
-
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">开服查询</div>
-                        <div class="source-tag">免令牌</div>
-                    </div>
-                    <code class="usage">开服 [服务器]</code>
-                    <p class="desc">查询指定服务器开服状态。</p>
-                </article>
-
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">全服状态</div>
-                        <div class="source-tag">免令牌</div>
-                    </div>
-                    <code class="usage">状态</code>
-                    <p class="desc">查询所有服务器当前状态。</p>
-                </article>
+                </div>
 
             </div>
-        </div>
-    
-        <div class="section">
-            <div class="section-head">
-                <div class="title-wrap">
-                    <span class="icon">角</span>
-                    <h2>角色功能</h2>
+        </section>
+
+        <section class="section">
+            <div class="section-title">物价交易</div>
+            <div class="section-body">
+
+                <div class="feature">
+                    <div class="feature-name">阵营拍卖</div>
+                    <div class="commands">
+                        <span class="command">阵营拍卖 服务器 [物品] [数量]</span>
+                    </div>
                 </div>
-                <div class="section-meta">
-                    <span class="mini">8 条</span>
-                    <span class="mini">需令牌 8</span>
+
+                <div class="feature">
+                    <div class="feature-name">的卢拍卖</div>
+                    <div class="commands">
+                        <span class="command">的卢 服务器</span>
+                    </div>
                 </div>
-            </div>
-            <div class="command-grid">
 
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">角色信息</div>
-                        <div class="source-tag">需令牌</div>
+                <div class="feature">
+                    <div class="feature-name">金价行情</div>
+                    <div class="commands">
+                        <span class="command">金价 服务器</span>
                     </div>
-                    <code class="usage">角色 名称 [服务器]</code>
-                    <p class="desc">查询角色基础信息。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">角色资历</div>
-                        <div class="source-tag">需令牌</div>
+                <div class="feature">
+                    <div class="feature-name">物品价格</div>
+                    <div class="commands">
+                        <span class="command">物价 外观名称 [服务器]</span>
                     </div>
-                    <code class="usage">资历 角色名 [服务器]</code>
-                    <p class="desc">按分类查询角色资历点数完成进度。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">角色名片</div>
-                        <div class="source-tag">需令牌</div>
+                <div class="feature">
+                    <div class="feature-name">成本计算</div>
+                    <div class="commands">
+                        <span class="command">成本 服务器 物品名称</span>
                     </div>
-                    <code class="usage">名片 角色名 [服务器]</code>
-                    <p class="desc">查询角色当前名片。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">所有名片</div>
-                        <div class="source-tag">需令牌</div>
+                <div class="feature">
+                    <div class="feature-name">编号搜索</div>
+                    <div class="commands">
+                        <span class="command">看号 万宝楼编号</span>
                     </div>
-                    <code class="usage">所有名片 角色名 [服务器]</code>
-                    <p class="desc">查询角色已拥有或可展示的全部名片。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">角色奇遇</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">奇遇 角色名 [服务器]</code>
-                    <p class="desc">查询指定角色已触发奇遇。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">未做奇遇</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">未做奇遇 角色名 [服务器]</code>
-                    <p class="desc">查询指定角色尚未完成的奇遇。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">名剑战绩</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">战绩 角色名 [服务器] [模式]</code>
-                    <p class="desc">查询角色名剑大会战绩，支持 22 / 33 模式。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">角色百战</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">精耐 角色名 [服务器]</code>
-                    <p class="desc">查询角色百战精力、耐力和技能列表。</p>
-                </article>
+                </div>
 
             </div>
-        </div>
-    
-        <div class="section">
-            <div class="section-head">
-                <div class="title-wrap">
-                    <span class="icon">职</span>
-                    <h2>职业功能</h2>
+        </section>
+
+        <section class="section">
+            <div class="section-title">阵营战场</div>
+            <div class="section-body">
+
+                <div class="feature">
+                    <div class="feature-name">帮战记录</div>
+                    <div class="commands">
+                        <span class="command">帮战 服务器</span>
+                    </div>
                 </div>
-                <div class="section-meta">
-                    <span class="mini">6 条</span>
-                    <span class="mini">免令牌 3</span>
-                    <span class="mini">需令牌 3</span>
+
+                <div class="feature">
+                    <div class="feature-name">阵营沙盘</div>
+                    <div class="commands">
+                        <span class="command">沙盘 服务器</span>
+                    </div>
                 </div>
-            </div>
-            <div class="command-grid">
 
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">小药推荐</div>
-                        <div class="source-tag">免令牌</div>
+                <div class="feature">
+                    <div class="feature-name">诛恶事件</div>
+                    <div class="commands">
+                        <span class="command">诛恶 服务器</span>
                     </div>
-                    <code class="usage">小药</code>
-                    <p class="desc">查询指定心法常用小药、宴席与辅助搭配。</p>
-                </article>
-
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">心法宏</div>
-                        <div class="source-tag">免令牌</div>
-                    </div>
-                    <code class="usage">宏 心法</code>
-                    <p class="desc">查询指定心法推荐宏设置。</p>
-                </article>
-
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">心法配装</div>
-                        <div class="source-tag">免令牌</div>
-                    </div>
-                    <code class="usage">配装 心法 [筛选]</code>
-                    <p class="desc">查询指定心法配装，支持 PvP / PvE 筛选。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">心法阵眼</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">阵眼 心法</code>
-                    <p class="desc">查询指定心法阵眼效果。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">奇穴详情</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">奇穴 心法</code>
-                    <p class="desc">查询指定心法奇穴详情。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">技能详情</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">技能 心法</code>
-                    <p class="desc">查询指定心法技能详情。</p>
-                </article>
+                </div>
 
             </div>
-        </div>
-    
-        <div class="section">
-            <div class="section-head">
-                <div class="title-wrap">
-                    <span class="icon">乐</span>
-                    <h2>休闲功能</h2>
+        </section>
+
+        <section class="section wide">
+            <div class="section-title">排行榜单</div>
+            <div class="section-body">
+
+                <div class="feature">
+                    <div class="feature-name">排行统计</div>
+
+                    <div class="ranking-list">
+                        <span class="command">名士五十强 服务器</span>
+                        <span class="command">老江湖五十强 服务器</span>
+                        <span class="command">兵甲藏家五十强 服务器</span>
+                        <span class="command">名师五十强 服务器</span>
+                        <span class="command">阵营英雄五十强 服务器</span>
+                        <span class="command">薪火相传五十强 服务器</span>
+                        <span class="command">庐园广记一百强 服务器</span>
+                        <span class="command">浩气神兵宝甲五十强 服务器</span>
+                        <span class="command">恶人神兵宝甲五十强 服务器</span>
+                        <span class="command">浩气爱心帮会五十强 服务器</span>
+                        <span class="command">恶人爱心帮会五十强 服务器</span>
+                        <span class="command">赛季恶人五十强 服务器</span>
+                        <span class="command">赛季浩气五十强 服务器</span>
+                        <span class="command">上周恶人五十强 服务器</span>
+                        <span class="command">上周浩气五十强 服务器</span>
+                        <span class="command">本周恶人五十强 服务器</span>
+                        <span class="command">本周浩气五十强 服务器</span>
+                    </div>
                 </div>
-                <div class="section-meta">
-                    <span class="mini">8 条</span>
-                    <span class="mini">免令牌 1</span>
-                    <span class="mini">需令牌 7</span>
+
+                <div class="feature">
+                    <div class="feature-name">试炼排行</div>
+                    <div class="commands">
+                        <span class="command">试炼排行 服务器 心法</span>
+                    </div>
                 </div>
-            </div>
-            <div class="command-grid">
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">烟花记录</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">烟花 角色名 [服务器]</code>
-                    <p class="desc">查询指定角色烟花记录。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">拜师列表</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">拜师 [搜索关键词] [服务器]</code>
-                    <p class="desc">查询徒弟找师傅信息。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">收徒列表</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">收徒 [搜索关键词] [服务器]</code>
-                    <p class="desc">查询师傅找徒弟信息。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">随机名片</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">随机名片 职业 体型 [服务器]</code>
-                    <p class="desc">按职业、体型、服务器随机抽取名片。</p>
-                </article>
-
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">奇遇攻略</div>
-                        <div class="source-tag">免令牌</div>
-                    </div>
-                    <code class="usage">攻略 奇遇名称</code>
-                    <p class="desc">查询指定奇遇的触发条件、奖励与流程攻略。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">奇遇统计</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">奇遇统计 奇遇名称 [服务器]</code>
-                    <p class="desc">统计指定奇遇触发次数</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">近期奇遇</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">近期奇遇 [服务器]</code>
-                    <p class="desc">查询指定服务器最近触发的奇遇记录</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">奇遇汇总</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">奇遇汇总 [天数] [服务器]</code>
-                    <p class="desc">统计指定服务器最近一段时间的奇遇触发汇总</p>
-                </article>
 
             </div>
-        </div>
-    
-        <div class="section">
-            <div class="section-head">
-                <div class="title-wrap">
-                    <span class="icon">营</span>
-                    <h2>阵营功能</h2>
+        </section>
+
+        <section class="section">
+            <div class="section-title">角色名片</div>
+            <div class="section-body">
+
+                <div class="feature">
+                    <div class="feature-name">名片缓存</div>
+                    <div class="commands">
+                        <span class="command">名片 服务器 角色</span>
+                    </div>
                 </div>
-                <div class="section-meta">
-                    <span class="mini">6 条</span>
-                    <span class="mini">免令牌 1</span>
-                    <span class="mini">需令牌 5</span>
+
+                <div class="feature">
+                    <div class="feature-name">名片历史</div>
+                    <div class="commands">
+                        <span class="command">全名片 服务器 角色</span>
+                    </div>
                 </div>
-            </div>
-            <div class="command-grid">
 
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">阵营沙盘</div>
-                        <div class="source-tag">免令牌</div>
+                <div class="feature">
+                    <div class="feature-name">随机名片</div>
+                    <div class="commands">
+                        <span class="command">随机秀 服务器 [门派] [体型]</span>
                     </div>
-                    <code class="usage">沙盘 [服务器]</code>
-                    <p class="desc">查询指定服务器阵营沙盘与据点状态。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">阵营拍卖</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">拍卖 物品名称 [服务器]</code>
-                    <p class="desc">查询阵营拍卖物品及服务器记录。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">阵营事件</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">阵营事件</code>
-                    <p class="desc">查询跨服阵营事件记录。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">关隘首领</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">关隘首领</code>
-                    <p class="desc">查询各分线关隘首领状态与剩余时间。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">帮战记录</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">帮战记录 [服务器]</code>
-                    <p class="desc">查询指定服务器帮战记录。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">统战歪歪</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">统战 [服务器]</code>
-                    <p class="desc">查询指定服务器阵营统战 YY 信息。</p>
-                </article>
+                </div>
 
             </div>
-        </div>
-    
-        <div class="section">
-            <div class="section-head">
-                <div class="title-wrap">
-                    <span class="icon">本</span>
-                    <h2>副本功能</h2>
+        </section>
+
+        <section class="section">
+            <div class="section-title">百战与角色</div>
+            <div class="section-body">
+
+                <div class="feature">
+                    <div class="feature-name">角色百战</div>
+                    <div class="commands">
+                        <span class="command">精耐 服务器 角色</span>
+                    </div>
                 </div>
-                <div class="section-meta">
-                    <span class="mini">4 条</span>
-                    <span class="mini">免令牌 1</span>
-                    <span class="mini">需令牌 3</span>
+
+                <div class="feature">
+                    <div class="feature-name">百战首领</div>
+                    <div class="commands">
+                        <span class="command">百战</span>
+                    </div>
                 </div>
-            </div>
-            <div class="command-grid">
 
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">百战首领</div>
-                        <div class="source-tag">需令牌</div>
+                <div class="feature">
+                    <div class="feature-name">成就查询</div>
+                    <div class="commands">
+                        <span class="command">成就 服务器 角色 成就</span>
                     </div>
-                    <code class="usage">百战</code>
-                    <p class="desc">查询本期百战异闻录首领与关卡信息。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">副本招募</div>
-                        <div class="source-tag">需令牌</div>
+                <div class="feature">
+                    <div class="feature-name">角色详情</div>
+                    <div class="commands">
+                        <span class="command">角色 服务器 名称</span>
                     </div>
-                    <code class="usage">招募 副本名称 [服务器]</code>
-                    <p class="desc">查询指定服务器副本招募信息。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">掉落记录</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">掉落 物品名称 [数量] [服务器]</code>
-                    <p class="desc">查询团队秘境贵重物品掉落记录</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">解密</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">解密</code>
-                    <p class="desc">查询当前机关解密结果与下轮时间。</p>
-                </article>
+                </div>
 
             </div>
-        </div>
-    
-        <div class="section">
-            <div class="section-head">
-                <div class="title-wrap">
-                    <span class="icon">活</span>
-                    <h2>活动功能</h2>
+        </section>
+
+        <section class="section">
+            <div class="section-title">奇遇相关</div>
+            <div class="section-body">
+
+                <div class="feature">
+                    <div class="feature-name">奇遇记录</div>
+                    <div class="commands">
+                        <span class="command">奇遇 服务器 角色</span>
+                        <span class="command">查询 服务器 角色</span>
+                    </div>
                 </div>
-                <div class="section-meta">
-                    <span class="mini">5 条</span>
-                    <span class="mini">需令牌 5</span>
+
+                <div class="feature">
+                    <div class="feature-name">未触发的</div>
+                    <div class="commands">
+                        <span class="command">未出 服务器 角色</span>
+                    </div>
                 </div>
-            </div>
-            <div class="command-grid">
 
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">扶摇九天</div>
-                        <div class="source-tag">需令牌</div>
+                <div class="feature">
+                    <div class="feature-name">奇遇汇总</div>
+                    <div class="commands">
+                        <span class="command">汇总 服务器 [天数]</span>
                     </div>
-                    <code class="usage">扶摇 [服务器]</code>
-                    <p class="desc">查询指定服务器扶摇九天活动记录。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">本日赤兔</div>
-                        <div class="source-tag">需令牌</div>
+                <div class="feature">
+                    <div class="feature-name">近期奇遇</div>
+                    <div class="commands">
+                        <span class="command">近期 服务器 [数量]</span>
                     </div>
-                    <code class="usage">本日赤兔</code>
-                    <p class="desc">查询本日赤兔时间、区服和地图记录。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">本周赤兔</div>
-                        <div class="source-tag">需令牌</div>
+                <div class="feature">
+                    <div class="feature-name">奇遇统计</div>
+                    <div class="commands">
+                        <span class="command">统计 奇遇 [服务器] [数量]</span>
                     </div>
-                    <code class="usage">本周赤兔</code>
-                    <p class="desc">查询本周赤兔时间、区服和地图记录。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">马场刷新</div>
-                        <div class="source-tag">需令牌</div>
+                <div class="feature">
+                    <div class="feature-name">奇遇攻略</div>
+                    <div class="commands">
+                        <span class="command">攻略 奇遇</span>
                     </div>
-                    <code class="usage">刷马 [服务器]</code>
-                    <p class="desc">查询指定服务器马场刷新记录。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">的卢记录</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">的卢 [服务器]</code>
-                    <p class="desc">查询指定服务器的卢马刷新与捕获记录。</p>
-                </article>
+                </div>
 
             </div>
-        </div>
-    
-        <div class="section">
-            <div class="section-head">
-                <div class="title-wrap">
-                    <span class="icon">市</span>
-                    <h2>交易功能</h2>
+        </section>
+
+        <section class="section">
+            <div class="section-title">心法配装</div>
+            <div class="section-body">
+
+                <div class="feature">
+                    <div class="feature-name">阵眼效果</div>
+                    <div class="commands">
+                        <span class="command">阵眼 心法</span>
+                    </div>
                 </div>
-                <div class="section-meta">
-                    <span class="mini">4 条</span>
-                    <span class="mini">需令牌 4</span>
+
+                <div class="feature">
+                    <div class="feature-name">魔盒配装</div>
+                    <div class="commands">
+                        <span class="command">配装 心法</span>
+                    </div>
                 </div>
-            </div>
-            <div class="command-grid">
 
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">金价查询</div>
-                        <div class="source-tag">需令牌</div>
+                <div class="feature">
+                    <div class="feature-name">资历榜单</div>
+                    <div class="commands">
+                        <span class="command">资历排行 [服务器] [门派]</span>
                     </div>
-                    <code class="usage">金价 [服务器]</code>
-                    <p class="desc">查询指定服务器金价行情。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">外观物价</div>
-                        <div class="source-tag">需令牌</div>
+                <div class="feature">
+                    <div class="feature-name">技能信息</div>
+                    <div class="commands">
+                        <span class="command">技能 心法</span>
                     </div>
-                    <code class="usage">物价 外观名称 [服务器]</code>
-                    <p class="desc">查询指定外观在服务器内的物价行情。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">交易行</div>
-                        <div class="source-tag">免令牌</div>
+                <div class="feature">
+                    <div class="feature-name">奇穴信息</div>
+                    <div class="commands">
+                        <span class="command">奇穴 心法</span>
                     </div>
-                    <code class="usage">交易行 物品名称 [服务器]</code>
-                    <p class="desc">查询指定物品交易行价格与挂单信息。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">贴吧物价</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">贴吧物价 物品名称 [记录数量] [服务器]</code>
-                    <p class="desc">查询指定物品的贴吧交易记录。</p>
-                </article>
+                </div>
 
             </div>
-        </div>
-    
-        <div class="section">
-            <div class="section-head">
-                <div class="title-wrap">
-                    <span class="icon">杂</span>
-                    <h2>杂项功能</h2>
+        </section>
+
+        <section class="section wide">
+            <div class="section-title">游戏社区</div>
+            <div class="section-body">
+
+                <div class="feature">
+                    <div class="feature-name">角色聊天</div>
+                    <div class="commands">
+                        <span class="command">聊天 服务器 角色 [条数] [页数]</span>
+                    </div>
                 </div>
-                <div class="section-meta">
-                    <span class="mini">7 条</span>
-                    <span class="mini">免令牌 5</span>
-                    <span class="mini">需令牌 2</span>
+
+                <div class="feature">
+                    <div class="feature-name">统战歪歪</div>
+                    <div class="commands">
+                        <span class="command">统战 [服务器]</span>
+                    </div>
                 </div>
-            </div>
-            <div class="command-grid">
 
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">科举答题</div>
-                        <div class="source-tag">免令牌</div>
+                <div class="feature">
+                    <div class="feature-name">家园功能</div>
+                    <div class="commands">
+                        <span class="command">花价 服务器 [名称] [地图]</span>
+                        <span class="command">装饰 名称</span>
+                        <span class="command">器物 地图名称</span>
                     </div>
-                    <code class="usage">科举 内容</code>
-                    <p class="desc">按题目关键字查询科举答案。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">家园鲜花</div>
-                        <div class="source-tag">免令牌</div>
+                <div class="feature">
+                    <div class="feature-name">师徒列表</div>
+                    <div class="commands">
+                        <span class="command">拜师 服务器 [关键词]</span>
+                        <span class="command">收徒 服务器 [关键词]</span>
                     </div>
-                    <code class="usage">花价 名称 [服务器] [家园地图]</code>
-                    <p class="desc">查询家园鲜花价格，支持服务器与家园地图筛选。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">家园装饰</div>
-                        <div class="source-tag">免令牌</div>
+                <div class="feature">
+                    <div class="feature-name">资讯公告</div>
+                    <div class="commands">
+                        <span class="command">维护 [数量]</span>
+                        <span class="command">新闻 [数量]</span>
                     </div>
-                    <code class="usage">装饰 名称</code>
-                    <p class="desc">查询家园装饰物名称、来源与相关信息。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">器物图谱</div>
-                        <div class="source-tag">免令牌</div>
+                <div class="feature">
+                    <div class="feature-name">团队招募</div>
+                    <div class="commands">
+                        <span class="command">招募 服务器 [副本]</span>
+                        <span class="command">团长 服务器 [名称]</span>
+                        <span class="command">团牌 服务器 [内容]</span>
                     </div>
-                    <code class="usage">器物 地图名称</code>
-                    <p class="desc">查询指定地图可收集的器物图谱。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">八卦记录</div>
-                        <div class="source-tag">需令牌</div>
+                <div class="feature">
+                    <div class="feature-name">骚话语录</div>
+                    <div class="commands">
+                        <span class="command">答案之书</span>
+                        <span class="command">舔狗语录</span>
+                        <span class="command">疯狂星期四</span>
+                        <span class="command">彩虹屁</span>
+                        <span class="command">毒鸡汤</span>
+                        <span class="command">朋友圈</span>
+                        <span class="command">喝什么</span>
+                        <span class="command">吃什么</span>
+                        <span class="command">骚话</span>
+                        <span class="command">渣男语录</span>
                     </div>
-                    <code class="usage">八卦 类型</code>
-                    <p class="desc">查询 818 / 616 / 避雷等八卦记录。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">骗子查询</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">骗子 QQ号</code>
-                    <p class="desc">按 QQ 号查询骗子记录。</p>
-                </article>
-
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">随机骚话</div>
-                        <div class="source-tag">免令牌</div>
-                    </div>
-                    <code class="usage">骚话</code>
-                    <p class="desc">随机返回一句趣味骚话，用于群内互动。</p>
-                </article>
+                </div>
 
             </div>
-        </div>
-    
-        <div class="section">
-            <div class="section-head">
-                <div class="title-wrap">
-                    <span class="icon">榜</span>
-                    <h2>排行功能</h2>
+        </section>
+
+        <section class="section">
+            <div class="section-title">百度贴吧</div>
+            <div class="section-body">
+
+                <div class="feature">
+                    <div class="feature-name">外观记录</div>
+                    <div class="commands">
+                        <span class="command">贴吧物价 名称 [服务器] [数量]</span>
+                    </div>
                 </div>
-                <div class="section-meta">
-                    <span class="mini">21 条</span>
-                    <span class="mini">需令牌 21</span>
+
+                <div class="feature">
+                    <div class="feature-name">贴吧查询</div>
+                    <div class="commands">
+                        <span class="command">818 [服务器] [数量]</span>
+                    </div>
                 </div>
-            </div>
-            <div class="command-grid">
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">名剑统计</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">名剑统计 [模式]</code>
-                    <p class="desc">统计指定模式名剑大会数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">名剑排行</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">名剑排行 [数量] [模式]</code>
-                    <p class="desc">查询名剑大会排名，支持 22 / 33 模式。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">资历排行</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">资历排行 职业 [服务器]</code>
-                    <p class="desc">查询指定职业资历排行榜。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">试炼排行</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">试炼排行 心法 [服务器]</code>
-                    <p class="desc">查询指定心法木桩试炼排行榜。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">名士五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">名士五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">老江湖五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">老江湖五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">兵甲藏家五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">兵甲藏家五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">名师五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">名师五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">阵营英雄五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">阵营英雄五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">薪火相传五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">薪火相传五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">庐园广记一百强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">庐园广记一百强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">浩气神兵宝甲五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">浩气神兵宝甲五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">恶人神兵宝甲五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">恶人神兵宝甲五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">浩气爱心帮会五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">浩气爱心帮会五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">恶人爱心帮会五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">恶人爱心帮会五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">赛季恶人五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">赛季恶人五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">赛季浩气五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">赛季浩气五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">上周恶人五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">上周恶人五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">上周浩气五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">上周浩气五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">本周恶人五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">本周恶人五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
-
-                <article class="cmd-card advanced-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">本周浩气五十强</div>
-                        <div class="source-tag">需令牌</div>
-                    </div>
-                    <code class="usage">本周浩气五十强 [服务器]</code>
-                    <p class="desc">查询风云录排行榜数据。</p>
-                </article>
 
             </div>
-        </div>
-    
-        <div class="section">
-            <div class="section-head">
-                <div class="title-wrap">
-                    <span class="icon">推</span>
-                    <h2>推送功能</h2>
+        </section>
+
+        <section class="section">
+            <div class="section-title">系统工具</div>
+            <div class="section-body">
+
+                <div class="feature">
+                    <div class="feature-name">科举答案</div>
+                    <div class="commands">
+                        <span class="command">科举 题目 [条数]</span>
+                    </div>
                 </div>
-                <div class="section-meta">
-                    <span class="mini">4 条</span>
-                    <span class="mini">免令牌 4</span>
+
+                <div class="feature">
+                    <div class="feature-name">大区状态</div>
+                    <div class="commands">
+                        <span class="command">区服</span>
+                        <span class="command">开服 服务器</span>
+                    </div>
                 </div>
-            </div>
-            <div class="command-grid">
 
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">开服推送</div>
-                        <div class="source-tag">免令牌</div>
+                <div class="feature">
+                    <div class="feature-name">技改记录</div>
+                    <div class="commands">
+                        <span class="command">技改</span>
                     </div>
-                    <code class="usage">开服推送</code>
-                    <p class="desc">订阅或管理服务器开服状态推送。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">新闻推送</div>
-                        <div class="source-tag">免令牌</div>
+                <div class="feature">
+                    <div class="feature-name">秘境方位</div>
+                    <div class="commands">
+                        <span class="command">解密</span>
                     </div>
-                    <code class="usage">新闻推送</code>
-                    <p class="desc">订阅或管理官方新闻公告推送。</p>
-                </article>
+                </div>
 
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">刷马推送</div>
-                        <div class="source-tag">免令牌</div>
+                <div class="feature">
+                    <div class="feature-name">掉落统计</div>
+                    <div class="commands">
+                        <span class="command">掉落 物品 [服务器] [数量]</span>
                     </div>
-                    <code class="usage">刷马推送</code>
-                    <p class="desc">订阅或管理刷马刷新推送。</p>
-                </article>
-
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">赤兔推送</div>
-                        <div class="source-tag">免令牌</div>
-                    </div>
-                    <code class="usage">赤兔推送</code>
-                    <p class="desc">订阅或管理赤兔马刷新推送。</p>
-                </article>
+                </div>
 
             </div>
-        </div>
-    
-        <div class="section">
-            <div class="section-head">
-                <div class="title-wrap">
-                    <span class="icon">避</span>
-                    <h2>避雷功能</h2>
+        </section>
+
+        <section class="section">
+            <div class="section-title">魔盒数据</div>
+            <div class="section-body">
+
+                <div class="feature">
+                    <div class="feature-name">资历查询</div>
+                    <div class="commands">
+                        <span class="command">资历 角色 服务器</span>
+                    </div>
                 </div>
-                <div class="section-meta">
-                    <span class="mini">5 条</span>
-                    <span class="mini">免令牌 5</span>
+
+                <div class="feature">
+                    <div class="feature-name">魔盒宏</div>
+                    <div class="commands">
+                        <span class="command">交易行 物品名称 服务器</span>
+                    </div>
                 </div>
-            </div>
-            <div class="command-grid">
-
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">避雷查看</div>
-                        <div class="source-tag">免令牌</div>
-                    </div>
-                    <code class="usage">避雷查看</code>
-                    <p class="desc">查看当前群内避雷记录列表。</p>
-                </article>
-
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">避雷添加</div>
-                        <div class="source-tag">免令牌</div>
-                    </div>
-                    <code class="usage">避雷添加 名称 备注</code>
-                    <p class="desc">新增一条避雷记录。</p>
-                </article>
-
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">避雷删除</div>
-                        <div class="source-tag">免令牌</div>
-                    </div>
-                    <code class="usage">避雷删除 ID</code>
-                    <p class="desc">按 ID 删除避雷记录。</p>
-                </article>
-
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">避雷修改</div>
-                        <div class="source-tag">免令牌</div>
-                    </div>
-                    <code class="usage">避雷修改 ID 名称 备注</code>
-                    <p class="desc">按 ID 修改避雷名称与备注。</p>
-                </article>
-
-                <article class="cmd-card basic-source">
-                    <div class="cmd-top">
-                        <div class="cmd-name">避雷查询</div>
-                        <div class="source-tag">免令牌</div>
-                    </div>
-                    <code class="usage">避雷查询 名称</code>
-                    <p class="desc">按名称关键字查询避雷记录。</p>
-                </article>
 
             </div>
-        </div>
-    
-    </section>
+        </section>
 
-    <section class="footer-note">
-        <b>使用提示：</b> 指令示例中的中括号参数为可选项；数量、天数、服务器等未填写时走程序默认值。建议渲染图片时使用 1320px 宽度，截图为整页长图。
-    </section>
-</main>
+    </main>
+
+    <footer class="footer">
+        <strong>使用说明：</strong>
+        指令与参数之间使用空格分隔，带有
+        <strong>[ ]</strong>
+        的参数可以省略。
+    </footer>
+
+</div>
 </body>
 </html>

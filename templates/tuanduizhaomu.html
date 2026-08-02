@@ -81,11 +81,11 @@
         <tbody>
         {% for m in list %}
             <tr>
-                <td>{{ m.activity }}</td>
-                <td>{{ m.leader }}</td>
+                <td>{{ m.activityName }}</td>
+                <td>{{ m.roleName }}</td>
                 <td>{{ m.createTime }}</td>
-                <td>{{ m.number }}</td>
-                <td>{{ m.content }}</td>
+                <td>{{ m.maxMemberCount }}</td>
+                <td>{{ m.commentText }}</td>
             </tr>
         {% endfor %}
         </tbody>

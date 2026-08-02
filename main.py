@@ -19,7 +19,7 @@ from .core.fun_basic import load_as_base64
 @register("astrbot_plugin_jx3", 
           "fxdyz", 
           "通过调用剑网三API接口获取游戏数据，处理发送。", 
-          "2.8",
+          "3.0",
           "https://github.com/qsc20001102/astrbot_plugin_jx3"
 )
 class Jx3ApiPlugin(Star):
@@ -270,66 +270,44 @@ class Jx3ApiPlugin(Star):
             "技能": self. jx3cmd.jineng,
             "奇穴": self. jx3cmd.qixue,
             "聊天": self. jx3cmd.liaotian,
-            
-
-
-
-
-            "科举": self. jx3cmd.keju,
+            "统战": self. jx3cmd.tongzhanyy,
+            "小药": self. jx3cmd.xiaoyao,
+            "骗子": self. jx3cmd.pianzhi,
             "花价": self. jx3cmd.huajia,
             "装饰": self. jx3cmd.zhuangshi,
             "器物": self. jx3cmd.qiwu,
-            "公告": self. jx3cmd.xinwen,
-            "维护": self. jx3cmd.weihu,
-            "区服": self. jx3cmd.qufu,
-            "开服": self. jx3cmd.kaifu,
-            "状态": self. jx3cmd.zhuangtai,
-            "技改": self. jx3cmd.jigai,
-            "小药": self. jx3cmd.xiaoyao,
-
-
-            "全服资历排行": self. jx3cmd.zilipaihang,
-            
-            "骚话": self. jx3cmd.shaohua,
-            "资历": self. jx3cmd.zili,
-            "解密": self. jx3cmd.jiemi,
-            
-
-            "宏": self. jx3cmd.hong,
-            
-            
-            "扶摇": self. jx3cmd.fuyaojjiutian,
-
-
-           
-
-            
-            "统战": self. jx3cmd.tongzhanyy,
-         
-
-            "骗子": self. jx3cmd.pianzhi,
-  
-
-
-
-
-
-            "招募": self. jx3cmd.tuanduizhaomu,
             "拜师": self. jx3cmd.baishi,
             "收徒": self. jx3cmd.shoutu,
-
-
-
+            "维护": self. jx3cmd.weihu,
+            "新闻": self. jx3cmd.xinwen,
+            "招募": self. jx3cmd.tuanduizhaomu,
+            "团长": self. jx3cmd.tuanzhang,
+            "团牌": self. jx3cmd.tuanpai,
+            "答案之书": self. jx3cmd.daanzhishu,
+            "舔狗语录": self. jx3cmd.tiangou,
+            "疯狂星期四": self. jx3cmd.fkxq4,
+            "彩虹屁": self. jx3cmd.caihongpi,
+            "毒鸡汤": self. jx3cmd.dujitang,
+            "朋友圈": self. jx3cmd.pengyouquan,
+            "喝什么": self. jx3cmd.heshengme,
+            "吃什么": self. jx3cmd.chishengme,
+            "骚话": self. jx3cmd.shaohua,
+            "渣男语录": self. jx3cmd.zhananyulu,
+            "科举": self. jx3cmd.keju,
+            "区服": self. jx3cmd.zhuangtai,
+            "开服": self. jx3cmd.kaifu,
+            "技改": self. jx3cmd.jigai,
+            "解密": self. jx3cmd.jiemi,
+            "资历": self. jx3cmd.zili,
+            "宏": self. jx3cmd.hong,
             
-
-
-
-           
+        
             
-            "八卦": self. jx3cmd.bagua,
+            "818": self. jx3cmd.bagua,
             "交易行": self. jx3cmd.jiaoyihang,
             "贴吧物价": self. jx3cmd.tiebawujia,
             "掉落": self. jx3cmd.diaoluo,
+
             "开服推送": self. jx3cmd.kaifhujiank,
             "新闻推送": self. jx3cmd.xinwenzhixun,
             "刷马推送": self. jx3cmd.shuamamsg,

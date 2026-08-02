@@ -246,7 +246,7 @@ class MessageBuilder:
                     return
 
                 try:
-                    data = await self.jx3api.zili(name, server, choice)
+                    data = await self.jx3box.zili(name, server, choice)
                     if data["code"] != 200:
                         await new_event.send(MessageChain().message(data.get("msg", "获取资历数据失败")))
                         controller.stop()
@@ -532,87 +532,136 @@ class MessageBuilder:
         return await self.T2I_image_msg(event, lambda: self.jx3api.qixue(name,0))
 
     async def  liaotian(self, event: AstrMessageEvent, server:str, name: str, limit:int = 20, page:int = 1):
-        """ 奇穴 心法"""
+        """ 聊天 服务器 角色 条数 页数"""
         return await self.T2I_image_msg(event, lambda: self.jx3api.juesheliaotian(server,name,limit,page))
 
+    async def  tongzhanyy(self, event: AstrMessageEvent, server: str = ""):
+        """ 统战 服务器"""
+        return await self.plain_msg(event, lambda: self.jx3api.tongzhanyy(server))
 
+    async def  xiaoyao(self, event: AstrMessageEvent, name:str = ""):
+        """ 小药 心法"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.xiaoyao(name))
 
-    async def  keju(self, event: AstrMessageEvent,subject: str, limit: int = 5):
-        """ 科举"""
-        return await self.plain_msg(event, lambda: self.jx3api.keju(subject,limit))
+    async def  pianzhi(self, event: AstrMessageEvent, uid: str, server:str = ""):
+        """ 骗子 uid 服务器"""
+        return await self.plain_msg(event, lambda: self.jx3api.pianzhi(server,uid))
 
-
-    async def  huajia(self, event: AstrMessageEvent,  name: str= "", server: str = "", map: str= ""):
-        """ 花价 名称 服务器 地图"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.huajia(self.serverdefault(server),name,map))
-
+    async def  huajia(self, event: AstrMessageEvent,  server: str, name: str= "" , map: str= ""):
+        """ 花价 服务器 名称 地图"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.huajia(server,name,map))
 
     async def  zhuangshi(self, event: AstrMessageEvent,  name: str):
         """ 装饰 名称"""
         return await self.T2I_image_msg(event, lambda: self.jx3api.zhuangshi(name))
 
-
     async def  qiwu(self, event: AstrMessageEvent,  name: str):
         """ 器物 地图名称"""
         return await self.T2I_image_msg(event, lambda: self.jx3api.qiwu(name))
 
+    async def  baishi(self, event: AstrMessageEvent, server: str, keyword: str = ""):
+        """ 拜师 服务器 关键词 """
+        return await self.T2I_image_msg(event, lambda: self.jx3api.shitu(2, server, keyword, 50))
 
-    async def  xinwen(self, event: AstrMessageEvent,num:int = 5):
-        """ 新闻"""
-        return await self.plain_msg(event, lambda: self.jx3api.xinwen(num))
+    async def  shoutu(self, event: AstrMessageEvent, server: str, keyword: str = ""):
+        """ 收徒 服务器 关键词 """
+        return await self.T2I_image_msg(event, lambda: self.jx3api.shitu(1, server, keyword, 50))
 
+    async def  weihu(self, event: AstrMessageEvent,limit:int = 5):
+        """ 维护 数量"""
+        return await self.plain_msg(event, lambda: self.jx3api.weihu(limit))
 
-    async def  weihu(self, event: AstrMessageEvent,num:int = 5):
-        """ 维护"""
-        return await self.plain_msg(event, lambda: self.jx3api.weihu(num))
-    
+    async def  xinwen(self, event: AstrMessageEvent,limit:int = 5):
+        """ 新闻 数量"""
+        return await self.plain_msg(event, lambda: self.jx3api.xinwen(limit))
 
-    async def  qufu(self, event: AstrMessageEvent,name: str = "双梦镇"):
-        """ 区服"""
-        return await self.plain_msg(event, lambda: self.jx3api.qufu(name))
+    async def  tuanduizhaomu(self, event: AstrMessageEvent,server: str, keyword: str = ""):
+        """ 招募 服务器 副本"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.tuanduizhaomu( server,1,keyword,50))
 
+    async def  tuanzhang(self, event: AstrMessageEvent,server: str, keyword: str = ""):
+        """ 团长 服务器 名字"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.tuanduizhaomu( server,2,keyword,50))
 
-    async def  kaifu(self, event: AstrMessageEvent,server: str = ""):
-        """ 开服 服务器"""
-        return await self.plain_msg(event, lambda: self.jx3api.kaifu(self.serverdefault(server)))
+    async def  tuanpai(self, event: AstrMessageEvent,server: str, keyword: str = ""):
+        """ 团牌 服务器 内容"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.tuanduizhaomu( server,3,keyword,50))
 
+    async def  daanzhishu(self, event: AstrMessageEvent):
+        """ 答案之书"""
+        return await self.plain_msg(event, self.jx3api.daanzhishu)
+
+    async def  tiangou(self, event: AstrMessageEvent):
+        """ 舔狗语录"""
+        return await self.plain_msg(event, self.jx3api.tiangou)
+
+    async def  fkxq4(self, event: AstrMessageEvent):
+        """ 疯狂星期四"""
+        return await self.plain_msg(event, lambda: self.jx3api.fengleiyulu("疯狂星期四"))
+
+    async def  caihongpi(self, event: AstrMessageEvent):
+        """ 彩虹屁"""
+        return await self.plain_msg(event, lambda: self.jx3api.fengleiyulu("彩虹屁"))
+
+    async def  dujitang(self, event: AstrMessageEvent):
+        """ 毒鸡汤"""
+        return await self.plain_msg(event, lambda: self.jx3api.fengleiyulu("毒鸡汤"))
+
+    async def  pengyouquan(self, event: AstrMessageEvent):
+        """ 朋友圈"""
+        return await self.plain_msg(event, lambda: self.jx3api.fengleiyulu("朋友圈"))
+
+    async def  heshengme(self, event: AstrMessageEvent,):
+        """ 喝什么"""
+        return await self.plain_msg(event, self.jx3api.heshengme)
+
+    async def  chishengme(self, event: AstrMessageEvent,):
+        """ 吃什么"""
+        return await self.plain_msg(event, self.jx3api.chishengme)
+
+    async def  shaohua(self, event: AstrMessageEvent,):
+        """ 骚话"""
+        return await self.plain_msg(event, self.jx3api.shaohua)
+
+    async def  zhananyulu(self, event: AstrMessageEvent,):
+        """ 渣男语录"""
+        return await self.plain_msg(event, self.jx3api.zhananyulu)
+
+    async def  keju(self, event: AstrMessageEvent,subject: str, limit: int = 5):
+        """ 科举 题目 条数"""
+        return await self.plain_msg(event, lambda: self.jx3api.keju(subject,limit))
 
     async def  zhuangtai(self, event: AstrMessageEvent):
-        """ 状态"""
-        return await self.T2I_image_msg(event, self.jx3api.zhuangtai)
+        """ 区服"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.zhuangtai(""))
 
+    async def  kaifu(self, event: AstrMessageEvent,server: str):
+        """ 开服 服务器"""
+        return await self.plain_msg(event, lambda: self.jx3api.kaifu(server))
 
     async def  jigai(self, event: AstrMessageEvent,):
         """ 技改"""
         return await self.plain_msg(event, self.jx3api.jigai)
 
+    async def  jiemi(self, event: AstrMessageEvent):
+        """ 解密"""
+        return await self.plain_msg(event, self.jx3api.jiemi)
 
-    async def  xiaoyao(self, event: AstrMessageEvent):
-        """ 小药"""
-        return await self.T2I_image_msg(event, self.jx3api.xiaoyao)
+    async def  tiebawujia(self, event: AstrMessageEvent, name: str, server: str = "", limit: str = "5", ):
+        """ 贴吧物价 名称 服务器 数量 """
+        return await self.plain_msg(event, lambda: self.jx3api.tiebawujia(name, server, limit))
 
+    async def  bagua(self, event: AstrMessageEvent, server:str = "", limit:str = 10):
+        """ 818 """
+        return await self.plain_msg(event, lambda: self.jx3api.bagua(818,server,limit))
 
+    async def  diaoluo(self, event: AstrMessageEvent, name: str,  server: str = "", limit: str = "20",):
+        """ 掉落 物品 服务器 数量 """
+        return await self.T2I_image_msg(event, lambda: self.jx3api.diaoluo(name, server, limit))
 
-
-
-
-
-
-
-
-
-
-
-    async def  zilipaihang(self, event: AstrMessageEvent):
-        """ 资历排行  """
-        return await self.T2I_image_msg(event, lambda: self.jx3api.zilipaixing("", ""))
-
-
-
-
-    async def  shaohua(self, event: AstrMessageEvent,):
-        """ 骚话"""
-        return await self.plain_msg(event, self.jx3api.shaohua)
+    async def  hong(self, event: AstrMessageEvent,name: str = "易筋经"):
+        """ 宏 心法"""
+        return await self.handler_plain_image_msg(event, lambda: self.jx3box.hong1(name), self.jx3box.hong2)
 
 
     async def  zili(self, event: AstrMessageEvent, name: str, server: str = ""):
@@ -620,156 +669,23 @@ class MessageBuilder:
         return await self.handler_zili_msg(event, name, self.serverdefault(server))
 
 
-    async def  jiemi(self, event: AstrMessageEvent):
-        """ 解密"""
-        return await self.plain_msg(event, self.jx3api.jiemi)
-
-
-
-
-
-
-
-
-    async def  fuyaojjiutian(self, event: AstrMessageEvent,server: str = ""):
-        """ 扶摇九天 服务器"""
-        return await self.plain_msg(event, lambda: self.jx3api.fuyaojjiutian( self.serverdefault(server)))
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    async def  tongzhanyy(self, event: AstrMessageEvent, server: str = ""):
-        """ 统战歪歪 服务器"""
-        return await self.plain_msg(event, lambda: self.jx3api.tongzhanyy(self.serverdefault(server)))
-
-
-
-
-
-
-
-
-    async def  pianzhi(self, event: AstrMessageEvent,qq: str):
-        """ 骗子 QQ"""
-        return await self.plain_msg(event, lambda: self.jx3api.pianzhi(qq))
-
-
-
-    
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-    async def  tuanduizhaomu(self, event: AstrMessageEvent,keyword: str = "25人普通会战弓月城", server: str = ""):
-        """ 招募 副本 服务器"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.tuanduizhaomu( self.serverdefault(server),keyword))
-
-
-    async def  baishi(self, event: AstrMessageEvent,keyword: str = "", server: str = ""):
-        """ 拜师 搜索关键词 服务器"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.shitu(2, keyword, self.serverdefault(server)))
-
-
-    async def  shoutu(self, event: AstrMessageEvent,keyword: str = "", server: str = ""):
-        """ 收徒 搜索关键词 服务器"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.shitu(1, keyword, self.serverdefault(server)))
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     async def  jiaoyihang(self, event: AstrMessageEvent,Name: str = "守缺式",server: str = ""):
         """ 交易行 物品名称 服务器"""     
-        return await self.T2I_image_msg(event, lambda: self.jx3api.jiaoyihang(Name, self.serverdefault(server)))
-
-
-    async def  tiebawujia(self, event: AstrMessageEvent, name: str = "狐金", limit_or_server: str = "5", server: str = ""):
-        """ 贴吧物价 物品名称 数量 服务器"""
-        limit = 5
-        target_server = server
-
-        if str(limit_or_server).isdigit():
-            limit = int(limit_or_server)
-        else:
-            target_server = limit_or_server
-
-        return await self.plain_msg(event, lambda: self.jx3api.tiebawujia(name, limit, self.serverdefault(target_server)))
-
-
-    async def  diaoluo(self, event: AstrMessageEvent, name: str = "玄晶", limit_or_server: str = "20", server: str = ""):
-        """ 掉落 物品名称 数量 服务器"""
-        limit = 20
-        target_server = server
-
-        if str(limit_or_server).isdigit():
-            limit = int(limit_or_server)
-        else:
-            target_server = limit_or_server
-
-        return await self.T2I_image_msg(event, lambda: self.jx3api.diaoluo(name, limit, self.serverdefault(target_server)))
-
-
-    async def  bagua(self, event: AstrMessageEvent,name: str = "818"):
-        """ 八卦 类型"""
-        return await self.plain_msg(event, lambda: self.jx3api.bagua(name))
+        return await self.T2I_image_msg(event, lambda: self.jx3box.jiaoyihang(Name, self.serverdefault(server)))
 
 
 
 
 
-    async def  hong(self, event: AstrMessageEvent,name: str = "易筋经"):
-        """ 宏 心法"""
-        return await self.handler_plain_image_msg(event, lambda: self.jx3api.hong1(name), self.jx3api.hong2)
+
+
+
+
+
+
+
+
+
 
 
 
