@@ -1776,42 +1776,19 @@ class JX3APIService:
             processor=processor,
             template=""
         ) 
-        return_data = self._init_return_data()
-        
-        # 1. 构造请求参数
-        params = {"class": type, "limit": "5", "token": self.token}
-        
-        # 2. 调用基础请求
-        data: Optional[list[Dict[str, Any]]] = await self._base_request(
-            "jx3_bagua", "GET", params=params
-        )
-        
-        # 3. 处理返回数据
-        try:
-            if not data:
-                result_msg = f"未找到相关 {type} 记录。\n"
-                result_msg += f"可选范围：818 616 鬼网三 鬼网3 树洞 记录 教程 街拍 故事 避雷 吐槽 提问"
-            else:
-                result_msg = f"类型：【{type}】\n\n"
-
-                for item in data:
-                    result_msg += f"{item['title']}\n"
-                    result_msg += f"分区：{item['zone']}  服务器：{item['server']}\n"
-                    result_msg += f"所属吧：{item['name']}\n"
-                    result_msg += f"链接：https://tieba.baidu.com/p/{item['url']}\n"
-                    result_msg += f"日期：{item['date']}\n\n"
-            return_data["data"] = result_msg
-        except Exception as e:
-            logger.exception("处理返回数据失败")
-            return_data["msg"] = "处理返回数据失败"
-            return return_data    
-
-        return_data["code"] = 200
-        
-        return return_data
 
 
+    async def fubengjilu(self, server:str, name: str ) -> Dict[str, Any]:
+        """副本记录"""
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+            return_data["data"]["list"] = data
 
+        return await self._request_api(
+            path="/raid/records",
+            params= {"server": server,"name": name,"token": self.token,},
+            processor=processor,
+            template="fubenjilu.html"
+        ) 
     
 
 

@@ -627,6 +627,14 @@ class MessageBuilder:
         """ 渣男语录"""
         return await self.plain_msg(event, self.jx3api.zhananyulu)
 
+    async def  tiebawujia(self, event: AstrMessageEvent, name: str, server: str = "", limit: str = "5", ):
+        """ 贴吧物价 名称 服务器 数量 """
+        return await self.plain_msg(event, lambda: self.jx3api.tiebawujia(name, server, limit))
+
+    async def  bagua(self, event: AstrMessageEvent, server:str = "", limit:str = 10):
+        """ 818 """
+        return await self.plain_msg(event, lambda: self.jx3api.bagua(818,server,limit))
+
     async def  keju(self, event: AstrMessageEvent,subject: str, limit: int = 5):
         """ 科举 题目 条数"""
         return await self.plain_msg(event, lambda: self.jx3api.keju(subject,limit))
@@ -647,68 +655,43 @@ class MessageBuilder:
         """ 解密"""
         return await self.plain_msg(event, self.jx3api.jiemi)
 
-    async def  tiebawujia(self, event: AstrMessageEvent, name: str, server: str = "", limit: str = "5", ):
-        """ 贴吧物价 名称 服务器 数量 """
-        return await self.plain_msg(event, lambda: self.jx3api.tiebawujia(name, server, limit))
-
-    async def  bagua(self, event: AstrMessageEvent, server:str = "", limit:str = 10):
-        """ 818 """
-        return await self.plain_msg(event, lambda: self.jx3api.bagua(818,server,limit))
+    async def  fubeng(self, event: AstrMessageEvent, server:str, name:str):
+        """ 副本"""
+        return await self.T2I_image_msg(event, lambda: self.jx3api.fubengjilu(server,name))
 
     async def  diaoluo(self, event: AstrMessageEvent, name: str,  server: str = "", limit: str = "20",):
         """ 掉落 物品 服务器 数量 """
         return await self.T2I_image_msg(event, lambda: self.jx3api.diaoluo(name, server, limit))
 
-    async def  hong(self, event: AstrMessageEvent,name: str = "易筋经"):
+
+    async def  hong(self, event: AstrMessageEvent,name: str):
         """ 宏 心法"""
         return await self.handler_plain_image_msg(event, lambda: self.jx3box.hong1(name), self.jx3box.hong2)
 
-
-    async def  zili(self, event: AstrMessageEvent, name: str, server: str = ""):
+    async def  zili(self, event: AstrMessageEvent, server: str, name: str):
         """ 资历 角色名称 服务器"""
-        return await self.handler_zili_msg(event, name, self.serverdefault(server))
+        return await self.handler_zili_msg(event, name, server)
 
-
-    async def  jiaoyihang(self, event: AstrMessageEvent,Name: str = "守缺式",server: str = ""):
+    async def  jiaoyihang(self, event: AstrMessageEvent,server: str, Name: str):
         """ 交易行 物品名称 服务器"""     
-        return await self.T2I_image_msg(event, lambda: self.jx3box.jiaoyihang(Name, self.serverdefault(server)))
+        return await self.T2I_image_msg(event, lambda: self.jx3box.jiaoyihang(Name,server))
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
     async def bilei_add(self, event: AstrMessageEvent,name: str, text: str):
         """避雷添加 名称 备注"""
         return await self.plain_msg(event, lambda: self.bilei.add(name,text,event.get_sender_name()))
     
-
     async def bilei_all(self, event: AstrMessageEvent):
         """避雷查看"""
         return await self.T2I_image_msg(event, self.bilei.all)
     
-
     async def bilei_select(self, event: AstrMessageEvent, name:str):
         """避雷查询"""
         return await self.T2I_image_msg(event, lambda: self.bilei.select(name))
 
-
     async def bilei_update(self, event: AstrMessageEvent, id:int, name: str, text: str):
         """避雷修改 ID 名称 备注"""
         return await self.plain_msg(event, lambda: self.bilei.update(id,name,text,event.get_sender_name()))
-
 
     async def bilei_delete(self, event: AstrMessageEvent, id:int):
         """避雷删除 ID"""
@@ -720,18 +703,15 @@ class MessageBuilder:
         return_msg = await self.jx3at.get_task_info("kfts")
         await event.send(event.plain_result(return_msg)) 
 
-
     async def  xinwenzhixun(self, event: AstrMessageEvent):
         """ 新闻推送"""     
         return_msg = await self.jx3at.get_task_info("xwts")
         await event.send(event.plain_result(return_msg)) 
 
-
     async def  shuamamsg(self, event: AstrMessageEvent):
         """ 刷马推送"""     
         return_msg = await self.jx3at.get_task_info("smts")
         await event.send(event.plain_result(return_msg)) 
-
 
     async def  chitusg(self, event: AstrMessageEvent):
         """ 赤兔推送"""     
