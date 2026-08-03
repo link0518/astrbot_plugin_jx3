@@ -1,66 +1,66 @@
 {# template-title: 角色奇遇 #}
+{# template-components: data-layout collection-card #}
 
 
     <!-- 普通奇遇 -->
-    <div class="section">
-        <div class="section-title">普通奇遇（{{ ptqy|length if ptqy else 0 }}）</div>
+    <div class="collection-section">
+        <div class="collection-heading">普通奇遇（{{ ptqy|length if ptqy else 0 }}）</div>
         {% if ptqy %}
-        <div class="card-container">
+        <div class="card-grid" style="--grid-columns: 4">
             {% for item in ptqy %}
-            <div class="card">
+            <div class="collection-card">
                 {% if icons.serendipity.get(item.event) %}
-                <img src="{{ icons.serendipity[item.event] }}" alt="{{ item.event }}">
+                <img class="collection-card__image" src="{{ icons.serendipity[item.event] }}" alt="{{ item.event }}">
                 {% else %}
-                <div class="event-name">{{ item.event }}</div>
+                <div class="collection-card__name">{{ item.event }}</div>
                 {% endif %}
-                <div class="time">{{ item.time }}</div>
+                <div class="collection-card__meta">{{ item.time }}</div>
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <div class="empty">暂无普通奇遇</div>
+        <div class="collection-empty">暂无普通奇遇</div>
         {% endif %}
     </div>
 
     <!-- 绝世奇遇 -->
-    <div class="section">
-        <div class="section-title">绝世奇遇（{{ jsqy|length if jsqy else 0 }}）</div>
+    <div class="collection-section">
+        <div class="collection-heading">绝世奇遇（{{ jsqy|length if jsqy else 0 }}）</div>
         {% if jsqy %}
-        <div class="card-container">
+        <div class="card-grid" style="--grid-columns: 4">
             {% for item in jsqy %}
-            <div class="card">
+            <div class="collection-card">
                 {% if icons.serendipity.get(item.event) %}
-                <img src="{{ icons.serendipity[item.event] }}" alt="{{ item.event }}">
+                <img class="collection-card__image" src="{{ icons.serendipity[item.event] }}" alt="{{ item.event }}">
                 {% else %}
-                <div class="event-name">{{ item.event }}</div>
+                <div class="collection-card__name">{{ item.event }}</div>
                 {% endif %}
-                <div class="time">{{ item.time }}</div>
+                <div class="collection-card__meta">{{ item.time }}</div>
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <div class="empty">暂无绝世奇遇</div>
+        <div class="collection-empty">暂无绝世奇遇</div>
         {% endif %}
     </div>
 
     <!-- 宠物奇遇 -->
-    <div class="section">
-        <div class="section-title">宠物奇遇（{{ cwqy|length if cwqy else 0 }}）</div>
+    <div class="collection-section">
+        <div class="collection-heading">宠物奇遇（{{ cwqy|length if cwqy else 0 }}）</div>
         {% if cwqy %}
-        <div class="card-container">
+        <div class="card-grid" style="--grid-columns: 4">
             {% for item in cwqy %}
-            <div class="card">
+            <div class="collection-card">
                 {% if icons.serendipity.get(item.event) %}
-                <img src="{{ icons.serendipity[item.event] }}" alt="{{ item.event }}">
+                <img class="collection-card__image" src="{{ icons.serendipity[item.event] }}" alt="{{ item.event }}">
                 {% else %}
-                <div class="event-name">{{ item.event }}</div>
+                <div class="collection-card__name">{{ item.event }}</div>
                 {% endif %}
-                <div class="time">{{ item.time }}</div>
+                <div class="collection-card__meta">{{ item.time }}</div>
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <div class="empty">暂无宠物奇遇</div>
+        <div class="collection-empty">暂无宠物奇遇</div>
         {% endif %}
     </div>
-

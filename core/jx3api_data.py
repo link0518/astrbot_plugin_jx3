@@ -1438,7 +1438,7 @@ class JX3APIService:
         """新闻资讯"""
         async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
             result = data[0]
-            return_data["status"] = result.get('catid')
+            return_data["status"] = int(result.get('catid'))
 
             result_msg = "新闻资讯推送\n"
             # 仅展示前1条，避免消息过长

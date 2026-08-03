@@ -212,7 +212,7 @@
         }
 
         .not-favorite {
-            color: #707b9d;
+            color: var(--jx3-text-muted);
         }
 
         .description {
@@ -265,41 +265,4 @@
             background: rgba(27, 34, 55, 0.75);
             text-align: center;
             font-size: 16px;
-        }
-
-        @media (max-width: 850px) {
-            body {
-                padding: 20px;
-            }
-
-            .achievement-list {
-                grid-template-columns: 1fr;
-            }
-
-            .role-name {
-                font-size: 29px;
-            }
-        }
-
-        @media (max-width: 520px) {
-            body {
-                padding: 14px;
-            }
-
-            .page-header {
-                padding: 23px 20px;
-            }
-
-            .achievement-card {
-                padding: 18px;
-            }
-
-            .card-header {
-                flex-direction: column;
-            }
-
-            .status-area {
-                flex-direction: row;
-                align-items: center;
-            }
         }

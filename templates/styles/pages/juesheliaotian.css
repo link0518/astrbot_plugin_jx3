@@ -20,7 +20,7 @@
     /* 角色列 */
     .role-col {
         width: 16%;
-        color: #333333;
+        color: var(--jx3-text);
         font-weight: 700;
         text-align: center;
         word-break: break-word;
@@ -35,7 +35,7 @@
     /* 消息列 */
     .message-col {
         width: 56%;
-        color: #333333;
+        color: var(--jx3-text-secondary);
         font-weight: 600;
         line-height: 1.65;
         word-break: break-word;

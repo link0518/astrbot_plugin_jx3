@@ -1,10 +1,11 @@
 {# template-title: 团队招募 #}
+{# template-components: data-table #}
 
 
-<div class="container">
+<div class="container data-page">
     <h1>团队招募</h1>
 
-    <table>
+    <table class="data-table data-table--spaced">
         <thead>
             <tr>
                 <th>副本名称</th>
@@ -22,11 +23,10 @@
                 <td>{{ m.roleName }}</td>
                 <td>{{ m.createTime }}</td>
                 <td>{{ m.maxMemberCount }}</td>
-                <td>{{ m.commentText }}</td>
+                <td class="data-cell--copy">{{ m.commentText }}</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 
 </div>
-

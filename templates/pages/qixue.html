@@ -1,30 +1,31 @@
 {# template-title: 奇穴详情 #}
+{# template-components: data-layout ability-card #}
 
 
-<div class="container">
+<div class="container data-page">
     <h1>{{ name }} 奇穴详情</h1>
-    <div class="meta">更新时间：{{ update_time }}</div>
+    <div class="data-page__meta">更新时间：{{ update_time }}</div>
 
     {% for group in groups %}
-    <div class="section">
-        <div class="section-title">{{ group['title'] }}</div>
-        <div class="cards">
+    <div class="data-section">
+        <div class="data-section__title">{{ group['title'] }}</div>
+        <div class="card-grid" style="--grid-columns: 2; --grid-gap: 14px">
             {% for item in group.talents %}
-            <div class="card">
+            <div class="ability-card">
                 {% if item['icon'] %}
-                <img class="icon" src="{{ item['icon'] }}" alt="{{ item['name'] }}">
+                <img class="ability-card__icon" src="{{ item['icon'] }}" alt="{{ item['name'] }}">
                 {% else %}
-                <div class="icon"></div>
+                <div class="ability-card__icon"></div>
                 {% endif %}
                 <div>
-                    <div class="head">
-                        <span class="name">{{ item['name'] }}</span>
-                        <span class="tag">{{ item['class_text'] }}</span>
+                    <div class="ability-card__head">
+                        <span class="ability-card__name">{{ item['name'] }}</span>
+                        <span class="ability-card__tag ability-card__tag--accent">{{ item['class_text'] }}</span>
                         {% if item['interval'] %}
-                        <span class="interval">{{ item['interval'] }}</span>
+                        <span class="ability-card__tag">{{ item['interval'] }}</span>
                         {% endif %}
                     </div>
-                    <div class="desc">{{ item['desc'] }}</div>
+                    <div class="ability-card__desc">{{ item['desc'] }}</div>
                 </div>
             </div>
             {% endfor %}
@@ -32,4 +33,3 @@
     </div>
     {% endfor %}
 </div>
-

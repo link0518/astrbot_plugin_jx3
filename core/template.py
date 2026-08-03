@@ -8,6 +8,15 @@ import aiofiles
 _TITLE_PATTERN = re.compile(
     r"\A\{# template-title: (.*?) #\}\r?\n",
 )
+_PAGE_COMPONENTS_PATTERN = re.compile(
+    r"\A\{# template-components: ([a-z0-9 -]+) #\}\r?\n",
+)
+_COMPONENT_STYLE_PATTERN = re.compile(
+    r"/\* @component (?P<name>[a-z0-9-]+) \*/\s*"
+    r"(?P<css>.*?)\s*"
+    r"/\* @endcomponent \*/",
+    re.DOTALL,
+)
 
 
 class TemplateRepository:
@@ -16,6 +25,7 @@ class TemplateRepository:
     def __init__(self, root: Path):
         self.root = root.resolve()
         self._cache: dict[str, str] = {}
+        self._shared_assets: tuple[str, str, str, str] | None = None
         self._lock = asyncio.Lock()
 
     async def _read(self, path: Path) -> str:
@@ -27,6 +37,26 @@ class TemplateRepository:
         if name.name != template_name or name.suffix.lower() != ".html":
             raise ValueError(f"非法模板名称: {template_name}")
         return self.root / "pages" / name.name
+
+    @staticmethod
+    def _select_component_styles(source: str, requested: set[str]) -> str:
+        """从单一组件样式表中挑选当前页面声明的组件块。"""
+        matches = list(_COMPONENT_STYLE_PATTERN.finditer(source))
+        available = [match.group("name") for match in matches]
+        if len(available) != len(set(available)):
+            raise ValueError("公共组件样式存在重复名称")
+
+        unknown = requested.difference(available)
+        if unknown:
+            names = ", ".join(sorted(unknown))
+            raise ValueError(f"页面声明了不存在的公共组件: {names}")
+
+        return _COMPONENT_STYLE_PATTERN.sub(
+            lambda match: match.group("css")
+            if match.group("name") in requested
+            else "",
+            source,
+        )
 
     async def get(self, template_name: str) -> str:
         """读取并缓存组装后的完整模板字符串。"""
@@ -49,22 +79,39 @@ class TemplateRepository:
                 self._cache[template_name] = template
                 return template
 
+            if self._shared_assets is None:
+                self._shared_assets = tuple(
+                    await asyncio.gather(
+                        self._read(self.root / "layouts" / "base.html"),
+                        self._read(self.root / "styles" / "tokens.css"),
+                        self._read(self.root / "styles" / "base.css"),
+                        self._read(self.root / "styles" / "components.css"),
+                    )
+                )
+
+            base, tokens, base_css, component_source = self._shared_assets
             page_css_path = self.root / "styles" / "pages" / f"{page_path.stem}.css"
-            read_tasks = [
-                self._read(self.root / "layouts" / "base.html"),
-                self._read(self.root / "styles" / "tokens.css"),
-                self._read(self.root / "styles" / "base.css"),
-                self._read(page_path),
-                self._read(page_css_path),
-                self._read(self.root / "styles" / "components.css"),
-            ]
-            base, tokens, base_css, page, page_css, components = await asyncio.gather(
-                *read_tasks
-            )
+            if page_css_path.exists():
+                page, page_css = await asyncio.gather(
+                    self._read(page_path),
+                    self._read(page_css_path),
+                )
+            else:
+                page = await self._read(page_path)
+                page_css = ""
 
             title_match = _TITLE_PATTERN.match(page)
             title = title_match.group(1).strip() if title_match else "剑网三数据查询"
             content = _TITLE_PATTERN.sub("", page, count=1)
+            component_match = _PAGE_COMPONENTS_PATTERN.match(content)
+            requested_components = (
+                set(component_match.group(1).split()) if component_match else set()
+            )
+            content = _PAGE_COMPONENTS_PATTERN.sub("", content, count=1)
+            components = self._select_component_styles(
+                component_source,
+                requested_components,
+            )
 
             template = (
                 base.replace("__PAGE_ID__", page_path.stem)
@@ -94,6 +141,7 @@ class TemplateRepository:
     def clear(self) -> None:
         """清理内存缓存，主要用于开发和测试。"""
         self._cache.clear()
+        self._shared_assets = None
 
 
 _TEMPLATE_ROOT = Path(__file__).parent.parent / "templates"

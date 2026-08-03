@@ -1,10 +1,11 @@
 {# template-title: 避雷查看 #}
+{# template-components: data-table #}
 
 
-<div class="container">
+<div class="container data-page">
     <h1>避雷查看</h1>
 
-    <table>
+    <table class="data-table data-table--spaced">
         <thead>
             <tr>
                 <th>ID</th>
@@ -20,7 +21,7 @@
             <tr>
                 <td>{{ m.id }}</td>
                 <td>{{ m.name }}</td>
-                <td class="text-col">{{ m.text }}</td>
+                <td class="data-cell--copy">{{ m.text }}</td>
                 <td>{{ m.time }}</td>
                 <td>{{ m.user }}</td>
             </tr>
@@ -29,4 +30,3 @@
     </table>
 
 </div>
-

@@ -412,14 +412,33 @@ flowchart LR
 
 图片默认使用质量 `100`、完整页面截图和普通设备缩放级别。模板可通过 `icons.img`、`icons.sect`、`icons.serendipity` 访问通用、门派/心法和奇遇图标。
 
-AstrBot 的渲染接口接收完整 HTML 字符串，因此插件不会依赖渲染端读取本地 CSS 文件。`core/template.py` 会异步读取并缓存公共布局、设计变量、基础样式、组件样式、页面专属样式和页面片段，组装完成后再把单个完整字符串交给渲染器。这样既满足渲染接口约束，也避免在 46 个页面中重复维护文档骨架和通用样式。
+AstrBot 的渲染接口接收完整 HTML 字符串，因此插件不会依赖渲染端读取本地 CSS 文件。`core/template.py` 会异步读取并缓存公共布局、设计变量、基础样式和组件样式，再按需读取页面专属样式及页面片段，组装完成后把单个完整字符串交给渲染器。共享资源只在首次请求时读取一次；标准页面没有同名 CSS 文件也可以正常组合。
+
+`styles/components.css` 是公共组件的唯一来源，内部使用 `@component` 标记划分表格、网格、能力卡片等组件块。页面通过顶部元数据声明需要的组件，加载器只把声明过的样式块注入最终 HTML，不会让只使用表格的页面同时携带技能卡片、器物卡片等无关 CSS：
+
+```html
+{# template-title: 角色榜单 #}
+{# template-components: data-table #}
+```
 
 样式职责如下：
 
 - `styles/tokens.css`：颜色、间距、圆角、字体和各页面内容宽度。
-- `styles/base.css`：页面背景、外框、基础排版和窄屏规则。
-- `styles/components.css`：信息面板、表格、状态、进度条、标签等跨页面组件。
-- `styles/pages/*.css`：只保留列宽、网格、卡片结构等页面独有布局。
+- `styles/base.css`：固定图片画布的页面背景、外框和基础排版。
+- `styles/components.css`：统一维护数据表格、列状态、排行、统计卡片、可配置列数网格、技能/奇穴卡片、奇遇卡片、器物详情、标签和空数据等跨页面组件。
+- `styles/pages/*.css`：可选，仅保留成本计算、成就、副本记录等无法合理复用的复杂页面布局。当前 46 个页面中只有 13 个需要专属 CSS。
+
+表格列数直接由模板中的 `<th>`、`<td>` 数量决定，不需要为四列、五列等情况分别创建样式。卡片网格通过 `--grid-columns` 配置列数，例如：
+
+```html
+<div class="card-grid" style="--grid-columns: 4">
+    ...
+</div>
+```
+
+数据页使用 `.data-table`、`.data-cell--rank`、`.data-cell--time`、`.data-cell--score` 等公共类；技能与奇穴使用 `.ability-card`，角色奇遇与区服状态使用 `.card-grid`，器物与家园装饰使用 `.object-card`。新增普通列表页面时应优先组合这些公共组件，不再创建内容重复的页面 CSS。
+
+这些模板不是响应式网页：每次查询只生成一个固定版式的完整 HTML 字符串，注入本次业务数据后由 AstrBot 使用 `full_page=True` 截取整页图片。样式不包含移动端断点；内容宽度由 `--jx3-page-width` 固定，列数由模板结构或 `--grid-columns` 明确决定，不随渲染服务的默认视口发生重排。
 
 ### 6. 本地数据与缓存
 
@@ -475,8 +494,8 @@ astrbot_plugin_jx3/
 │   ├── styles/
 │   │   ├── tokens.css       # 设计变量与页面宽度
 │   │   ├── base.css         # 全局背景、外框和排版
-│   │   ├── components.css   # 公共组件样式
-│   │   └── pages/*.css      # 页面独有布局
+│   │   ├── components.css   # 表格、网格、卡片、状态等公共组件
+│   │   └── pages/*.css      # 可选的复杂页面独有布局（当前 13 个）
 │   ├── img/                 # 通用图片资源
 │   ├── sect/                # 门派与心法图标
 │   └── serendipity/         # 奇遇图标
@@ -490,7 +509,7 @@ astrbot_plugin_jx3/
 
 1. 根据数据来源选择 `JX3APIService`、`AIJX3Service` 或 `JX3BOXService`。
 2. 在业务服务中新增异步方法，复用 `APIClient`，完成请求、空数据检查、字段整理和标准返回对象构建。
-3. 需要图片输出时新增或复用 `templates/pages/*.html`，并按需添加同名的 `templates/styles/pages/*.css`；通用视觉规则应进入公共样式层，不要在业务层拼装最终图片消息。
+3. 需要图片输出时新增或复用 `templates/pages/*.html`，优先组合 `data-table`、`card-grid`、`ability-card`、`object-card` 等公共组件，并通过 `template-components` 元数据声明所需组件；只有无法复用的复杂布局才添加同名的 `templates/styles/pages/*.css`，不要在业务层拼装最终图片消息。
 4. 在 `MessageBuilder` 中增加薄包装方法，选择文本、HTML 图片、远程图片、消息链或会话处理器。
 5. 在 `main.py` 的 `command_map` 注册触发词。
 6. 同步更新 `templates/pages/helps.html`、README 和 CHANGELOG，确保参数顺序以包装方法签名为准。
@@ -504,7 +523,7 @@ python -m compileall -q .
 python -m unittest tests.test_template_system -v
 ```
 
-模板测试会检查 46 个页面片段与同名样式是否一一对应、能否组合为完整文档、Jinja2 是否能够完成基础渲染，以及模板路径是否能阻止目录穿越。它和 `compileall` 仍不能替代带真实数据的 AstrBot 消息、HTML 渲染和外部接口联调。
+模板测试会检查 46 个页面片段、13 个可选页面样式、公共组件按声明选择性注入、完整文档组合、Jinja2 基础渲染，以及模板路径能否阻止目录穿越。它和 `compileall` 仍不能替代带真实数据的 AstrBot 消息、HTML 渲染和外部接口联调。
 
 ## 当前版本状态
 

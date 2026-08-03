@@ -107,7 +107,7 @@ class AsyncTask:
 
     async def init_tasks(self):
         settings = [
-            ("kfts", "开服监控", lambda: self.jx3fun.kaifu(self.server)),
+            ("kfts", "开服监控", lambda: self.jx3fun.kaifu("梦江南")),
             ("xwts", "新闻资讯", lambda: self.jx3fun.xinwen(1)),
             ("smts", "刷马消息", lambda: self.jx3fun.shuamamsg(self.server,type="horse",subtype="foreshow")),
             ("ctts", "赤兔消息", lambda: self.jx3fun.shuamamsg(self.server,type="chitu-horse",subtype="share_msg")),

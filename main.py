@@ -141,7 +141,7 @@ class Jx3ApiPlugin(Star):
             "sect": sect,
             "serendipity": serendipity
         }        
-        logger.debug(f"图片base64编码加载完成: {self.icons}")
+        logger.debug(f"图片base64编码加载完成")
 
 
     def create_all(self):

@@ -45,7 +45,7 @@
 
 .desc {
     font-size: 20px;
-    color: #444;
+    color: var(--jx3-text-secondary);
     line-height: 1.5;
 }
 
@@ -54,11 +54,11 @@
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: #e5e7eb;
+    background: rgba(114, 169, 213, 0.16);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 18px;
     font-weight: 700;
-    color: #374151;
+    color: var(--jx3-blue);
 }

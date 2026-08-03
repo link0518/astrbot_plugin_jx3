@@ -1,7 +1,8 @@
 {# template-title: 花价查询 #}
+{# template-components: data-table data-extras #}
 
 
-<div class="container">
+<div class="container data-page">
     <h1>花价查询（{{ server }}）</h1>
 
     {% for map_name in [
@@ -13,9 +14,9 @@
     ] %}
 
         {% if data.get(map_name) %}
-        <h2>{{ map_name }}</h2>
+        <h2 class="data-subtitle">{{ map_name }}</h2>
 
-        <table>
+        <table class="data-table">
             <thead>
                 <tr>
                     <th>名称</th>
@@ -35,8 +36,8 @@
                             <span class="empty">—</span>
                         {% endif %}
                     </td>
-                    <td class="price">{{ item.price }}</td>
-                    <td class="lines">
+                    <td class="data-price">{{ item.price }}</td>
+                    <td class="data-note">
                         {{ item.line | join('、') }}
                     </td>
                 </tr>
@@ -47,4 +48,3 @@
 
     {% endfor %}
 </div>
-

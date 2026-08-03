@@ -1,11 +1,12 @@
 {# template-title: 名剑统计 #}
+{# template-components: data-table #}
 
 
-<div class="container">
+<div class="container data-page">
     <h1>名剑统计(前1000) · {{ mode }}</h1>
-    <div class="meta">更新时间：{{ update_time }}</div>
+    <div class="data-page__meta">更新时间：{{ update_time }}</div>
 
-    <table>
+    <table class="data-table data-table--nowrap">
         <thead>
             <tr>
                 <th>门派</th>
@@ -18,19 +19,18 @@
         {% for m in items %}
             <tr>
                 <td>
-                    <div class="school">
+                    <div class="icon-label">
                         {% if icons.sect.get(m.forceName) %}
-                        <img class="school-icon" src="{{ icons.sect[m.forceName] }}" alt="{{ m.forceName }}">
+                        <img class="icon-label__icon" src="{{ icons.sect[m.forceName] }}" alt="{{ m.forceName }}">
                         {% endif %}
                         <span>{{ m.forceName }}</span>
                     </div>
                 </td>
-                <td class="num-col">{{ m.thisWeek }}</td>
-                <td class="num-col">{{ m.lastWeek }}</td>
+                <td class="data-cell--score">{{ m.thisWeek }}</td>
+                <td class="data-cell--score">{{ m.lastWeek }}</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 
 </div>
-

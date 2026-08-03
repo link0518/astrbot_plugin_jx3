@@ -1,10 +1,11 @@
 {# template-title: 竞技排行榜 #}
+{# template-components: data-table #}
 
 
-<div class="container">
+<div class="container data-page">
     <h1>名剑排行榜</h1>
 
-    <table>
+    <table class="data-table data-table--spaced">
         <thead>
             <tr>
                 <th>排名</th>
@@ -20,7 +21,7 @@
         <tbody>
         {% for m in lists %}
             <tr>
-                <td class="
+                <td class="data-cell--rank
                     {% if m.rankNum == '1' %}rank-1{% endif %}
                     {% if m.rankNum == '2' %}rank-2{% endif %}
                     {% if m.rankNum == '3' %}rank-3{% endif %}
@@ -29,7 +30,7 @@
                 </td>
 
                 <td>
-                    <img class="avatar" src="{{ m.avatarUrl }}">
+                    <img class="data-avatar" src="{{ m.avatarUrl }}">
                 </td>
 
                 <td>{{ m.roleName }}</td>
@@ -40,11 +41,10 @@
 
                 <td>{{ m.score }}</td>
 
-                <td class="winrate">{{ m.winRate }}</td>
+                <td class="winrate data-cell--numeric">{{ m.winRate }}</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 
 </div>
-

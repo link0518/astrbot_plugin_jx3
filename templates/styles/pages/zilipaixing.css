@@ -92,7 +92,7 @@
         gap: 9px;
         width: 100%;
         min-width: 0;
-        color: #333;
+        color: var(--jx3-text);
         font-size: 17px;
         font-weight: 700;
         white-space: nowrap;
@@ -120,7 +120,7 @@
     .role-name-col {
         padding-left: 10px;
         padding-right: 10px;
-        color: #333;
+        color: var(--jx3-text);
         font-size: 17px;
         font-weight: 600;
         text-align: center;
@@ -135,7 +135,7 @@
     .server-col {
         padding-left: 8px;
         padding-right: 8px;
-        color: #333;
+        color: var(--jx3-text-secondary);
         font-size: 17px;
         text-align: center;
         overflow: hidden;
@@ -155,59 +155,4 @@
         text-align: center;
         white-space: nowrap;
         font-variant-numeric: tabular-nums;
-    }
-
-    /*
-     * 小尺寸页面适配
-     */
-    @media screen and (max-width: 760px) {
-        body {
-            padding: 10px;
-        }
-
-        h1 {
-            font-size: 30px;
-        }
-
-        .meta {
-            margin-bottom: 18px;
-            font-size: 15px;
-        }
-
-        th,
-        td {
-            height: 58px;
-            padding: 8px 5px;
-            font-size: 15px;
-        }
-
-        th {
-            height: 46px;
-            font-size: 15px;
-        }
-
-        .avatar {
-            width: 40px;
-            height: 40px;
-        }
-
-        .force-icon {
-            width: 34px;
-            height: 34px;
-        }
-
-        .force {
-            gap: 6px;
-            font-size: 15px;
-        }
-
-        .rank-col,
-        .role-name-col,
-        .server-col {
-            font-size: 15px;
-        }
-
-        .score-col {
-            font-size: 16px;
-        }
     }

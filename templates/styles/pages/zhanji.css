@@ -69,7 +69,7 @@
 
 .stat-title {
     font-size: 26px;
-    color: #777;
+    color: var(--jx3-text-muted);
 }
 
 .stat-value {

@@ -242,25 +242,534 @@
     font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 760px) {
-    .jx3-template :where(.header, .page-header, .top-info, .info-bar) {
-        padding: 16px;
-    }
-
-    .jx3-template :where(th, td) {
-        padding: 8px 4px;
-        font-size: 11px;
-        white-space: normal !important;
-        word-break: break-word;
-    }
-
-    .jx3-template table {
-        min-width: 0 !important;
-        table-layout: auto !important;
-    }
-
-    .jx3-template :where(.avatar, .force-icon, .school-icon) {
-        width: 28px;
-        height: 28px;
-    }
+.jx3-template .data-page__meta {
+    margin-bottom: var(--jx3-space-6);
+    color: var(--jx3-text-muted);
+    font-size: 16px;
+    text-align: center;
 }
+
+/* @component data-table */
+/* 标准数据页：列数和内容由 HTML 决定，视觉规则由所有查询页共用 */
+.jx3-template .data-table {
+    text-align: left;
+}
+
+.jx3-template .data-table--spaced {
+    margin-top: 10px;
+}
+
+.jx3-template .data-table--center {
+    text-align: center;
+}
+
+.jx3-template .data-table :where(th, td) {
+    vertical-align: middle;
+}
+
+.jx3-template .data-table--nowrap :where(th, td),
+.jx3-template .data-cell--nowrap {
+    white-space: nowrap;
+}
+
+.jx3-template .data-cell--center {
+    text-align: center;
+}
+
+.jx3-template .data-cell--wrap {
+    word-break: break-word;
+}
+
+.jx3-template .data-cell--strong,
+.jx3-template .data-cell--name {
+    color: var(--jx3-text);
+    font-weight: 700;
+}
+
+.jx3-template .data-cell--muted {
+    color: var(--jx3-text-muted);
+}
+
+.jx3-template .data-cell--numeric {
+    font-variant-numeric: tabular-nums;
+}
+
+.jx3-template .data-cell--accent,
+.jx3-template .data-cell--score {
+    color: var(--jx3-gold-bright);
+    font-weight: 800;
+}
+
+.jx3-template .data-cell--rank {
+    width: 56px;
+    color: var(--jx3-gold-bright);
+    font-weight: 800;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.jx3-template .data-cell--score {
+    text-align: center;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.jx3-template .data-cell--time {
+    min-width: 150px;
+    color: var(--jx3-text-muted);
+    text-align: center;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.jx3-template .data-cell--copy {
+    max-width: 360px;
+    color: var(--jx3-text-secondary);
+    font-weight: 600;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.jx3-template .data-cell--copy.data-cell--name {
+    color: var(--jx3-text);
+    font-weight: 700;
+}
+
+.jx3-template .data-cell--time.data-cell--accent {
+    color: var(--jx3-gold-bright);
+}
+
+.jx3-template .data-cell--compact {
+    width: 90px;
+}
+
+.jx3-template .data-cell--medium {
+    min-width: 120px;
+}
+
+.jx3-template .data-cell--wide {
+    min-width: 150px;
+}
+
+.jx3-template .data-cell--xwide {
+    min-width: 220px;
+}
+
+.jx3-template .data-cell--max-wide {
+    max-width: 260px;
+}
+
+.jx3-template .data-avatar {
+    display: block;
+    width: 40px;
+    height: 40px;
+    margin: 0 auto;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.jx3-template .data-cell--rank.rank-1 {
+    color: var(--jx3-gold-bright);
+}
+
+.jx3-template .data-cell--rank.rank-2 {
+    color: #c8d2dc;
+}
+
+.jx3-template .data-cell--rank.rank-3 {
+    color: #c88a62;
+}
+
+.jx3-template .icon-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    color: var(--jx3-text);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.jx3-template .icon-label__icon {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--jx3-border-soft);
+    border-radius: 50%;
+    object-fit: contain;
+    flex: 0 0 auto;
+    background: rgba(7, 26, 43, 0.6);
+}
+
+.jx3-template .data-table tr.camp-haoqi {
+    color: var(--jx3-blue);
+}
+
+.jx3-template .data-table tr.camp-eren {
+    color: var(--jx3-red);
+}
+
+.jx3-template .data-table--camp-tinted tr.camp-haoqi {
+    background: rgba(114, 169, 213, 0.1);
+}
+
+.jx3-template .data-table--camp-tinted tr.camp-eren {
+    background: rgba(213, 106, 99, 0.1);
+}
+
+.jx3-template .data-table--camp-tinted tr.camp-haoqi .data-cell--name,
+.jx3-template .data-table tr.camp-haoqi .data-cell--camp {
+    color: var(--jx3-blue);
+}
+
+.jx3-template .data-table--camp-tinted tr.camp-eren .data-cell--name,
+.jx3-template .data-table tr.camp-eren .data-cell--camp {
+    color: var(--jx3-red);
+}
+/* @endcomponent */
+
+/* @component data-layout */
+/* 通用分区、统计卡片与可配置列数的卡片网格 */
+.jx3-template .data-section,
+.jx3-template .collection-section {
+    margin-bottom: var(--jx3-space-6);
+}
+
+.jx3-template .data-section__title,
+.jx3-template .collection-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 var(--jx3-space-3);
+    color: var(--jx3-gold-bright);
+    font-size: 24px;
+    line-height: 1.3;
+    font-weight: 800;
+}
+
+.jx3-template .data-section__title::before,
+.jx3-template .collection-heading::before {
+    width: 5px;
+    height: 30px;
+    border-radius: 3px;
+    background: var(--jx3-gold);
+    content: "";
+    flex: 0 0 auto;
+}
+
+.jx3-template .card-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--grid-columns, 3), minmax(0, 1fr));
+    gap: var(--grid-gap, 16px);
+}
+
+.jx3-template .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--grid-columns, 3), minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.jx3-template .stat-card {
+    padding: 18px 14px;
+    border: 1px solid var(--jx3-border-faint);
+    border-radius: var(--jx3-radius-md);
+    background: rgba(13, 41, 66, 0.82);
+    text-align: center;
+    box-shadow: var(--jx3-shadow-sm);
+}
+
+.jx3-template .stat-card__label {
+    margin-bottom: var(--jx3-space-2);
+    color: var(--jx3-text-muted);
+    font-size: 16px;
+}
+
+.jx3-template .stat-card__value {
+    color: var(--jx3-gold-bright);
+    font-size: 30px;
+    line-height: 1;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+/* @endcomponent */
+
+/* @component ability-card */
+/* 技能与奇穴共用同一套能力卡片 */
+.jx3-template .ability-card {
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--jx3-border-faint);
+    border-radius: var(--jx3-radius-md);
+    background: rgba(13, 41, 66, 0.82);
+    box-shadow: var(--jx3-shadow-sm);
+}
+
+.jx3-template .ability-card__icon {
+    width: 48px;
+    height: 48px;
+    border: 1px solid var(--jx3-border-soft);
+    border-radius: 8px;
+    object-fit: cover;
+    background: rgba(7, 26, 43, 0.6);
+}
+
+.jx3-template .ability-card__head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.jx3-template .ability-card__name {
+    color: var(--jx3-text);
+    font-size: 18px;
+    line-height: 1.25;
+    font-weight: 800;
+}
+
+.jx3-template .ability-card__tag {
+    padding: 2px 8px;
+    border: 1px solid var(--jx3-border-soft);
+    border-radius: 999px;
+    color: var(--jx3-gold-bright);
+    background: rgba(225, 183, 102, 0.1);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.jx3-template .ability-card__tag--accent {
+    color: var(--jx3-bg-deep);
+    background: var(--jx3-gold);
+    font-weight: 700;
+}
+
+.jx3-template .ability-card__desc {
+    color: var(--jx3-text-secondary);
+    font-size: 15px;
+    line-height: 1.55;
+    word-break: break-word;
+}
+/* @endcomponent */
+
+/* @component collection-card */
+/* 奇遇与区服状态共用卡片网格 */
+.jx3-template .collection-section {
+    margin-bottom: var(--jx3-space-8);
+}
+
+.jx3-template .collection-heading {
+    margin-bottom: var(--jx3-space-4);
+    font-size: 32px;
+}
+
+.jx3-template .collection-card {
+    display: flex;
+    min-height: 90px;
+    padding: 16px 12px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--jx3-border-faint);
+    border-radius: var(--jx3-radius-md);
+    background: rgba(13, 41, 66, 0.82);
+    text-align: center;
+    box-shadow: var(--jx3-shadow-sm);
+}
+
+.jx3-template .collection-card__image {
+    width: 100%;
+    max-width: 180px;
+    height: auto;
+    margin-bottom: 6px;
+    object-fit: contain;
+}
+
+.jx3-template .collection-card__name {
+    margin-bottom: 4px;
+    color: var(--jx3-text);
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.jx3-template .collection-card__meta {
+    color: var(--jx3-text-muted);
+    font-size: 20px;
+}
+
+.jx3-template .collection-empty {
+    padding: 18px;
+    border: 1px solid var(--jx3-border-faint);
+    border-radius: var(--jx3-radius-md);
+    color: var(--jx3-text-muted);
+    background: rgba(13, 41, 66, 0.82);
+}
+
+.jx3-template .data-header {
+    margin-bottom: var(--jx3-space-6);
+}
+
+.jx3-template .data-header__title {
+    margin-bottom: var(--jx3-space-2);
+    color: var(--jx3-text);
+    font-size: 34px;
+    font-weight: 800;
+}
+
+.jx3-template .data-header__meta {
+    color: var(--jx3-text-muted);
+    font-size: 20px;
+}
+
+.jx3-template .server-status-card {
+    padding: 30px 12px;
+    border-radius: var(--jx3-radius-md);
+    color: #fff;
+    font-size: 28px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.jx3-template .server-status-card.爆满 {
+    background: #b94f4b;
+}
+
+.jx3-template .server-status-card.拥挤 {
+    color: #2c2106;
+    background: #d4a64e;
+}
+
+.jx3-template .server-status-card:is(.正常, .顺畅) {
+    background: #438d65;
+}
+
+.jx3-template .server-status-card.维护 {
+    color: #253443;
+    background: #9eaebb;
+}
+/* @endcomponent */
+
+/* @component object-card */
+/* 器物与家园装饰共用详情卡片 */
+.jx3-template .object-card {
+    display: flex;
+    margin-bottom: var(--jx3-space-6);
+    overflow: hidden;
+    border: 1px solid var(--jx3-border-faint);
+    border-radius: var(--jx3-radius-lg);
+    background: rgba(13, 41, 66, 0.9);
+    box-shadow: var(--jx3-shadow-sm);
+}
+
+.jx3-template .object-card__image {
+    width: 220px;
+    height: 220px;
+    padding: 16px;
+    object-fit: contain;
+    background: rgba(7, 26, 43, 0.72);
+}
+
+.jx3-template .object-card__content {
+    min-width: 0;
+    padding: 20px 24px;
+    flex: 1;
+}
+
+.jx3-template .object-card__title {
+    margin-bottom: 6px;
+    font-size: 26px;
+    font-weight: 800;
+}
+
+.jx3-template :where(.quality-1) { color: var(--jx3-text-muted); }
+.jx3-template :where(.quality-2) { color: var(--jx3-green); }
+.jx3-template :where(.quality-3) { color: var(--jx3-blue); }
+.jx3-template :where(.quality-4) { color: var(--jx3-purple); }
+.jx3-template :where(.quality-5) { color: #e6a25f; }
+
+.jx3-template .object-card__meta {
+    margin-bottom: 14px;
+    color: var(--jx3-text-muted);
+    font-size: 15px;
+}
+
+.jx3-template .object-card__meta span {
+    margin-right: 18px;
+}
+
+.jx3-template .object-card__tip {
+    margin-bottom: 16px;
+    padding: 10px 14px;
+    border-left: 4px solid var(--jx3-gold);
+    color: var(--jx3-text-secondary);
+    background: rgba(114, 169, 213, 0.08);
+    font-size: 14px;
+}
+
+.jx3-template .object-stats {
+    display: grid;
+    grid-template-columns: repeat(var(--grid-columns, 5), minmax(0, 1fr));
+    gap: 12px;
+}
+
+.jx3-template .object-stat {
+    padding: 10px;
+    border: 1px solid var(--jx3-border-faint);
+    border-radius: var(--jx3-radius-md);
+    background: rgba(7, 26, 43, 0.58);
+    text-align: center;
+}
+
+.jx3-template .object-stat__label {
+    margin-bottom: 6px;
+    color: var(--jx3-text-muted);
+    font-size: 13px;
+}
+
+.jx3-template .object-stat__value {
+    color: var(--jx3-text);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.jx3-template .object-card__footer {
+    margin-top: 12px;
+    color: var(--jx3-text-muted);
+    font-size: 14px;
+}
+/* @endcomponent */
+
+/* @component data-extras */
+.jx3-template .data-subtitle {
+    margin: 40px 0 12px;
+    color: var(--jx3-gold-bright);
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.jx3-template .data-subtitle + .data-table {
+    margin-bottom: var(--jx3-space-5);
+}
+
+.jx3-template .data-note {
+    color: var(--jx3-text-secondary);
+    font-weight: 600;
+}
+
+.jx3-template .data-price {
+    color: var(--jx3-gold-bright);
+    font-weight: 700;
+}
+
+.jx3-template .text-purple {
+    color: var(--jx3-purple);
+    font-weight: 600;
+}
+
+.jx3-template .text-blue {
+    color: var(--jx3-blue);
+    font-weight: 600;
+}
+/* @endcomponent */

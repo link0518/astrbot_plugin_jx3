@@ -11,7 +11,7 @@
         gap: 24px;
         margin-bottom: 20px;
         font-size: 14px;
-        color: #666;
+        color: var(--jx3-text-secondary);
     }
 
     .legend-item {
@@ -27,11 +27,11 @@
     }
 
     .legend-color.finished {
-        background: #c9cdd3;
+        background: #60788f;
     }
 
     .legend-color.unfinished {
-        background: #2dbd78;
+        background: var(--jx3-green);
     }table {
         table-layout: fixed;
         margin-top: 10px;
@@ -51,7 +51,7 @@
     }
 
     .map-name {
-        color: #252a34;
+        color: var(--jx3-text);
         font-size: 18px;
         font-weight: 700;
         line-height: 1.5;
@@ -59,7 +59,7 @@
 
     .map-progress {
         margin-top: 7px;
-        color: #8a909c;
+        color: var(--jx3-text-muted);
         font-size: 13px;
         font-weight: 500;
     }
@@ -92,9 +92,9 @@
      * 奖励已经获取，显示灰色
      */
     .boss-item.finished {
-        color: #747b85;
-        background: #e1e4e8;
-        border: 1px solid #d1d5db;
+        color: #d5e0e9;
+        background: #24384b;
+        border: 1px solid #60788f;
     }
 
     .boss-item.finished:hover {
@@ -106,9 +106,9 @@
      * 奖励尚未获取，显示绿色
      */
     .boss-item.unfinished {
-        color: white;
-        background: #2dbd78;
-        border: 1px solid #24a96a;
+        color: #c8f3dc;
+        background: #183f34;
+        border: 1px solid #438d68;
     }
 
     .boss-item.unfinished:hover {
@@ -155,91 +155,21 @@
     }
 
     .boss-item.finished .status-icon {
-        color: #777e88;
-        background: rgba(255, 255, 255, 0.75);
+        color: #e7eef4;
+        background: rgba(192, 211, 226, 0.16);
     }
 
     .boss-item.unfinished .status-icon {
-        color: #22a566;
-        background: white;
+        color: #d7f8e6;
+        background: rgba(98, 188, 146, 0.18);
     }
 
     .empty-data {
         padding: 50px 20px;
-        color: #8a909c;
+        color: var(--jx3-text-muted);
         text-align: center;
-        background: white;
+        background: rgba(13, 41, 66, 0.82);
+        border: 1px solid var(--jx3-border-faint);
         border-radius: 12px;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-    }
-
-    @media (max-width: 800px) {
-        body {
-            padding: 12px;
-        }
-
-        h1 {
-            font-size: 26px;
-        }
-
-        table,
-        thead,
-        tbody,
-        tr,
-        th,
-        td {
-            display: block;
-        }
-
-        thead {
-            display: none;
-        }
-
-        table {
-            background: transparent;
-            box-shadow: none;
-        }
-
-        tbody tr {
-            margin-bottom: 14px;
-            overflow: hidden;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
-        }
-
-        th:first-child,
-        td:first-child {
-            width: 100%;
-        }
-
-        td {
-            border-bottom: none;
-        }
-
-        .map-info {
-            padding: 17px;
-            background: #fafbfc;
-            border-bottom: 1px solid #eee;
-        }
-
-        .boss-list {
-            padding: 2px;
-        }
-
-        .boss-item {
-            max-width: none;
-        }
-    }
-
-    @media (max-width: 500px) {
-        .legend {
-            gap: 14px;
-            font-size: 13px;
-        }
-
-        .boss-item {
-            flex-basis: 100%;
-            max-width: 100%;
-        }
     }

@@ -13,7 +13,7 @@
     .time {
         font-size: 18px;
         font-weight: 600;
-        color: #333;
+        color: var(--jx3-text-secondary);
     }
 
     .boss-final {
@@ -48,7 +48,7 @@
     .index {
         font-weight: bold;
         font-size: 18px;
-        color: #333;
+        color: var(--jx3-text);
         margin-bottom: 4px;
     }
 
@@ -60,7 +60,7 @@
     }
 
     .buff {
-        color: #0984e3;
+        color: var(--jx3-blue);
         font-size: 14px;
         line-height: 1.5em;
         word-break: break-word;

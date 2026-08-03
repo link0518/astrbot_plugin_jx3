@@ -9,7 +9,7 @@
     .goods-desc {
         font-size: 16px;
         line-height: 1.8;
-        color: #444;
+        color: var(--jx3-text-secondary);
         margin: 0 0 10px;
         text-align: left;
     }
@@ -22,10 +22,11 @@
         gap: 20px 40px;
         font-size: 18px;
         margin-bottom: 30px;
+        color: var(--jx3-text-muted);
     }
 
     .meta-row .price {
-        color: #d93939;
+        color: var(--jx3-gold-bright);
         font-weight: 800;
     }
 
@@ -46,7 +47,7 @@
         font-weight: 700;
         margin-bottom: 8px;
         text-align: center;
-        color: #d93939;
+        color: var(--jx3-gold-bright);
     }
 
     .table-scroll {
@@ -71,7 +72,7 @@
     }
 
     .price-col {
-        color: #d93939;
+        color: var(--jx3-gold-bright);
         font-weight: 700;
     }
 
@@ -79,77 +80,48 @@
         height: 80px;
         padding: 28px 10px;
         text-align: center;
-        color: #999999;
+        color: var(--jx3-text-muted);
         font-weight: 400;
     }
 
     /* ===== 万宝楼公示（蓝色） ===== */
 
     .table-card.notice .table-title {
-        color: #1e6bd6;
+        color: var(--jx3-blue);
     }
 
     .table-card.notice .price-col {
-        color: #1e6bd6;
+        color: var(--jx3-blue);
     }
 
     .table-card.notice thead {
-        background: #1e6bd6;
+        background: rgba(63, 111, 153, 0.78);
     }
 
     /* ===== 万宝楼在售（绿色） ===== */
 
     .table-card.sale .table-title {
-        color: #2e8b57;
+        color: var(--jx3-green);
     }
 
     .table-card.sale .price-col {
-        color: #2e8b57;
+        color: var(--jx3-green);
     }
 
     .table-card.sale thead {
-        background: #2e8b57;
+        background: rgba(43, 111, 82, 0.78);
     }
 
     /* ===== 查询区服（紫色） ===== */
 
     .table-card.query .table-title {
-        color: #8a4fd3;
+        color: var(--jx3-purple);
     }
 
     .table-card.query .price-col {
-        color: #8a4fd3;
+        color: var(--jx3-purple);
     }
 
     .table-card.query thead {
-        background: #8a4fd3;
-    }
-
-    @media (max-width: 1100px) {
-        .table-wrapper {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-    }
-
-    @media (max-width: 720px) {
-        body {
-            padding: 12px;
-        }
-
-        h1 {
-            font-size: 24px;
-        }
-
-        .goods-desc {
-            font-size: 14px;
-        }
-
-        .meta-row {
-            gap: 12px 20px;
-            font-size: 16px;
-        }
-
-        .table-wrapper {
-            grid-template-columns: 1fr;
-        }
+        background: rgba(90, 67, 126, 0.8);
     }

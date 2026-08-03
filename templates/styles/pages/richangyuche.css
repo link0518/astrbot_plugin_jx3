@@ -10,7 +10,7 @@
     text-align: center;
     font-size: 18px;
     font-weight: 700;
-    color: #555;
+    color: var(--jx3-text-secondary);
 }
 
 /* 卡片基础 */
@@ -24,19 +24,19 @@
 
 /* 状态样式 */
 .card.past {
-    background: #e5e5e5;
-    color: #666;
+    background: rgba(71, 91, 108, 0.72);
+    color: var(--jx3-text-secondary);
 }
 
 .card.today {
-    background: #3b82f6;
-    color: #fff;
+    background: rgba(53, 113, 165, 0.9);
+    color: var(--jx3-text);
 }
 
 .card.future {
-    background: #ffffff;
-    color: #333;
-    border: 1px solid #ddd;
+    background: rgba(13, 41, 66, 0.82);
+    color: var(--jx3-text);
+    border: 1px solid var(--jx3-border-faint);
 }
 
 /* 内容 */

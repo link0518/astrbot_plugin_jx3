@@ -11,7 +11,7 @@ body {
 }
 
 body.jx3-template {
-    min-width: 0;
+    min-width: calc(var(--jx3-page-width) + 94px);
     padding: 20px;
     color: var(--jx3-text);
     font-family: var(--jx3-font);
@@ -67,8 +67,14 @@ body.jx3-template {
 }
 
 .jx3-template :where(.container, .page, .page-container),
-.jx3-template > .jx3-frame > :where(.panel, .header, .section) {
-    width: min(var(--jx3-page-width), calc(100vw - 92px));
+.jx3-template > .jx3-frame > :where(
+    .panel,
+    .header,
+    .section,
+    .data-header,
+    .collection-section
+) {
+    width: var(--jx3-page-width);
     max-width: none;
     margin-right: auto;
     margin-left: auto;
@@ -101,26 +107,4 @@ body.jx3-template {
 
 .jx3-template img {
     max-width: 100%;
-}
-
-@media (max-width: 760px) {
-    body.jx3-template {
-        padding: 10px;
-        font-size: 14px;
-    }
-
-    .jx3-frame {
-        min-height: calc(100vh - 20px);
-        padding: 16px;
-    }
-
-    .jx3-template :where(.container, .page, .page-container),
-    .jx3-template > .jx3-frame > :where(.panel, .header, .section) {
-        width: 100%;
-    }
-
-    .jx3-template h1 {
-        margin-bottom: 16px;
-        font-size: 26px;
-    }
 }

@@ -1,11 +1,12 @@
 {# template-title: 近期奇遇 #}
+{# template-components: data-table #}
 
 
-<div class="container">
+<div class="container data-page">
     <h1>{{ server }} 近期奇遇</h1>
-    <div class="meta">更新时间：{{ update_time }}</div>
+    <div class="data-page__meta">更新时间：{{ update_time }}</div>
 
-    <table>
+    <table class="data-table data-table--nowrap">
         <thead>
             <tr>
                 <th>区服</th>
@@ -19,13 +20,12 @@
         {% for m in items %}
             <tr>
                 <td>{{ m.server }}</td>
-                <td class="role-col">{{ m.name }}</td>
-                <td class="event-col">{{ m.event }}</td>
-                <td class="time-col">{{ m.time }}</td>
+                <td class="data-cell--name">{{ m.name }}</td>
+                <td class="data-cell--strong">{{ m.event }}</td>
+                <td class="data-cell--muted data-cell--numeric">{{ m.time }}</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 
 </div>
-
