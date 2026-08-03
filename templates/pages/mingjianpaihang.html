@@ -1,0 +1,50 @@
+{# template-title: 竞技排行榜 #}
+
+
+<div class="container">
+    <h1>名剑排行榜</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>排名</th>
+                <th>头像</th>
+                <th>角色</th>
+                <th>区服</th>
+                <th>门派</th>
+                <th>分数</th>
+                <th>胜率</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for m in lists %}
+            <tr>
+                <td class="
+                    {% if m.rankNum == '1' %}rank-1{% endif %}
+                    {% if m.rankNum == '2' %}rank-2{% endif %}
+                    {% if m.rankNum == '3' %}rank-3{% endif %}
+                ">
+                    {{ m.rankNum }}
+                </td>
+
+                <td>
+                    <img class="avatar" src="{{ m.avatarUrl }}">
+                </td>
+
+                <td>{{ m.roleName }}</td>
+
+                <td>{{ m.zoneName }} · {{ m.serverName }}</td>
+
+                <td>{{ m.forceName }}</td>
+
+                <td>{{ m.score }}</td>
+
+                <td class="winrate">{{ m.winRate }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+

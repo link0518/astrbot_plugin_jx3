@@ -1,0 +1,89 @@
+{# template-title: 资历排行 #}
+
+
+<div class="container">
+    <h1>{{ school }} 资历排行</h1>
+
+    <div class="meta">
+        {{ server }} ｜ 更新时间：{{ update_time }}
+    </div>
+
+    <table>
+        <colgroup>
+            <col class="rank-width">
+            <col class="avatar-width">
+            <col class="force-width">
+            <col class="role-width">
+            <col class="server-width">
+            <col class="score-width">
+        </colgroup>
+
+        <thead>
+            <tr>
+                <th>排名</th>
+                <th>头像</th>
+                <th>职业</th>
+                <th>角色</th>
+                <th>服务器</th>
+                <th>资历</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for item in items %}
+            <tr>
+                <td class="rank-col">
+                    {{ loop.index }}
+                </td>
+
+                <td class="avatar-col">
+                    {% if item.avatarUrl %}
+                    <img
+                        class="avatar"
+                        src="{{ item.avatarUrl }}"
+                        alt="{{ item.roleName }}"
+                    >
+                    {% endif %}
+                </td>
+
+                <td class="force-col">
+                    <div class="force">
+                        {% set force_icon = item.forceIcon or icons.sect.get(item.forceName) %}
+
+                        {% if force_icon %}
+                        <img
+                            class="force-icon"
+                            src="{{ force_icon }}"
+                            alt="{{ item.forceName }}"
+                        >
+                        {% endif %}
+
+                        <span class="force-name">
+                            {{ item.forceName }}
+                        </span>
+                    </div>
+                </td>
+
+                <td
+                    class="role-name-col"
+                    title="{{ item.roleName }}"
+                >
+                    {{ item.roleName }}
+                </td>
+
+                <td
+                    class="server-col"
+                    title="{{ item.serverName }}"
+                >
+                    {{ item.serverName }}
+                </td>
+
+                <td class="score-col">
+                    {{ item.seniority }}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+

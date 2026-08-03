@@ -1,0 +1,33 @@
+{# template-title: 奇遇汇总 #}
+
+
+<div class="container">
+    <h1>{{ server }} 奇遇汇总</h1>
+    <div class="meta">最近 {{ num }} 天 · 更新时间：{{ update_time }}</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>区服</th>
+                <th>奇遇名称</th>
+                <th>触发次数</th>
+                <th>最近角色</th>
+                <th>最近时间</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for m in items %}
+            <tr>
+                <td>{{ m.server }}</td>
+                <td class="event-col">{{ m.event }}</td>
+                <td class="count-col">{{ m.count }}</td>
+                <td class="role-col">{{ m.latest_name }}</td>
+                <td class="time-col">{{ m.latest_time }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+

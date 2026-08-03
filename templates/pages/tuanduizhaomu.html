@@ -1,0 +1,32 @@
+{# template-title: 团队招募 #}
+
+
+<div class="container">
+    <h1>团队招募</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>副本名称</th>
+                <th>招募人</th>
+                <th>招募时间</th>
+                <th>人数</th>
+                <th>招募说明</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for m in list %}
+            <tr>
+                <td>{{ m.activityName }}</td>
+                <td>{{ m.roleName }}</td>
+                <td>{{ m.createTime }}</td>
+                <td>{{ m.maxMemberCount }}</td>
+                <td>{{ m.commentText }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+

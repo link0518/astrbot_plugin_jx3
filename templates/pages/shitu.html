@@ -1,0 +1,48 @@
+{# template-title: 师徒招募 #}
+
+
+<div class="container">
+    <h1>{{ title }}</h1>
+    <div class="meta">
+        {{ server }}
+        {% if keyword %} · 关键词：{{ keyword }}{% endif %}
+        · 更新时间：{{ update_time }}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>职业</th>
+                <th>角色名称</th>
+                <th>等级</th>
+                <th>体型</th>
+                <th>帮会</th>
+                <th>阵营</th>
+                <th>信息</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for item in items %}
+            <tr>
+                <td class="force-col">
+                    <div class="force">
+                        {% if icons.sect.get(item.forceName) %}
+                        <img class="force-icon" src="{{ icons.sect[item.forceName] }}" alt="{{ item.forceName }}">
+                        {% endif %}
+                        <span>{{ item.forceName }}</span>
+                    </div>
+                </td>
+                <td class="name-col">{{ item.roleName }}</td>
+                <td class="small-col">{{ item.roleLevel }}</td>
+                <td class="small-col">{{ item.bodyName }}</td>
+                <td>{{ item.tongName }}</td>
+                <td class="small-col">{{ item.campName }}</td>
+                <td class="comment-col">{{ item.comment }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+

@@ -1,0 +1,34 @@
+.meta {
+        margin-bottom: 24px;
+        color: #7a7f99;
+        font-size: 16px;
+        text-align: center;
+    }table {
+        text-align: left;
+    }th, td {
+        vertical-align: middle;
+    }
+
+    .rank-col,
+    .number-col {
+        white-space: nowrap;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .rank-col {
+        width: 60px;
+        color: #d93939;
+        font-weight: 800;
+    }
+
+    .role-col {
+        min-width: 180px;
+        font-weight: 700;
+        color: #333;
+    }
+
+    .score-col {
+        color: #d93939;
+        font-weight: 800;
+    }

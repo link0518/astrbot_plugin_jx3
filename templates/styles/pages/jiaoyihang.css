@@ -1,0 +1,107 @@
+.header {
+        background: #ffffff;
+        border: 1px solid #e6e8ee;
+        border-radius: 8px;
+        padding: 22px 26px;
+        margin-bottom: 16px;
+        box-shadow: 0 6px 18px rgba(35, 38, 47, 0.06);
+    }
+
+    .meta {
+        display: flex;
+        gap: 18px;
+        margin-top: 10px;
+        font-size: 15px;
+        color: #667085;
+    }
+
+    .table-wrapper {
+        background: #ffffff;
+        border: 1px solid #e6e8ee;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 6px 18px rgba(35, 38, 47, 0.06);
+    }table {
+        table-layout: fixed;
+    }
+
+    th {
+        padding: 14px 16px;
+        font-size: 16px;
+        font-weight: 700;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    th:nth-child(2),
+    th:nth-child(3),
+    th:nth-child(4),
+    td:nth-child(2),
+    td:nth-child(3),
+    td:nth-child(4) {
+        text-align: center;
+    }
+
+    td {
+        padding: 14px 16px;
+        border-bottom: 1px solid #edf0f5;
+        font-size: 15px;
+        vertical-align: middle;
+    }
+
+    .item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+
+    .item-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 6px;
+        flex: 0 0 auto;
+        background: #edf0f5;
+    }
+
+    .item-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 700;
+        color: #20232a;
+    }
+
+    .price {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        white-space: nowrap;
+        font-weight: 700;
+        color: #2f343d;
+    }
+
+    .money-part {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        margin-right: 3px;
+    }
+
+    .money-icon {
+        width: 17px;
+        height: 17px;
+        object-fit: contain;
+    }
+
+    .sample {
+        font-weight: 700;
+        color: #2f343d;
+    }
+
+    .time {
+        color: #667085;
+        font-size: 14px;
+        white-space: nowrap;
+    }

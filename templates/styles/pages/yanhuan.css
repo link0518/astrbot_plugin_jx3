@@ -1,0 +1,12 @@
+table {
+        margin-top: 10px;
+        text-align: left;  /* 不影响表格内容 */
+    }
+
+    .text-col {
+        max-width: 360px;
+        line-height: 1.5em;
+        word-break: break-word;
+        font-weight: 600;
+        color: #333;
+    }

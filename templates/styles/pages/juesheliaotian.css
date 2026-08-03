@@ -1,0 +1,99 @@
+.meta {
+        margin-bottom: 24px;
+        color: #7a7f99;
+        font-size: 16px;
+        text-align: center;
+    }table {
+        margin-top: 10px;
+        table-layout: fixed;
+        text-align: left;
+    }th,
+    td {
+        vertical-align: middle;
+    }
+
+    th {
+        font-weight: 700;
+        text-align: center;
+    }
+
+    /* 角色列 */
+    .role-col {
+        width: 16%;
+        color: #333333;
+        font-weight: 700;
+        text-align: center;
+        word-break: break-word;
+    }
+
+    /* 频道列 */
+    .channel-col {
+        width: 10%;
+        text-align: center;
+    }
+
+    /* 消息列 */
+    .message-col {
+        width: 56%;
+        color: #333333;
+        font-weight: 600;
+        line-height: 1.65;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+
+    /* 时间列 */
+    .time-col {
+        width: 18%;
+        color: #757b8f;
+        text-align: center;
+        white-space: nowrap;
+    }
+
+    /* 频道标签 */
+    .channel-tag {
+        display: inline-block;
+        min-width: 58px;
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .channel-world {
+        color: #d93939;
+        border: 1px solid #f3bcbc;
+        background: #fff0f0;
+    }
+
+    .channel-school {
+        color: #7d43b7;
+        border: 1px solid #d8c0ef;
+        background: #f6effd;
+    }
+
+    .channel-team {
+        color: #197d5b;
+        border: 1px solid #b8e4d5;
+        background: #edf9f5;
+    }
+
+    .channel-map {
+        color: #1e6bd6;
+        border: 1px solid #bdd3f5;
+        background: #eef5ff;
+    }
+
+    .channel-other {
+        color: #666666;
+        border: 1px solid #d8d8d8;
+        background: #f4f4f4;
+    }
+
+    .empty-row td {
+        padding: 50px 20px;
+        color: #8a8fa3;
+        font-size: 17px;
+        text-align: center;
+    }

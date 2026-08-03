@@ -1,0 +1,40 @@
+{# template-title: 阵营拍卖 #}
+
+
+<div class="container">
+    <h1>阵营拍卖</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>服务器</th>
+                <th>物品名称</th>
+                <th>拍得者</th>
+                <th>所属阵营</th>
+                <th>拍卖价格</th>
+                <th>拍卖时间</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for m in list %}
+            <tr
+                {% if m.campName == '浩气盟' %}
+                    class="camp-haoqi"
+                {% elif m.campName == '恶人谷' %}
+                    class="camp-eren"
+                {% endif %}
+            >
+                <td>{{ m.server }}</td>
+                <td>{{ m.itemName }}</td>
+                <td>{{ m.roleName }}</td>
+                <td>{{ m.campName }}</td>
+                <td>{{ m.itemAmount }}</td>
+                <td>{{ m.time }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+

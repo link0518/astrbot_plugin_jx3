@@ -1,0 +1,245 @@
+.description {
+        margin-bottom: 24px;
+        color: #7a7f8c;
+        font-size: 15px;
+    }
+
+    .legend {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 24px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        color: #666;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .legend-color {
+        width: 15px;
+        height: 15px;
+        border-radius: 4px;
+    }
+
+    .legend-color.finished {
+        background: #c9cdd3;
+    }
+
+    .legend-color.unfinished {
+        background: #2dbd78;
+    }table {
+        table-layout: fixed;
+        margin-top: 10px;
+        text-align: left;
+    }th,
+    td {
+        vertical-align: middle;
+    }
+
+    th:first-child,
+    td:first-child {
+        width: 250px;
+    }
+
+    .map-info {
+        text-align: center;
+    }
+
+    .map-name {
+        color: #252a34;
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.5;
+    }
+
+    .map-progress {
+        margin-top: 7px;
+        color: #8a909c;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .boss-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .boss-item {
+        position: relative;
+        min-width: 145px;
+        flex: 1 1 145px;
+        max-width: 210px;
+        min-height: 64px;
+        padding: 11px 13px;
+        border-radius: 9px;
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .boss-item:hover {
+        transform: translateY(-2px);
+    }
+
+    /*
+     * finished 为 true：
+     * 奖励已经获取，显示灰色
+     */
+    .boss-item.finished {
+        color: #747b85;
+        background: #e1e4e8;
+        border: 1px solid #d1d5db;
+    }
+
+    .boss-item.finished:hover {
+        box-shadow: 0 4px 12px rgba(75, 85, 99, 0.15);
+    }
+
+    /*
+     * finished 为 false：
+     * 奖励尚未获取，显示绿色
+     */
+    .boss-item.unfinished {
+        color: white;
+        background: #2dbd78;
+        border: 1px solid #24a96a;
+    }
+
+    .boss-item.unfinished:hover {
+        box-shadow: 0 4px 12px rgba(45, 189, 120, 0.25);
+    }
+
+    .boss-index {
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        opacity: 0.65;
+    }
+
+    .boss-name {
+        padding-right: 18px;
+        overflow: hidden;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.4;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .boss-status {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 6px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .status-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    .boss-item.finished .status-icon {
+        color: #777e88;
+        background: rgba(255, 255, 255, 0.75);
+    }
+
+    .boss-item.unfinished .status-icon {
+        color: #22a566;
+        background: white;
+    }
+
+    .empty-data {
+        padding: 50px 20px;
+        color: #8a909c;
+        text-align: center;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    @media (max-width: 800px) {
+        body {
+            padding: 12px;
+        }
+
+        h1 {
+            font-size: 26px;
+        }
+
+        table,
+        thead,
+        tbody,
+        tr,
+        th,
+        td {
+            display: block;
+        }
+
+        thead {
+            display: none;
+        }
+
+        table {
+            background: transparent;
+            box-shadow: none;
+        }
+
+        tbody tr {
+            margin-bottom: 14px;
+            overflow: hidden;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+        }
+
+        th:first-child,
+        td:first-child {
+            width: 100%;
+        }
+
+        td {
+            border-bottom: none;
+        }
+
+        .map-info {
+            padding: 17px;
+            background: #fafbfc;
+            border-bottom: 1px solid #eee;
+        }
+
+        .boss-list {
+            padding: 2px;
+        }
+
+        .boss-item {
+            max-width: none;
+        }
+    }
+
+    @media (max-width: 500px) {
+        .legend {
+            gap: 14px;
+            font-size: 13px;
+        }
+
+        .boss-item {
+            flex-basis: 100%;
+            max-width: 100%;
+        }
+    }

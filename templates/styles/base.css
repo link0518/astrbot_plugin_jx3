@@ -1,0 +1,126 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+body.jx3-template {
+    min-width: 0;
+    padding: 20px;
+    color: var(--jx3-text);
+    font-family: var(--jx3-font);
+    font-size: 16px;
+    line-height: 1.6;
+    background-color: var(--jx3-bg);
+    background-image:
+        radial-gradient(circle at 50% -10%, rgba(67, 111, 150, 0.34), transparent 38%),
+        linear-gradient(180deg, rgba(4, 17, 29, 0.18), rgba(4, 17, 29, 0.72)),
+        url("{{ icons.img.get('bg', '') }}");
+    background-repeat: no-repeat, no-repeat, repeat;
+    background-size: 100% 560px, 100% 100%, 540px 316px;
+    background-blend-mode: screen, normal, multiply;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+.jx3-frame {
+    position: relative;
+    width: 100%;
+    min-height: calc(100vh - 40px);
+    padding: 26px;
+    border: 1px solid var(--jx3-border-strong);
+    background: rgba(4, 17, 29, 0.2);
+    box-shadow:
+        inset 0 0 0 3px rgba(4, 17, 29, 0.9),
+        inset 0 0 0 4px rgba(203, 160, 78, 0.2),
+        var(--jx3-shadow-md);
+}
+
+.jx3-frame::before,
+.jx3-frame::after {
+    position: absolute;
+    width: 42px;
+    height: 42px;
+    border-color: var(--jx3-gold);
+    content: "";
+    pointer-events: none;
+}
+
+.jx3-frame::before {
+    top: 8px;
+    left: 8px;
+    border-top: 2px solid var(--jx3-gold);
+    border-left: 2px solid var(--jx3-gold);
+}
+
+.jx3-frame::after {
+    right: 8px;
+    bottom: 8px;
+    border-right: 2px solid var(--jx3-gold);
+    border-bottom: 2px solid var(--jx3-gold);
+}
+
+.jx3-template :where(.container, .page, .page-container),
+.jx3-template > .jx3-frame > :where(.panel, .header, .section) {
+    width: min(var(--jx3-page-width), calc(100vw - 92px));
+    max-width: none;
+    margin-right: auto;
+    margin-left: auto;
+    color: var(--jx3-text);
+}
+
+.jx3-template :where(h1, h2, h3, p) {
+    overflow-wrap: anywhere;
+}
+
+.jx3-template h1 {
+    margin: 0 0 var(--jx3-space-6);
+    color: var(--jx3-text);
+    font-size: 34px;
+    line-height: 1.25;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-align: center;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.32);
+}
+
+.jx3-template h2,
+.jx3-template h3 {
+    color: var(--jx3-text);
+}
+
+.jx3-template a {
+    color: var(--jx3-blue);
+}
+
+.jx3-template img {
+    max-width: 100%;
+}
+
+@media (max-width: 760px) {
+    body.jx3-template {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .jx3-frame {
+        min-height: calc(100vh - 20px);
+        padding: 16px;
+    }
+
+    .jx3-template :where(.container, .page, .page-container),
+    .jx3-template > .jx3-frame > :where(.panel, .header, .section) {
+        width: 100%;
+    }
+
+    .jx3-template h1 {
+        margin-bottom: 16px;
+        font-size: 26px;
+    }
+}

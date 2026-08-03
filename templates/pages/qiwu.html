@@ -1,0 +1,64 @@
+{# template-title: 地图装饰器物 #}
+
+
+<div class="container">
+    <h1>地图装饰器物({{ name }})</h1>
+
+    {% for item in data %}
+    <div class="item">
+        <img src="{{ item.image }}" alt="{{ item.name }}">
+
+        <div class="info">
+            <div class="name q{{ item.color }}">
+                {{ item.name }}
+            </div>
+
+            <div class="meta">
+                <span>来源：{{ item.source }}</span>
+                <span>数量限制：{{ item.limit }}</span>
+                <span>品质值：{{ item.quality }}</span>
+            </div>
+
+            {% if item.tip %}
+            <div class="tip">
+                {{ item.tip }}
+            </div>
+            {% endif %}
+
+            <div class="attrs">
+                <div class="attr">
+                    <div class="attr-name">观赏</div>
+                    <div class="attr-value">{{ item.view }}</div>
+                </div>
+                <div class="attr">
+                    <div class="attr-name">实用</div>
+                    <div class="attr-value">{{ item.practical }}</div>
+                </div>
+                <div class="attr">
+                    <div class="attr-name">坚固</div>
+                    <div class="attr-value">{{ item.hard }}</div>
+                </div>
+                <div class="attr">
+                    <div class="attr-name">风水</div>
+                    <div class="attr-value">{{ item.geomantic }}</div>
+                </div>
+                <div class="attr">
+                    <div class="attr-name">趣味</div>
+                    <div class="attr-value">{{ item.interesting }}</div>
+                </div>
+            </div>
+
+            <div class="footer">
+                建筑适配：{{ item.architecture }}　
+                {% if item.produce %}
+                    ｜制作门派：{{ item.produce }}
+                {% else %}
+                    ｜不可制作
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+

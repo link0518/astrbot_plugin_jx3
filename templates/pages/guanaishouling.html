@@ -1,0 +1,45 @@
+{# template-title: 关隘首领 #}
+
+
+<div class="container">
+    <h1>关隘首领</h1>
+    <div class="meta">更新时间：{{ update_time }}</div>
+
+    {% for group in groups %}
+    <div class="section">
+        <div class="section-title">{{ group.server }}</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>归属</th>
+                    <th>关隘名称</th>
+                    <th>状态</th>
+                    <th>开始时间</th>
+                    <th>结束时间</th>
+                    <th>剩余时间</th>
+                </tr>
+            </thead>
+
+            <tbody>
+            {% for item in group.records %}
+                <tr
+                    {% if item.camp_name == '恶人谷' %}
+                        class="camp-eren"
+                    {% elif item.camp_name == '浩气盟' %}
+                        class="camp-haoqi"
+                    {% endif %}
+                >
+                    <td class="camp-col">{{ item.camp_name }}</td>
+                    <td class="castle-col">{{ item.castle }}</td>
+                    <td class="status-col">{{ item.str_status }}</td>
+                    <td class="time-col">{{ item.start_time }}</td>
+                    <td class="time-col">{{ item.end_time }}</td>
+                    <td class="remain-col">{{ item.remaining_time }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+</div>
+

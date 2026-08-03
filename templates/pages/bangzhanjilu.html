@@ -1,0 +1,32 @@
+{# template-title: 帮战记录 #}
+
+
+<div class="container">
+    <h1>帮战记录</h1>
+    <div class="meta">{{ server }} ｜ 更新时间：{{ update_time }}</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>宣战帮会</th>
+                <th>应战帮会</th>
+                <th>开始时间</th>
+                <th>持续时间</th>
+                <th>结束时间</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for item in items %}
+            <tr>
+                <td class="tong-col">{{ item.declaringName }}</td>
+                <td class="tong-col">{{ item.acceptingName }}</td>
+                <td class="time-col">{{ item.startTime }}</td>
+                <td class="duration-col">{{ item.durationSeconds }}</td>
+                <td class="time-col">{{ item.endTime }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+

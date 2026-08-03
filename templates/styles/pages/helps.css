@@ -1,0 +1,238 @@
+.help-page {
+    position: relative;
+    padding: 22px;
+    overflow: hidden;
+    border: 1px solid rgba(224, 200, 141, 0.72);
+    border-radius: 20px;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.035), transparent 24%),
+        rgba(8, 27, 49, 0.92);
+    box-shadow: inset 0 0 32px rgba(126, 161, 216, 0.06);
+}
+
+.help-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 18px;
+}
+
+.top-name {
+    color: #fff0c8;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.top-summary {
+    margin-top: 5px;
+    font-size: 14px;
+}
+
+.top-desc {
+    font-size: 14px;
+    line-height: 1.75;
+    text-align: right;
+}
+
+.section-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+}
+
+.section {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.section.span-2 {
+    grid-column: span 2;
+}
+
+.section.span-3 {
+    grid-column: 1 / -1;
+}
+
+.section-title {
+    padding: 11px 15px;
+    border-bottom: 1px solid rgba(220, 199, 145, 0.3);
+    background: linear-gradient(90deg, rgba(198, 165, 93, 0.24), rgba(105, 138, 194, 0.08));
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+}
+
+.section-body {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0 18px;
+    padding: 7px 13px 10px;
+}
+
+.span-2 .section-body {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.feature {
+    display: grid;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 9px;
+    align-items: start;
+    min-width: 0;
+    padding: 8px 0;
+    border-bottom: 1px dashed rgba(186, 205, 239, 0.15);
+}
+
+.feature-name {
+    padding-top: 3px;
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 700;
+}
+
+.commands {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-width: 0;
+}
+
+.command {
+    display: inline-block;
+    padding: 3px 7px;
+    border: 1px solid rgba(157, 184, 228, 0.22);
+    border-radius: 5px;
+    font-size: 12px;
+    line-height: 1.5;
+    word-break: break-all;
+}
+
+.ranking-section .section-body {
+    display: block;
+}
+
+.ranking-feature {
+    grid-template-columns: 88px minmax(0, 1fr);
+}
+
+.ranking-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+}
+
+.ranking-list .command {
+    width: 100%;
+}
+
+.trial-feature {
+    margin-top: 4px;
+}
+
+.full-row {
+    grid-column: 1 / -1;
+}
+
+.push-section .section-body {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.section--danger {
+    border-color: rgba(213, 106, 99, 0.54) !important;
+}
+
+.section--danger .section-title {
+    color: #ffd6d3;
+    background: linear-gradient(90deg, rgba(176, 65, 65, 0.3), rgba(105, 138, 194, 0.06));
+}
+
+.section--success {
+    border-color: rgba(98, 188, 146, 0.52) !important;
+}
+
+.section--success .section-title {
+    color: #d8ffeb;
+    background: linear-gradient(90deg, rgba(39, 148, 103, 0.28), rgba(105, 138, 194, 0.06));
+}
+
+.help-footer {
+    margin-top: 17px;
+    padding: 13px 16px 2px;
+    border-top: 1px solid rgba(216, 195, 140, 0.24);
+    font-size: 13px;
+    line-height: 1.8;
+    text-align: center;
+}
+
+.help-footer strong {
+    color: #e6d4a4;
+}
+
+@media (max-width: 1180px) {
+    .section-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .section.span-3 {
+        grid-column: 1 / -1;
+    }
+
+    .section.span-2 {
+        grid-column: span 2;
+    }
+
+    .ranking-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .push-section .section-body {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .help-page {
+        padding: 13px;
+        border-radius: 14px;
+    }
+
+    .help-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .top-name {
+        font-size: 20px;
+    }
+
+    .top-desc {
+        text-align: left;
+    }
+
+    .section-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section.span-2,
+    .section.span-3 {
+        grid-column: span 1;
+    }
+
+    .span-2 .section-body,
+    .push-section .section-body {
+        grid-template-columns: 1fr;
+    }
+
+    .feature,
+    .ranking-feature {
+        grid-template-columns: 78px minmax(0, 1fr);
+    }
+
+    .ranking-list {
+        grid-template-columns: 1fr;
+    }
+}

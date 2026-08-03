@@ -1,0 +1,30 @@
+{# template-title: 日常预测 #}
+
+
+<div class="container">
+    <h1>日常预测</h1>
+
+    <div class="calendar">
+        <!-- 星期头 -->
+        {% for w in ["周一","周二","周三","周四","周五","周六","周日"] %}
+        <div class="week">{{ w }}</div>
+        {% endfor %}
+
+        <!-- 日程卡片 -->
+        {% for m in items %}
+        <div class="
+            card
+            {% if m.compare == '过去' %}past{% endif %}
+            {% if m.compare == '今天' %}today{% endif %}
+            {% if m.compare == '将来' %}future{% endif %}
+        ">
+            {% if m.en %}
+                <div class="date">{{ m.date }}</div>
+                <div class="line">日常：{{ m.war }}</div>
+                <div class="line">战场：{{ m.battle }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+

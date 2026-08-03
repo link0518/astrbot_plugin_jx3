@@ -1,0 +1,35 @@
+{# template-title: 奇穴详情 #}
+
+
+<div class="container">
+    <h1>{{ name }} 奇穴详情</h1>
+    <div class="meta">更新时间：{{ update_time }}</div>
+
+    {% for group in groups %}
+    <div class="section">
+        <div class="section-title">{{ group['title'] }}</div>
+        <div class="cards">
+            {% for item in group.talents %}
+            <div class="card">
+                {% if item['icon'] %}
+                <img class="icon" src="{{ item['icon'] }}" alt="{{ item['name'] }}">
+                {% else %}
+                <div class="icon"></div>
+                {% endif %}
+                <div>
+                    <div class="head">
+                        <span class="name">{{ item['name'] }}</span>
+                        <span class="tag">{{ item['class_text'] }}</span>
+                        {% if item['interval'] %}
+                        <span class="interval">{{ item['interval'] }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="desc">{{ item['desc'] }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+

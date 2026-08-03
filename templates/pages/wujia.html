@@ -1,0 +1,481 @@
+{# template-title: {{ name }} - 万宝楼行情 #}
+
+
+{#
+    先根据分组名称识别对应数据。
+
+    查询区服不固定使用 list[3]：
+    除电信区、双线区、无界区、公示期、出售期外，
+    其他分组都视为查询区服。
+
+    即使某个分组不存在，对应表格区域仍然会显示。
+#}
+
+{% set ns = namespace(
+    notice=none,
+    sale=none,
+    query=none,
+    telecom=none,
+    dual=none,
+    boundless=none
+) %}
+
+{% for group in list %}
+    {% if group.name == "公示期" %}
+        {% set ns.notice = group %}
+
+    {% elif group.name == "出售期" %}
+        {% set ns.sale = group %}
+
+    {% elif group.name == "电信区" %}
+        {% set ns.telecom = group %}
+
+    {% elif group.name == "双线区" %}
+        {% set ns.dual = group %}
+
+    {% elif group.name == "无界区" %}
+        {% set ns.boundless = group %}
+
+    {% elif ns.query is none %}
+        {% set ns.query = group %}
+    {% endif %}
+{% endfor %}
+
+
+<div class="container">
+
+    <h1>
+        {{ name }}
+        {% if alias %}
+            （{{ alias }}）
+        {% endif %}
+    </h1>
+
+    {% if view %}
+    <img
+        src="{{ view }}"
+        alt="{{ name }}"
+        class="goods-image"
+    >
+    {% endif %}
+
+    {% if desc %}
+    <p class="goods-desc">{{ desc }}</p>
+    {% endif %}
+
+    <div class="meta-row">
+        <span>分类：{{ category }}</span>
+        <span>发售时间：{{ date }}</span>
+        <span class="price">参考价格：{{ retail }} 元</span>
+    </div>
+
+    <div class="table-wrapper">
+
+        <!-- ==================================================
+             1. 万宝楼公示
+             区域始终保留
+        =================================================== -->
+
+        <div class="table-card notice">
+            <div class="table-title">万宝楼公示</div>
+
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>区服</th>
+                            <th>服务器</th>
+                            <th>价格</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% if ns.notice and ns.notice.list %}
+
+                            {% for item in ns.notice.list %}
+                            <tr>
+                                <td>{{ item.date }}</td>
+
+                                <td>{{ item.zone }}</td>
+
+                                <td class="server-col">
+                                    {{ item.server }}
+                                </td>
+
+                                <td class="price-col">
+                                    {{ item.value }} 元
+                                </td>
+
+                                <td class="server-col">
+                                    公示
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+                        {% else %}
+
+                            <tr>
+                                <td colspan="5" class="empty-row">
+                                    暂无公示数据
+                                </td>
+                            </tr>
+
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- ==================================================
+             2. 万宝楼在售
+             区域始终保留
+        =================================================== -->
+
+        <div class="table-card sale">
+            <div class="table-title">万宝楼在售</div>
+
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>区服</th>
+                            <th>服务器</th>
+                            <th>价格</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% if ns.sale and ns.sale.list %}
+
+                            {% for item in ns.sale.list %}
+                            <tr>
+                                <td>{{ item.date }}</td>
+
+                                <td>{{ item.zone }}</td>
+
+                                <td class="server-col">
+                                    {{ item.server }}
+                                </td>
+
+                                <td class="price-col">
+                                    {{ item.value }} 元
+                                </td>
+
+                                <td class="server-col">
+                                    在售
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+                        {% else %}
+
+                            <tr>
+                                <td colspan="5" class="empty-row">
+                                    暂无在售数据
+                                </td>
+                            </tr>
+
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- ==================================================
+             3. 查询区服
+             没有查询区服时，表格仍然保留
+        =================================================== -->
+
+        <div class="table-card query">
+            <div class="table-title">
+                查询区服
+                {% if ns.query %}
+                    ：{{ ns.query.name }}
+                {% endif %}
+            </div>
+
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>服务器</th>
+                            <th>价格</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% if ns.query and ns.query.list %}
+
+                            {% for item in ns.query.list %}
+                            <tr>
+                                <td>{{ item.date }}</td>
+
+                                <td class="server-col">
+                                    {{ item.server }}
+                                </td>
+
+                                <td class="price-col">
+                                    {{ item.value }} 元
+                                </td>
+
+                                <td class="server-col">
+                                    {% if item.sale == 1 %}
+                                        出售
+                                    {% elif item.sale == 2 %}
+                                        收购
+                                    {% elif item.sale == 3 %}
+                                        想出
+                                    {% elif item.sale == 4 %}
+                                        想收
+                                    {% elif item.sale == 5 %}
+                                        成交
+                                    {% elif item.sale == 6 %}
+                                        正出
+                                    {% elif item.sale == 7 %}
+                                        公示
+                                    {% else %}
+                                        未知
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+                        {% else %}
+
+                            <tr>
+                                <td colspan="4" class="empty-row">
+                                    暂无查询区服数据
+                                </td>
+                            </tr>
+
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- ==================================================
+             4. 电信区
+             区域始终保留
+        =================================================== -->
+
+        <div class="table-card">
+            <div class="table-title">电信区</div>
+
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>服务器</th>
+                            <th>价格</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% if ns.telecom and ns.telecom.list %}
+
+                            {% for item in ns.telecom.list %}
+                            <tr>
+                                <td>{{ item.date }}</td>
+
+                                <td class="server-col">
+                                    {{ item.server }}
+                                </td>
+
+                                <td class="price-col">
+                                    {{ item.value }} 元
+                                </td>
+
+                                <td class="server-col">
+                                    {% if item.sale == 1 %}
+                                        出售
+                                    {% elif item.sale == 2 %}
+                                        收购
+                                    {% elif item.sale == 3 %}
+                                        想出
+                                    {% elif item.sale == 4 %}
+                                        想收
+                                    {% elif item.sale == 5 %}
+                                        成交
+                                    {% elif item.sale == 6 %}
+                                        正出
+                                    {% elif item.sale == 7 %}
+                                        公示
+                                    {% else %}
+                                        未知
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+                        {% else %}
+
+                            <tr>
+                                <td colspan="4" class="empty-row">
+                                    暂无电信区数据
+                                </td>
+                            </tr>
+
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- ==================================================
+             5. 双线区
+             区域始终保留
+        =================================================== -->
+
+        <div class="table-card">
+            <div class="table-title">双线区</div>
+
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>服务器</th>
+                            <th>价格</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% if ns.dual and ns.dual.list %}
+
+                            {% for item in ns.dual.list %}
+                            <tr>
+                                <td>{{ item.date }}</td>
+
+                                <td class="server-col">
+                                    {{ item.server }}
+                                </td>
+
+                                <td class="price-col">
+                                    {{ item.value }} 元
+                                </td>
+
+                                <td class="server-col">
+                                    {% if item.sale == 1 %}
+                                        出售
+                                    {% elif item.sale == 2 %}
+                                        收购
+                                    {% elif item.sale == 3 %}
+                                        想出
+                                    {% elif item.sale == 4 %}
+                                        想收
+                                    {% elif item.sale == 5 %}
+                                        成交
+                                    {% elif item.sale == 6 %}
+                                        正出
+                                    {% elif item.sale == 7 %}
+                                        公示
+                                    {% else %}
+                                        未知
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+                        {% else %}
+
+                            <tr>
+                                <td colspan="4" class="empty-row">
+                                    暂无双线区数据
+                                </td>
+                            </tr>
+
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- ==================================================
+             6. 无界区
+             区域始终保留
+        =================================================== -->
+
+        <div class="table-card">
+            <div class="table-title">无界区</div>
+
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>时间</th>
+                            <th>服务器</th>
+                            <th>价格</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% if ns.boundless and ns.boundless.list %}
+
+                            {% for item in ns.boundless.list %}
+                            <tr>
+                                <td>{{ item.date }}</td>
+
+                                <td class="server-col">
+                                    {{ item.server }}
+                                </td>
+
+                                <td class="price-col">
+                                    {{ item.value }} 元
+                                </td>
+
+                                <td class="server-col">
+                                    {% if item.sale == 1 %}
+                                        出售
+                                    {% elif item.sale == 2 %}
+                                        收购
+                                    {% elif item.sale == 3 %}
+                                        想出
+                                    {% elif item.sale == 4 %}
+                                        想收
+                                    {% elif item.sale == 5 %}
+                                        成交
+                                    {% elif item.sale == 6 %}
+                                        正出
+                                    {% elif item.sale == 7 %}
+                                        公示
+                                    {% else %}
+                                        未知
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+
+                        {% else %}
+
+                            <tr>
+                                <td colspan="4" class="empty-row">
+                                    暂无无界区数据
+                                </td>
+                            </tr>
+
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+

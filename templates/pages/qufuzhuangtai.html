@@ -1,0 +1,45 @@
+{# template-title: 区服状态面板 #}
+
+
+    <!-- 无界区 -->
+    <div class="section">
+        <div class="section-title">无界区（{{ server_wj|length if server_wj else 0 }}）</div>
+        {% if server_wj %}
+        <div class="card-container">
+            {% for item in server_wj %}
+            <div class="card {{ item.status }}">{{ item.server }}</div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty">暂无数据</div>
+        {% endif %}
+    </div>
+
+    <!-- 电信区 -->
+    <div class="section">
+        <div class="section-title">电信区（{{ server_dx|length if server_dx else 0 }}）</div>
+        {% if server_dx %}
+        <div class="card-container">
+            {% for item in server_dx %}
+            <div class="card {{ item.status }}">{{ item.server }}</div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty">暂无数据</div>
+        {% endif %}
+    </div>
+
+    <!-- 双线区 -->
+    <div class="section">
+        <div class="section-title">双线区（{{ server_sx|length if server_sx else 0 }}）</div>
+        {% if server_sx %}
+        <div class="card-container">
+            {% for item in server_sx %}
+            <div class="card {{ item.status }}">{{ item.server }}</div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty">暂无数据</div>
+        {% endif %}
+    </div>
+

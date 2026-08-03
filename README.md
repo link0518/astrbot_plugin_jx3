@@ -22,7 +22,7 @@
 - 支持本地 SQLite 避雷记录的增删改查。
 - 支持开服、新闻、刷马、赤兔四类定时轮询与会话推送。
 - 复用 `aiohttp.ClientSession`，统一处理 GET、POST、JSON、图片和分页请求。
-- 内置 46 个 HTML 模板，以及通用、门派/心法和奇遇图标资源。
+- 内置 46 个页面片段，通过公共布局与样式在本地组装为完整 HTML，并附带通用、门派/心法和奇遇图标资源。
 
 ## 数据来源
 
@@ -412,6 +412,15 @@ flowchart LR
 
 图片默认使用质量 `100`、完整页面截图和普通设备缩放级别。模板可通过 `icons.img`、`icons.sect`、`icons.serendipity` 访问通用、门派/心法和奇遇图标。
 
+AstrBot 的渲染接口接收完整 HTML 字符串，因此插件不会依赖渲染端读取本地 CSS 文件。`core/template.py` 会异步读取并缓存公共布局、设计变量、基础样式、组件样式、页面专属样式和页面片段，组装完成后再把单个完整字符串交给渲染器。这样既满足渲染接口约束，也避免在 46 个页面中重复维护文档骨架和通用样式。
+
+样式职责如下：
+
+- `styles/tokens.css`：颜色、间距、圆角、字体和各页面内容宽度。
+- `styles/base.css`：页面背景、外框、基础排版和窄屏规则。
+- `styles/components.css`：信息面板、表格、状态、进度条、标签等跨页面组件。
+- `styles/pages/*.css`：只保留列宽、网格、卡片结构等页面独有布局。
+
 ### 6. 本地数据与缓存
 
 插件使用两个 SQLite 文件：
@@ -456,13 +465,23 @@ astrbot_plugin_jx3/
 │   ├── async_task.py        # APScheduler 后台推送
 │   ├── bilei_data.py        # 避雷数据增删改查
 │   ├── sqlite.py            # aiosqlite 通用封装
-│   └── fun_basic.py         # 模板、图标、时间和货币格式化工具
-└── templates/
-    ├── helps.html           # 内置功能帮助图
-    ├── *.html               # 各图片查询模板
-    ├── img/                 # 通用图片资源
-    ├── sect/                # 门派与心法图标
-    └── serendipity/         # 奇遇图标
+│   ├── fun_basic.py         # 图标、时间和货币格式化工具
+│   └── template.py          # 模板组合、异步读取与内存缓存
+├── templates/
+│   ├── layouts/
+│   │   └── base.html        # 唯一的完整 HTML 文档骨架
+│   ├── pages/
+│   │   └── *.html           # 46 个页面内容与 Jinja2 数据绑定
+│   ├── styles/
+│   │   ├── tokens.css       # 设计变量与页面宽度
+│   │   ├── base.css         # 全局背景、外框和排版
+│   │   ├── components.css   # 公共组件样式
+│   │   └── pages/*.css      # 页面独有布局
+│   ├── img/                 # 通用图片资源
+│   ├── sect/                # 门派与心法图标
+│   └── serendipity/         # 奇遇图标
+└── tests/
+    └── test_template_system.py  # 46 个模板的组合、渲染与安全检查
 ```
 
 ## 新增功能开发
@@ -471,10 +490,10 @@ astrbot_plugin_jx3/
 
 1. 根据数据来源选择 `JX3APIService`、`AIJX3Service` 或 `JX3BOXService`。
 2. 在业务服务中新增异步方法，复用 `APIClient`，完成请求、空数据检查、字段整理和标准返回对象构建。
-3. 需要图片输出时新增或复用 `templates/*.html`；不要在业务层直接拼装最终图片消息。
+3. 需要图片输出时新增或复用 `templates/pages/*.html`，并按需添加同名的 `templates/styles/pages/*.css`；通用视觉规则应进入公共样式层，不要在业务层拼装最终图片消息。
 4. 在 `MessageBuilder` 中增加薄包装方法，选择文本、HTML 图片、远程图片、消息链或会话处理器。
 5. 在 `main.py` 的 `command_map` 注册触发词。
-6. 同步更新 `templates/helps.html`、README 和 CHANGELOG，确保参数顺序以包装方法签名为准。
+6. 同步更新 `templates/pages/helps.html`、README 和 CHANGELOG，确保参数顺序以包装方法签名为准。
 7. 如果新增运行时数据，使用参数化 SQL 并在初始化阶段创建表；如果新增敏感配置，同时更新 `_conf_schema.json`。
 8. 至少执行语法检查，并在带有效凭据的 AstrBot 环境中手工验证成功、空数据、上游异常和参数错误路径。
 
@@ -482,15 +501,16 @@ astrbot_plugin_jx3/
 
 ```bash
 python -m compileall -q .
+python -m unittest tests.test_template_system -v
 ```
 
-仓库当前没有自动化测试套件，`compileall` 只能检查 Python 语法，不能替代真实 AstrBot 消息、HTML 渲染和外部接口联调。
+模板测试会检查 46 个页面片段与同名样式是否一一对应、能否组合为完整文档、Jinja2 是否能够完成基础渲染，以及模板路径是否能阻止目录穿越。它和 `compileall` 仍不能替代带真实数据的 AstrBot 消息、HTML 渲染和外部接口联调。
 
 ## 当前版本状态
 
 以下内容是对 v3.1 当前源码的静态核对结果，部署和二次开发前应注意：
 
-1. `command_map` 实际注册 108 个触发词；`templates/helps.html` 标注 105 条，并遗漏 `功能`、`小药`、`骗子`、`开服推送`。帮助图中的 `开服监控` 不是当前有效触发词。
+1. `command_map` 实际注册 108 个触发词；`templates/pages/helps.html` 标注 105 条，并遗漏 `功能`、`小药`、`骗子`、`开服推送`。帮助图中的 `开服监控` 不是当前有效触发词。
 2. 默认服务器配置会用于四类后台任务，并只在 `烟花` 查询中通过 `serverdefault()` 显式补齐；其他可选服务器参数会原样传为空字符串。
 3. `JX3BOXService._get_achievement_base_data()` 当前调用了该类中未定义的 `_base_request()`，因此 `资历` 在用户选择分类后无法完成基础数据加载。
 4. 刷马和赤兔后台任务当前调用了 `JX3APIService` 中不存在的 `shuamamsg()`，启用 `smts` 或 `ctts` 后，定时回调会记录执行异常。

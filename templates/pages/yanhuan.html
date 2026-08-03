@@ -1,0 +1,34 @@
+{# template-title: 烟花记录 #}
+
+
+<div class="container">
+    <h1>烟花记录</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>服务器</th>
+                <th>烟花名称</th>
+                <th>使用地点</th>
+                <th>释放角色</th>
+                <th>接收角色</th>
+                <th>释放时间</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for m in list %}
+            <tr>
+                <td>{{ m.server }}</td>
+                <td>{{ m.firework }}</td>
+                <td>{{ m.mapName }}</td>
+                <td>{{ m.sender }}</td>
+                <td>{{ m.receiver }}</td>
+                <td>{{ m.time }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+

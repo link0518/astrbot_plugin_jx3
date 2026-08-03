@@ -1,0 +1,464 @@
+{# template-title: {{ name }} - 制作成本计算 #}
+
+
+{# ==========================================================
+   游戏币格式化宏
+
+   接口价格单位按铜处理：
+   100 铜 = 1 银
+   100 银 = 1 金
+========================================================== #}
+
+{% macro format_money(value) %}
+    {% set amount = value|default(0, true)|int %}
+    {% set gold = amount // 10000 %}
+    {% set silver = (amount % 10000) // 100 %}
+    {% set copper = amount % 100 %}
+
+    <span class="money">
+        {% if gold > 0 %}
+            <span class="money-gold">{{ gold }}金</span>
+        {% endif %}
+
+        {% if silver > 0 or gold > 0 %}
+            <span class="money-silver">{{ silver }}银</span>
+        {% endif %}
+
+        <span class="money-copper">{{ copper }}铜</span>
+    </span>
+
+    <span class="raw-price">
+        {{ "{:,}".format(amount) }} 铜
+    </span>
+{% endmacro %}
+
+
+<div class="container">
+
+    <header class="page-header">
+        <h1 class="page-title">制作成本计算</h1>
+
+        <p class="page-subtitle">
+            根据交易行实时行情与商店固定价格计算制作材料成本
+        </p>
+    </header>
+
+
+    <!-- ==================================================
+         主卡片
+    =================================================== -->
+
+    <section class="main-card">
+
+        <div class="main-card-top">
+
+            <div class="main-icon-wrapper">
+                <div class="main-icon">
+                    <img
+                        src="https://icon.jx3box.com/icon/{{ iconId }}.png"
+                        alt="{{ name }}"
+                    >
+                </div>
+            </div>
+
+
+            <div class="main-info">
+
+                <div class="main-name-row">
+                    <h2 class="main-name">{{ name }}</h2>
+
+                    <span class="quality-badge quality-{{ quality }}">
+                        品质 {{ quality }}
+                    </span>
+                </div>
+
+
+                {% if tipInfo %}
+                <ul class="tip-list">
+                    {% for tip in tipInfo %}
+                    <li>{{ tip.text }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+
+                <div class="stat-grid">
+
+                    <div class="stat-item">
+                        <div class="stat-label">使用等级</div>
+                        <div class="stat-value">{{ level }} 级</div>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-label">技艺经验</div>
+                        <div class="stat-value">+{{ exp }}</div>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-label">精力消耗</div>
+                        <div class="stat-value">{{ costVigor }}</div>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-label">制作产出</div>
+                        <div class="stat-value">
+                            {{ createItemMin }}～{{ createItemMax }} 个
+                        </div>
+                    </div>
+
+                    <div class="stat-item">
+                        <div class="stat-label">物品编号</div>
+                        <div class="stat-value">{{ createItemIndex }}</div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ==================================================
+             价格汇总
+        =================================================== -->
+
+        <div class="summary-section">
+
+            <div class="summary-panel">
+
+                <div class="summary-title market">
+                    <span>成品市场价格</span>
+
+                    <span class="summary-count">
+                        样本 {{ price.sampleSize }} 条
+                    </span>
+                </div>
+
+                <div class="price-grid">
+
+                    <div class="price-box lowest">
+                        <div class="price-box-label">最低价格</div>
+
+                        <div class="price-box-value">
+                            {{ format_money(price.lowestPrice) }}
+                        </div>
+                    </div>
+
+                    <div class="price-box average">
+                        <div class="price-box-label">平均价格</div>
+
+                        <div class="price-box-value">
+                            {{ format_money(price.avgPrice) }}
+                        </div>
+                    </div>
+
+                    <div class="price-box highest">
+                        <div class="price-box-label">最高价格</div>
+
+                        <div class="price-box-value">
+                            {{ format_money(price.highestPrice) }}
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="summary-footer">
+                    <span>
+                        产出数量：{{ createItemMin }}～{{ createItemMax }} 个
+                    </span>
+
+                    <span>
+                        更新时间：
+                        <span data-unix="{{ price.updatedAt }}">
+                            {{ price.updatedAt }}
+                        </span>
+                    </span>
+                </div>
+
+            </div>
+
+
+            <div class="summary-panel">
+
+                <div class="summary-title cost">
+                    <span>制作材料总成本</span>
+
+                    <span class="summary-count">
+                        共 {{ items|length }} 种材料
+                    </span>
+                </div>
+
+                <div class="price-grid">
+
+                    <div class="price-box lowest">
+                        <div class="price-box-label">最低采购成本</div>
+
+                        <div class="price-box-value">
+                            {{ format_money(total.lowestTotal) }}
+                        </div>
+                    </div>
+
+                    <div class="price-box average">
+                        <div class="price-box-label">平均采购成本</div>
+
+                        <div class="price-box-value">
+                            {{ format_money(total.avgTotal) }}
+                        </div>
+                    </div>
+
+                    <div class="price-box highest">
+                        <div class="price-box-label">最高采购成本</div>
+
+                        <div class="price-box-value">
+                            {{ format_money(total.highestTotal) }}
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="subtotal-row">
+                    <span class="subtotal-label">接口成本小计</span>
+
+                    <span class="subtotal-value">
+                        {{ format_money(total.subtotal) }}
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ==================================================
+         合成材料
+    =================================================== -->
+
+    <section class="material-section">
+
+        <div class="section-header">
+            <h2 class="section-title">合成所需物品</h2>
+
+            <div class="section-desc">
+                交易行材料按市场行情计算，商店材料按固定单价计算
+            </div>
+        </div>
+
+
+        <div class="material-grid">
+
+            {% for item in items %}
+
+            <article class="material-card">
+
+                <div class="material-card-header">
+
+                    <div class="material-icon">
+                        <img
+                            src="https://icon.jx3box.com/icon/{{ item.iconId }}.png"
+                            alt="{{ item.name }}"
+                            loading="lazy"
+                        >
+                    </div>
+
+
+                    <div class="material-info">
+
+                        <h3 class="material-name">
+                            {{ item.name }}
+                        </h3>
+
+                        <div class="material-meta">
+
+                            {% if item.type == "trading" %}
+                                <span class="material-tag tag-trading">
+                                    交易行
+                                </span>
+                            {% elif item.type == "store" %}
+                                <span class="material-tag tag-store">
+                                    商店购买
+                                </span>
+                            {% else %}
+                                <span class="material-tag">
+                                    {{ item.type }}
+                                </span>
+                            {% endif %}
+
+                            <span class="material-tag tag-quality-{{ item.quality }}">
+                                品质 {{ item.quality }}
+                            </span>
+
+                            {% if item.genre is not none %}
+                                <span class="material-tag">
+                                    分类 {{ item.genre }}
+                                </span>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="material-quantity">
+                        <div class="quantity-label">需求数量</div>
+
+                        <div class="quantity-value">
+                            × {{ item.quantity }}
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div class="material-card-body">
+
+                    {% if item.type == "trading" %}
+
+                        <div class="material-price-grid">
+
+                            <div class="material-price-item">
+                                <div class="material-price-label">
+                                    最低单价
+                                </div>
+
+                                <div class="material-price-value">
+                                    {{ format_money(item.price.lowestPrice) }}
+                                </div>
+                            </div>
+
+                            <div class="material-price-item">
+                                <div class="material-price-label">
+                                    平均单价
+                                </div>
+
+                                <div class="material-price-value">
+                                    {{ format_money(item.price.avgPrice) }}
+                                </div>
+                            </div>
+
+                            <div class="material-price-item">
+                                <div class="material-price-label">
+                                    最高单价
+                                </div>
+
+                                <div class="material-price-value">
+                                    {{ format_money(item.price.highestPrice) }}
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <div class="material-total">
+                            <span class="material-total-label">
+                                最低采购小计
+                            </span>
+
+                            <span class="material-total-value">
+                                {{ format_money(
+                                    item.price.lowestPrice * item.quantity
+                                ) }}
+                            </span>
+                        </div>
+
+
+                        <div class="material-footer">
+                            <span>
+                                市场样本：{{ item.price.sampleSize }} 条
+                            </span>
+
+                            <span>
+                                更新时间：
+                                <span data-unix="{{ item.price.updatedAt }}">
+                                    {{ item.price.updatedAt }}
+                                </span>
+                            </span>
+                        </div>
+
+
+                    {% elif item.type == "store" %}
+
+                        <div class="store-price-box">
+
+                            <div class="store-price-item">
+                                <div class="store-price-label">
+                                    商店单价
+                                </div>
+
+                                <div class="store-price-value">
+                                    {{ format_money(item.price) }}
+                                </div>
+                            </div>
+
+                            <div class="store-price-item">
+                                <div class="store-price-label">
+                                    采购小计
+                                </div>
+
+                                <div class="store-price-value">
+                                    {{ format_money(
+                                        item.price * item.quantity
+                                    ) }}
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                    {% else %}
+
+                        <div class="material-total">
+                            <span class="material-total-label">
+                                暂无价格计算方式
+                            </span>
+
+                            <span class="material-total-value">
+                                -
+                            </span>
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </article>
+
+            {% else %}
+
+            <div class="empty-card">
+                暂无合成材料数据
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<script>
+    document.querySelectorAll("[data-unix]").forEach(function (element) {
+        const timestamp = Number(element.dataset.unix);
+
+        if (!Number.isFinite(timestamp) || timestamp <= 0) {
+            element.textContent = "未知";
+            return;
+        }
+
+        const date = new Date(timestamp * 1000);
+
+        element.textContent = date.toLocaleString("zh-CN", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false
+        });
+    });
+</script>
+

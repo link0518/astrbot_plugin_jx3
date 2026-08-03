@@ -1,0 +1,36 @@
+{# template-title: 名剑统计 #}
+
+
+<div class="container">
+    <h1>名剑统计(前1000) · {{ mode }}</h1>
+    <div class="meta">更新时间：{{ update_time }}</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>门派</th>
+                <th>本周数量</th>
+                <th>上周数量</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for m in items %}
+            <tr>
+                <td>
+                    <div class="school">
+                        {% if icons.sect.get(m.forceName) %}
+                        <img class="school-icon" src="{{ icons.sect[m.forceName] }}" alt="{{ m.forceName }}">
+                        {% endif %}
+                        <span>{{ m.forceName }}</span>
+                    </div>
+                </td>
+                <td class="num-col">{{ m.thisWeek }}</td>
+                <td class="num-col">{{ m.lastWeek }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+

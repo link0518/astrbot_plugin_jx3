@@ -1,0 +1,26 @@
+h2 {
+        margin-top: 40px;
+        margin-bottom: 12px;
+        color: #d93939;
+        font-size: 26px;
+        font-weight: 700;
+    }table {
+        margin-bottom: 20px;
+    }th, td {
+        text-align: left;
+    }
+
+    .lines {
+        color: #555;
+        font-weight: 600;
+    }
+
+    .price {
+        color: #1e6bd6;
+        font-weight: 700;
+    }
+
+    .empty {
+        color: #999;
+        font-style: italic;
+    }

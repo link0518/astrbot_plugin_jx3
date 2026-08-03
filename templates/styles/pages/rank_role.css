@@ -1,0 +1,61 @@
+.meta {
+        margin-bottom: 24px;
+        color: #7a7f99;
+        font-size: 16px;
+        text-align: center;
+    }table {
+        text-align: left;
+    }th, td {
+        vertical-align: middle;
+    }
+
+    .rank-col,
+    .level-col,
+    .camp-col,
+    .score-col {
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    .rank-col {
+        width: 56px;
+        color: #d93939;
+        font-weight: 800;
+    }
+
+    .force {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 108px;
+        font-weight: 700;
+        color: #333;
+        white-space: nowrap;
+    }
+
+    .force-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        object-fit: contain;
+        flex: 0 0 auto;
+    }
+
+    .role-col {
+        min-width: 120px;
+        font-weight: 700;
+        color: #333;
+        white-space: nowrap;
+    }
+
+    .tong-col {
+        max-width: 260px;
+        word-break: break-word;
+        color: #333;
+    }
+
+    .score-col {
+        color: #d93939;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+    }

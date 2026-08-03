@@ -1,0 +1,32 @@
+{# template-title: 掉落记录 #}
+
+
+<div class="container">
+    <h1>{{ name }} 掉落记录</h1>
+    <div class="meta">{{ server }} · 数量：{{ limit }} · 更新时间：{{ update_time }}</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>物品名称</th>
+                <th>服务器</th>
+                <th>地点</th>
+                <th>角色名称</th>
+                <th>时间</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for item in items %}
+            <tr>
+                <td class="item-col">{{ item.itemName }}</td>
+                <td class="server-col">{{ item.server }}</td>
+                <td class="map-col">{{ item.mapName }}</td>
+                <td class="role-col">{{ item.roleName }}</td>
+                <td class="time-col">{{ item.time }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+

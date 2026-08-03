@@ -1,0 +1,77 @@
+{# template-title: 聊天记录 #}
+
+
+<div class="container">
+    <h1>聊天记录</h1>
+
+    <div class="meta">
+        共查询到 {{ total | default(0, true) }} 条聊天记录
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="role-col">角色</th>
+                <th class="channel-col">频道</th>
+                <th class="message-col">消息</th>
+                <th class="time-col">时间</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% if list %}
+            {% for m in list %}
+                <tr>
+                    <td class="role-col">
+                        {{ m["roleName"] | default("未知角色", true) }}
+                    </td>
+
+                    <td class="channel-col">
+                        {% if m["channel"] == "世界" %}
+                            <span class="channel-tag channel-world">
+                                {{ m["channel"] }}
+                            </span>
+
+                        {% elif m["channel"] == "门派" %}
+                            <span class="channel-tag channel-school">
+                                {{ m["channel"] }}
+                            </span>
+
+                        {% elif m["channel"] == "团队" %}
+                            <span class="channel-tag channel-team">
+                                {{ m["channel"] }}
+                            </span>
+
+                        {% elif m["channel"] == "地图" %}
+                            <span class="channel-tag channel-map">
+                                {{ m["channel"] }}
+                            </span>
+
+                        {% else %}
+                            <span class="channel-tag channel-other">
+                                {{ m["channel"] | default("未知", true) }}
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td class="message-col">
+                        {{ m["message"] | default("暂无消息内容", true) }}
+                    </td>
+
+                    <td class="time-col">
+                        {{ m["time"] | default("-", true) }}
+                    </td>
+                </tr>
+            {% endfor %}
+
+        {% else %}
+            <tr class="empty-row">
+                <td colspan="4">
+                    暂未查询到聊天记录
+                </td>
+            </tr>
+        {% endif %}
+        </tbody>
+    </table>
+</div>
+

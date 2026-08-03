@@ -1,0 +1,59 @@
+.meta {
+        margin-bottom: 24px;
+        color: #7a7f99;
+        font-size: 16px;
+        text-align: center;
+    }table {
+        text-align: left;
+    }th, td {
+        vertical-align: middle;
+    }
+
+    tbody tr.camp-eren {
+        background: #fff2f2;
+        color: #b91c1c;
+    }
+
+    tbody tr.camp-haoqi {
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .camp-col {
+        width: 90px;
+        text-align: center;
+        white-space: nowrap;
+        font-weight: 800;
+    }
+
+    .fenxian-col,
+    .server-col {
+        width: 130px;
+        text-align: center;
+        white-space: nowrap;
+        font-weight: 700;
+    }
+
+    .role-col {
+        max-width: 320px;
+        color: #333;
+        font-weight: 700;
+        word-break: break-word;
+        line-height: 1.45;
+    }
+
+    tr.camp-eren .role-col {
+        color: #b91c1c;
+    }
+
+    tr.camp-haoqi .role-col {
+        color: #1d4ed8;
+    }
+
+    .time-col {
+        min-width: 150px;
+        color: #60657a;
+        text-align: center;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }

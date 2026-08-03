@@ -1,0 +1,28 @@
+{# template-title: 诛恶事件 #}
+
+
+<div class="container">
+    <h1>诛恶事件</h1>
+    <div class="meta">更新时间：{{ update_time }}</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>服务器</th>
+                <th>地图</th>
+                <th>时间</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for item in items %}
+            <tr>
+                <td class="server-col">{{ item.server }}</td>
+                <td class="map-col">{{ item.mapName }}</td>
+                <td class="time-col">{{ item.time }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+

@@ -1,0 +1,45 @@
+{# template-title: 精耐查询 #}
+
+
+<div class="container">
+    <h1>{{ server }} - {{ role_name }}</h1>
+    <div class="meta">更新时间：{{ update_time }}</div>
+
+    <div class="summary">
+        <div class="stat">
+            <div class="label">精力</div>
+            <div class="value">{{ skill_energy }}</div>
+        </div>
+        <div class="stat">
+            <div class="label">耐力</div>
+            <div class="value">{{ skill_stamina }}</div>
+        </div>
+        <div class="stat">
+            <div class="label">技能数量</div>
+            <div class="value">{{ skill_count }}</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>技能名称</th>
+                <th>首领</th>
+                <th>破绽颜色</th>
+                <th>技能等级</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for item in items %}
+            <tr>
+                <td class="skill-col">{{ item.szSkillName }}</td>
+                <td class="leader-col">{{ item.szBossName }}</td>
+                <td class="color-col">{{ item.skill_color_text }}</td>
+                <td class="level-col">{{ item.nLevel }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+

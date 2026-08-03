@@ -1,0 +1,53 @@
+.meta {
+        margin-bottom: 24px;
+        color: #7a7f99;
+        font-size: 16px;
+        text-align: center;
+    }table {
+        text-align: left;
+    }th, td {
+        vertical-align: middle;
+    }
+
+    .rank-col,
+    .people-col,
+    .score-col {
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    .rank-col {
+        width: 56px;
+        color: #d93939;
+        font-weight: 800;
+    }
+
+    .tong-col {
+        min-width: 220px;
+        font-weight: 800;
+        color: #333;
+        word-break: break-word;
+    }
+
+    .master-col {
+        min-width: 150px;
+        color: #333;
+        word-break: break-word;
+    }
+
+    .castle-col {
+        min-width: 110px;
+        color: #60657a;
+        word-break: break-word;
+    }
+
+    .people-col {
+        color: #333;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .score-col {
+        color: #d93939;
+        font-weight: 800;
+        font-variant-numeric: tabular-nums;
+    }

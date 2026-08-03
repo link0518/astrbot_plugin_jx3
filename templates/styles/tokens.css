@@ -1,0 +1,123 @@
+:root {
+    --jx3-bg-deep: #04111d;
+    --jx3-bg: #071a2b;
+    --jx3-bg-raised: #0a2238;
+    --jx3-surface: #0d2942;
+    --jx3-surface-strong: #113451;
+    --jx3-surface-soft: #173d5d;
+    --jx3-surface-muted: #1b4567;
+    --jx3-border: #9a7432;
+    --jx3-border-strong: #c09647;
+    --jx3-border-soft: rgba(203, 160, 78, 0.36);
+    --jx3-border-faint: rgba(141, 175, 207, 0.18);
+    --jx3-gold: #e1b766;
+    --jx3-gold-bright: #f2cf82;
+    --jx3-gold-muted: #b89655;
+    --jx3-text: #f5f0e6;
+    --jx3-text-secondary: #c4d2df;
+    --jx3-text-muted: #879db2;
+    --jx3-blue: #72a9d5;
+    --jx3-green: #62bc92;
+    --jx3-red: #d56a63;
+    --jx3-purple: #a98bd2;
+    --jx3-shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.18);
+    --jx3-shadow-md: 0 12px 30px rgba(0, 0, 0, 0.24);
+    --jx3-radius-sm: 6px;
+    --jx3-radius-md: 10px;
+    --jx3-radius-lg: 14px;
+    --jx3-space-1: 4px;
+    --jx3-space-2: 8px;
+    --jx3-space-3: 12px;
+    --jx3-space-4: 16px;
+    --jx3-space-5: 20px;
+    --jx3-space-6: 24px;
+    --jx3-space-8: 32px;
+    --jx3-page-width: 1200px;
+    --jx3-font: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif;
+}
+
+.jx3-template--mingjiantongji {
+    --jx3-page-width: 640px;
+}
+
+.jx3-template--xingxiashijian {
+    --jx3-page-width: 900px;
+}
+
+.jx3-template--shilianpaixing,
+.jx3-template--zhueevent {
+    --jx3-page-width: 960px;
+}
+
+.jx3-template--jingnai,
+.jx3-template--zili {
+    --jx3-page-width: 980px;
+}
+
+.jx3-template--bilei,
+.jx3-template--mingjianpaihang,
+.jx3-template--qiyuliebiao,
+.jx3-template--yanhuan {
+    --jx3-page-width: 1000px;
+}
+
+.jx3-template--jinqiqiyu,
+.jx3-template--rank_tong0,
+.jx3-template--rank_tong1,
+.jx3-template--rank_tong2,
+.jx3-template--zilipaixing {
+    --jx3-page-width: 1040px;
+}
+
+.jx3-template--diaoluo,
+.jx3-template--qiyuhuizong,
+.jx3-template--zhenyingevent {
+    --jx3-page-width: 1080px;
+}
+
+.jx3-template--richangyuche {
+    --jx3-page-width: 1100px;
+}
+
+.jx3-template--zhanji {
+    --jx3-page-width: 1100px;
+}
+
+.jx3-template--jiaoyihang,
+.jx3-template--jineng,
+.jx3-template--qixue,
+.jx3-template--rank_role {
+    --jx3-page-width: 1120px;
+}
+
+.jx3-template--bangzhanjilu,
+.jx3-template--chengjiu,
+.jx3-template--guanaishouling {
+    --jx3-page-width: 1180px;
+}
+
+.jx3-template--dilujilu,
+.jx3-template--jinjia,
+.jx3-template--juesheliaotian,
+.jx3-template--tuanduizhaomu,
+.jx3-template--zhengyingpaimai {
+    --jx3-page-width: 1300px;
+}
+
+.jx3-template--shitu {
+    --jx3-page-width: 1280px;
+}
+
+.jx3-template--huajia,
+.jx3-template--wujia,
+.jx3-template--xiaoyao {
+    --jx3-page-width: 1400px;
+}
+
+.jx3-template--chengbeng {
+    --jx3-page-width: 1500px;
+}
+
+.jx3-template--helps {
+    --jx3-page-width: 1520px;
+}

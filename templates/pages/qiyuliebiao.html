@@ -1,0 +1,30 @@
+{# template-title: 区服奇遇 #}
+
+
+<div class="container">
+    <h1>区服奇遇</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>奇遇名称</th>
+                <th>服务器</th>
+                <th>触发角色</th>
+                <th>触发时间</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for m in items %}
+            <tr>
+                <td>{{ m.event }}</td>
+                <td>{{ m.server }}</td>
+                <td>{{ m.name }}</td>
+                <td>{{ m.time }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+

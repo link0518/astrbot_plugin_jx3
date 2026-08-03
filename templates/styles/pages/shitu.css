@@ -1,0 +1,49 @@
+.meta {
+        margin-bottom: 24px;
+        color: #7a7f99;
+        font-size: 16px;
+        text-align: center;
+    }table {
+        text-align: left;
+    }th, td {
+        vertical-align: middle;
+    }
+
+    .force-col {
+        min-width: 120px;
+    }
+
+    .force {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 700;
+        color: #333;
+        white-space: nowrap;
+    }
+
+    .force-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: contain;
+        flex: 0 0 auto;
+    }
+
+    .name-col {
+        font-weight: 700;
+        color: #333;
+        white-space: nowrap;
+    }
+
+    .small-col {
+        white-space: nowrap;
+        text-align: center;
+    }
+
+    .comment-col {
+        max-width: 420px;
+        line-height: 1.5;
+        word-break: break-word;
+        color: #333;
+    }

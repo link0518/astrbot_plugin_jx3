@@ -1,0 +1,49 @@
+{# template-title: 百战异闻录 #}
+
+
+<div class="container">
+    <h1>百战异闻录</h1>
+
+    <!-- 顶部信息（同一行） -->
+    <div class="info-bar"> 
+        <div class="time"> 
+            开始时间：{{ start }} &nbsp;&nbsp;|&nbsp;&nbsp;
+            结束时间：{{ end }}
+        </div> 
+
+        <div class="boss-final"> 
+            荡剑恩仇：{{ boss }} 
+        </div> 
+    </div>
+
+    <div class="grid">
+
+        {% for row in range(0, list|length, 10) %}
+            {% set slice = list[row:row+10] %}
+
+            {% if (row // 10) % 2 == 1 %}
+                {% set slice = slice[::-1] %}
+            {% endif %}
+
+            {% for item in slice %}
+            <div class="cell">
+                <div class="index">第{{ item.index }}层</div>
+                <div class="boss">{{ item.name }}</div>
+
+                {% if item.data.list %}
+                    <div class="buff">
+                        {% for b in item.data.list %}
+                            {{ b }}{% if not loop.last %} / {% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="buff">无</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+        {% endfor %}
+
+    </div>
+</div>
+

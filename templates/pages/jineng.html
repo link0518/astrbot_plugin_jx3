@@ -1,0 +1,43 @@
+{# template-title: 技能详情 #}
+
+
+<div class="container">
+    <h1>{{ name }} 技能详情</h1>
+    <div class="meta">更新时间：{{ update_time }}</div>
+
+    {% for group in groups %}
+    <div class="section">
+        <div class="section-title">{{ group.title }}</div>
+        <div class="cards">
+            {% for skill in group.skills %}
+            <div class="card">
+                {% if skill.icon %}
+                <img class="icon" src="{{ skill.icon }}" alt="{{ skill.name }}">
+                {% else %}
+                <div class="icon"></div>
+                {% endif %}
+                <div>
+                    <div class="head">
+                        <span class="name">{{ skill.name }}</span>
+                        {% if skill.interval %}
+                        <span class="tag">{{ skill.interval }}</span>
+                        {% endif %}
+                        {% if skill.distance %}
+                        <span class="tag">{{ skill.distance }}</span>
+                        {% endif %}
+                        {% if skill.release_type %}
+                        <span class="tag">{{ skill.release_type }}</span>
+                        {% endif %}
+                        {% if skill.weapon %}
+                        <span class="tag">{{ skill.weapon }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="desc">{{ skill.desc }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+

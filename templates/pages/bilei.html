@@ -1,0 +1,32 @@
+{# template-title: 避雷查看 #}
+
+
+<div class="container">
+    <h1>避雷查看</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>避雷名称</th>
+                <th>避雷备注</th>
+                <th>添加时间</th>
+                <th>添加人</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for m in lists %}
+            <tr>
+                <td>{{ m.id }}</td>
+                <td>{{ m.name }}</td>
+                <td class="text-col">{{ m.text }}</td>
+                <td>{{ m.time }}</td>
+                <td>{{ m.user }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+

@@ -1,0 +1,101 @@
+{# template-title: 剑网三 战绩面板 #}
+
+<div class="panel">
+
+    <!-- 角色信息 -->
+    <div class="header">
+        <div>
+            <div class="role-name">{{ roleName }}</div>
+            <div class="sub-info">
+                {{ serverName }} ｜ {{ forceName }} ｜ {{ campName }} ｜ {{ tongName }}
+            </div>
+        </div>
+        <div class="sub-info">
+            角色ID：{{ roleId }}
+        </div>
+    </div>
+
+    <!-- 头像 + 当前 3v3 表现 -->
+    <div class="stats-wrap">
+
+        <!-- 右侧数据 -->
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-title">名剑积分</div>
+                <div class="stat-value mmr">{{ performance['3v3'].mmr }}</div>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat-title">名剑段位</div>
+                <div class="stat-value">{{ performance['3v3'].grade }}</div>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat-title">胜率</div>
+                <div class="stat-value winrate">{{ performance['3v3'].winRate }}%</div>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat-title">总场数</div>
+                <div class="stat-value">{{ performance['3v3'].totalCount }}</div>
+            </div>
+
+            <div class="stat-box">
+                <div class="stat-title">MVP次数</div>
+                <div class="stat-value">{{ performance['3v3'].mvpCount }}</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 对战记录表 -->
+    <table>
+        <thead>
+        <tr>
+            <th class="time-col">开始时间</th>
+            <th class="duration-col">对战时长</th>
+            <th class="kungfu-col">心法</th>
+            <th class="result-col">胜负</th>
+            <th class="score-col">积分变化</th>
+            <th class="score-col">最终积分</th>
+            <th class="grade-col">平均段位</th>
+            <th class="mvp-col">MVP</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        {% for m in history %}
+            <tr>
+                <td class="time-col start-time" data-ts="{{ m.startTime }}">{{ m.startTime }}</td>
+                <td class="duration-col">{{ m.endTime - m.startTime }}</td>
+                <td class="kungfu-col">{{ m.kungfu }}</td>
+                <td class="result-col {{ 'win' if m.won else 'lose' }}">{{ '胜' if m.won else '负' }}</td>
+                <td class="score-col {{ 'mmr-up' if m.mmr > 0 else 'mmr-down' }}">
+                    {{ m.mmr }}
+                </td>
+                <td class="score-col">{{ m.totalMmr }}</td>
+                <td class="grade-col">{{ m.avgGrade }}</td>
+                <td class="mvp-col {{ 'mvp' if m.mvp else '' }}">
+                    {{ '是' if m.mvp else '-' }}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+<script>
+document.querySelectorAll(".start-time").forEach(function (cell) {
+    const ts = Number(cell.dataset.ts);
+
+    if (!Number.isFinite(ts) || ts <= 0) {
+        cell.textContent = "-";
+        return;
+    }
+
+    cell.textContent = new Date(ts * 1000).toLocaleString("zh-CN", {
+        timeZone: "Asia/Shanghai",
+        hour12: false
+    });
+});
+</script>

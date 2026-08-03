@@ -1,0 +1,23 @@
+{# template-title: 名望事件 #}
+
+
+<div class="container">
+    <h1>名望事件({{ name }})</h1>
+
+    <div class="list">
+        {% for m in items %}
+        <div class="card">
+            <div class="time">{{ m.time }}</div>
+
+            <div class="content">
+                <div class="stage">{{ m.stage }}</div>
+                <div class="meta">{{ m.map }} · {{ m.site }}</div>
+                <div class="desc">{{ m.desc }}</div>
+            </div>
+
+            <div class="icon">{{ m.icon }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+

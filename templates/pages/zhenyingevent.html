@@ -1,0 +1,38 @@
+{# template-title: 阵营事件 #}
+
+
+<div class="container">
+    <h1>阵营事件</h1>
+    <div class="meta">更新时间：{{ update_time }}</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>阵营</th>
+                <th>分线</th>
+                <th>服务器</th>
+                <th>角色名称</th>
+                <th>时间</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for item in items %}
+            <tr
+                {% if item.camp_name == '恶人谷' %}
+                    class="camp-eren"
+                {% elif item.camp_name == '浩气盟' %}
+                    class="camp-haoqi"
+                {% endif %}
+            >
+                <td class="camp-col">{{ item.campName }}</td>
+                <td class="fenxian-col">{{ item.fenxianName }}</td>
+                <td class="server-col">{{ item.friendName }}</td>
+                <td class="role-col">{{ item.roleName }}</td>
+                <td class="time-col">{{ item.seizeTime }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
