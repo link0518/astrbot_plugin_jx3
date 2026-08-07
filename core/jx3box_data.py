@@ -134,7 +134,7 @@ class JX3BOXService:
         params = {
             "per": "10",
             "page": "1",
-            "tags": "",
+            "tags": tags,
             "client": "std",
             "global_level": "130",
             "mount": mount,

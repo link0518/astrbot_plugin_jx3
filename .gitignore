@@ -1,0 +1,35 @@
+# Python 缓存与编译产物
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 测试与覆盖率产物
+tests/
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# 类型检查与代码质量工具缓存
+.mypy_cache/
+.pyright/
+.ruff_cache/
+
+# Python 虚拟环境
+.venv/
+venv/
+env/
+
+# 编辑器与操作系统文件
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# 本地日志和临时文件
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
