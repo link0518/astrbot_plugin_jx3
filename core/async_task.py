@@ -11,6 +11,7 @@ from astrbot.api import AstrBotConfig
 
 
 from .jx3api_data import JX3APIService
+from .jx3box_data import JX3BOXService
 from .sqlite import AsyncSQLiteDB
 
 class AsyncTask:
@@ -18,10 +19,11 @@ class AsyncTask:
     基于 APScheduler 的后台异步监控任务管理类
     """
 
-    def __init__(self, context: Context, config: AstrBotConfig, jx3api: JX3APIService, sqlite: AsyncSQLiteDB):
+    def __init__(self, context: Context, config: AstrBotConfig, jx3api: JX3APIService, jx3box: JX3BOXService, sqlite: AsyncSQLiteDB):
         self.context = context
         self.conf = config
-        self.jx3fun = jx3api
+        self.jx3api = jx3api
+        self.jx3box = jx3box
         self.sql = sqlite
 
         self.server = self.conf.get("server", "梦江南")
@@ -107,10 +109,10 @@ class AsyncTask:
 
     async def init_tasks(self):
         settings = [
-            ("kfts", "开服监控", lambda: self.jx3fun.kaifu("梦江南")),
-            ("xwts", "新闻资讯", lambda: self.jx3fun.xinwen(1)),
-            ("smts", "刷马消息", lambda: self.jx3fun.shuamamsg(self.server,type="horse",subtype="foreshow")),
-            ("ctts", "赤兔消息", lambda: self.jx3fun.shuamamsg(self.server,type="chitu-horse",subtype="share_msg")),
+            ("kfts", "开服监控", lambda: self.jx3api.kaifu("梦江南")),
+            ("xwts", "新闻资讯", lambda: self.jx3api.xinwen(1)),
+            ("smts", "刷马消息", lambda: self.jx3box.machangxiaoxi(self.server,"horse","foreshow")),
+            ("ctts", "赤兔消息", lambda: self.jx3box.machangxiaoxi(self.server,"chitu-horse","share_msg")),
         ]
 
         for key, name, fetch in settings:

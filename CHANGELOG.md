@@ -1,5 +1,19 @@
 ## 更新记录
 
+### version: 3.2.1：
+
+统一封装 JX3BOX Node、Next2 和 CMS 三类接口请求，集中处理基础地址、GET/POST、请求参数、返回字段提取与异常日志。
+
+修复资历菜单和点数缓存的刷新链路，缓存过期后分别请求 `/api/node/achievement/menus` 与 `/api/node/achievement/points`，上游失败时继续使用旧缓存。
+
+刷马与赤兔后台推送改用 JX3BOX Next2 马场消息接口，并向后台任务管理器注入 `JX3BOXService`。
+
+配装查询开始实际传递类型筛选参数。
+
+新增项目级 `.gitignore`，忽略 Python 缓存、虚拟环境、日志、临时文件及整个 `tests/` 目录。
+
+同步更新 README、插件注册信息和元数据版本号。
+
 ### version: 3.1：
 
 增加副本记录查询功能。

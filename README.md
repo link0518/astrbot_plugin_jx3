@@ -10,9 +10,9 @@
 
 `astrbot_plugin_jx3` 通过 JX3API、剑侠茶馆、JX3BOX 等数据源查询《剑网3》游戏数据，并根据功能将结果发送为纯文本、图片、图文消息或两轮交互消息。插件同时提供本地避雷记录和开服、新闻、刷马、赤兔后台推送能力。
 
-当前仓库版本为 **v3.1**，要求 **AstrBot >= 4.11.0**，元数据声明支持 `aiocqhttp` 与 `weixin_oc` 平台。
+当前仓库版本为 **v3.2.1**，要求 **AstrBot >= 4.11.0**，元数据声明支持 `aiocqhttp` 与 `weixin_oc` 平台。
 
-> 本 README 以 v3.1 的 `main.py` 指令映射、`core/message.py` 参数签名和三个数据服务的实际实现为准。当前代码与内置帮助图之间存在少量差异，详见[当前版本状态](#当前版本状态)。
+> 本 README 以 v3.2.1 的 `main.py` 指令映射、`core/message.py` 参数签名和三个数据服务的实际实现为准。当前代码与内置帮助图之间存在少量差异，详见[当前版本状态](#当前版本状态)。
 
 ## 功能特点
 
@@ -22,6 +22,7 @@
 - 支持本地 SQLite 避雷记录的增删改查。
 - 支持开服、新闻、刷马、赤兔四类定时轮询与会话推送。
 - 复用 `aiohttp.ClientSession`，统一处理 GET、POST、JSON、图片和分页请求。
+- JX3BOX 的 Node、Next2、CMS 请求统一封装，资历与交易行基础数据支持本地快照缓存和过期兜底。
 - 内置 46 个页面片段，通过公共布局与样式在本地组装为完整 HTML，并附带通用、门派/心法和奇遇图标资源。
 
 ## 数据来源
@@ -30,7 +31,7 @@
 | --- | --- | --- |
 | [JX3API](https://www.jx3api.com/) | `core/jx3api_data.py` | 绝大多数游戏查询、官方资讯、排行、角色和推送数据 |
 | [剑侠茶馆](https://www.jianxiachaguan.cn/) | `core/aijx3_data.py` | 阵营沙盘图片 |
-| [JX3BOX](https://www.jx3box.com/) | `core/jx3box_data.py` | 奇遇攻略、配装、宏、资历和交易行 |
+| [JX3BOX](https://www.jx3box.com/) | `core/jx3box_data.py` | 奇遇攻略、配装、宏、资历、交易行及刷马/赤兔推送消息 |
 | 本地 SQLite | `core/sqlite.py`、`core/bilei_data.py` | 心法别名、避雷记录、推送状态和基础数据缓存 |
 
 外部数据源的可用性、数据时效和字段结构均不由本插件控制。接口变更、网络异常、凭据权限不足或上游限流都可能导致查询失败。
@@ -74,7 +75,7 @@ pip install -r data/plugins/astrbot_plugin_jx3/requirements.txt
 | `aiofiles` | 异步读取 HTML 模板 |
 | `aiosqlite` | 异步访问本地 SQLite 数据库 |
 | `apscheduler` | 后台轮询与消息推送调度 |
-| `matplotlib` | 当前依赖清单保留的绘图依赖；v3.1 业务代码未直接导入 |
+| `matplotlib` | 当前依赖清单保留的绘图依赖；v3.2.1 业务代码未直接导入 |
 
 ## 插件配置
 
@@ -371,7 +372,7 @@ flowchart LR
 
 - `JX3APIService`：以 `https://www.jx3api.com` 为根地址，通过 GET 请求实现主体功能。
 - `AIJX3Service`：向剑侠茶馆发送 POST 请求，目前只负责沙盘图片。
-- `JX3BOXService`：直接访问 JX3BOX 的 Node、CMS、Next2 和图标地址，负责攻略、配装、宏、资历和交易行。
+- `JX3BOXService`：通过统一请求入口访问 JX3BOX 的 Node、CMS 和 Next2 服务，负责攻略、配装、宏、资历、交易行及刷马/赤兔推送消息。
 
 服务方法通常返回统一结构：
 
@@ -398,6 +399,8 @@ flowchart LR
 - 兼容 JX3API 常见成功码 `200`、`"0"`、`0`、`1`。
 - 可通过 `out_key` 提取响应中的指定字段。
 - 网络、HTTP、JSON 和业务码异常统一记录日志并返回 `None`。
+
+业务服务在 `APIClient` 之上维护各自的基础请求方法。`JX3APIService` 以 `https://www.jx3api.com` 为固定根地址；`JX3BOXService._base_request()` 根据 `node`、`next2`、`cms` 数据源选择基础地址，并统一转发 GET/POST 参数和 `out` 返回字段。JX3BOX 业务代码只传接口路径，不再重复拼接完整域名。
 
 ### 5. 消息与图片渲染
 
@@ -449,7 +452,7 @@ AstrBot 的渲染接口接收完整 HTML 字符串，因此插件不会依赖渲
 | `data/plugin_data.db` | 随插件分发，只读基础数据为主 | `kungfu` 心法名称、别名和 JX3BOX 配装 ID |
 | AstrBot 插件数据目录下的 `local_data.db` | 运行时创建和维护 | 避雷记录、推送状态、资历与交易行基础数据缓存 |
 
-`achievement_cache` 同时被资历基础数据和交易行物品分组复用。缓存有效期为 30 天；缓存过期后优先刷新，上游请求失败时会尝试使用旧缓存兜底。
+`achievement_cache` 同时被资历基础数据和交易行物品分组复用。每个接口快照以一条 JSON 记录保存，当前使用 `achievement_menus`、`achievement_points` 和 `trade_item_groups` 三个键。缓存有效期为 30 天；缓存过期后优先全量刷新，上游请求失败时继续使用可解析的旧缓存兜底。资历菜单与点数的刷新接口分别为 JX3BOX Node 的 `/api/node/achievement/menus` 和 `/api/node/achievement/points`。
 
 ### 7. 后台推送
 
@@ -463,10 +466,13 @@ AstrBot 的渲染接口接收完整 HTML 字符串，因此插件不会依赖渲
 
 调度任务取得业务数据后读取其中的 `status`。状态发生变化时，向所有 `umos` 发送 `data` 文本，并将新状态写回 `tuishong` 表。插件卸载时会移除全部任务并以非等待方式关闭调度器。
 
+开服与新闻任务使用 `JX3APIService`；刷马与赤兔任务使用 `JX3BOXService.machangxiaoxi()` 请求 Next2 马场消息接口，分别传入 `horse/foreshow` 和 `chitu-horse/share_msg`，并把最新消息 ID 作为状态值避免重复推送。
+
 ## 目录结构
 
 ```text
 astrbot_plugin_jx3/
+├── .gitignore               # Python、工具缓存、临时文件和 tests 忽略规则
 ├── main.py                  # 插件入口、生命周期、数据库建表和指令分发
 ├── metadata.yaml            # 插件名称、版本、平台和 AstrBot 版本要求
 ├── _conf_schema.json        # AstrBot 管理面板配置结构
@@ -486,21 +492,19 @@ astrbot_plugin_jx3/
 │   ├── sqlite.py            # aiosqlite 通用封装
 │   ├── fun_basic.py         # 图标、时间和货币格式化工具
 │   └── template.py          # 模板组合、异步读取与内存缓存
-├── templates/
-│   ├── layouts/
-│   │   └── base.html        # 唯一的完整 HTML 文档骨架
-│   ├── pages/
-│   │   └── *.html           # 46 个页面内容与 Jinja2 数据绑定
-│   ├── styles/
-│   │   ├── tokens.css       # 设计变量与页面宽度
-│   │   ├── base.css         # 全局背景、外框和排版
-│   │   ├── components.css   # 表格、网格、卡片、状态等公共组件
-│   │   └── pages/*.css      # 可选的复杂页面独有布局（当前 13 个）
-│   ├── img/                 # 通用图片资源
-│   ├── sect/                # 门派与心法图标
-│   └── serendipity/         # 奇遇图标
-└── tests/
-    └── test_template_system.py  # 46 个模板的组合、渲染与安全检查
+└── templates/
+    ├── layouts/
+    │   └── base.html        # 唯一的完整 HTML 文档骨架
+    ├── pages/
+    │   └── *.html           # 46 个页面内容与 Jinja2 数据绑定
+    ├── styles/
+    │   ├── tokens.css       # 设计变量与页面宽度
+    │   ├── base.css         # 全局背景、外框和排版
+    │   ├── components.css   # 表格、网格、卡片、状态等公共组件
+    │   └── pages/*.css      # 可选的复杂页面独有布局（当前 13 个）
+    ├── img/                 # 通用图片资源
+    ├── sect/                # 门派与心法图标
+    └── serendipity/         # 奇遇图标
 ```
 
 ## 新增功能开发
@@ -520,19 +524,19 @@ astrbot_plugin_jx3/
 
 ```bash
 python -m compileall -q .
-python -m unittest tests.test_template_system -v
+git diff --check
 ```
 
-模板测试会检查 46 个页面片段、13 个可选页面样式、公共组件按声明选择性注入、完整文档组合、Jinja2 基础渲染，以及模板路径能否阻止目录穿越。它和 `compileall` 仍不能替代带真实数据的 AstrBot 消息、HTML 渲染和外部接口联调。
+项目级 `.gitignore` 会忽略整个 `tests/`，本地自行维护的测试不会随插件分发。语法检查和差异检查仍不能替代带真实数据的 AstrBot 消息、HTML 渲染、后台推送和外部接口联调；发布前应在具备有效凭据的实际环境中覆盖成功、空数据、超时及上游异常路径。
 
 ## 当前版本状态
 
-以下内容是对 v3.1 当前源码的静态核对结果，部署和二次开发前应注意：
+以下内容是对 v3.2.1 当前源码的静态核对结果，部署和二次开发前应注意：
 
 1. `command_map` 实际注册 108 个触发词；`templates/pages/helps.html` 标注 105 条，并遗漏 `功能`、`小药`、`骗子`、`开服推送`。帮助图中的 `开服监控` 不是当前有效触发词。
-2. 默认服务器配置会用于四类后台任务，并只在 `烟花` 查询中通过 `serverdefault()` 显式补齐；其他可选服务器参数会原样传为空字符串。
-3. `JX3BOXService._get_achievement_base_data()` 当前调用了该类中未定义的 `_base_request()`，因此 `资历` 在用户选择分类后无法完成基础数据加载。
-4. 刷马和赤兔后台任务当前调用了 `JX3APIService` 中不存在的 `shuamamsg()`，启用 `smts` 或 `ctts` 后，定时回调会记录执行异常。
+2. 默认服务器配置用于刷马和赤兔后台任务；开服监控仍固定查询 `梦江南`，新闻任务不使用服务器参数。普通查询中只有 `烟花` 通过 `serverdefault()` 显式补齐默认服务器，其他可选服务器参数会原样传为空字符串。
+3. `JX3BOXService` 通过统一的 `_base_request()` 分发 Node、Next2 和 CMS 请求；资历菜单与点数缓存过期后分别从 `/api/node/achievement/menus` 和 `/api/node/achievement/points` 刷新。
+4. 刷马和赤兔后台任务已改用 JX3BOX Next2 马场消息接口；`machangxiaoxi()` 当前直接读取结果列表第一项，上游返回空列表时会由后台任务记录数据结构异常而不发送消息。
 5. `main.py` 仍计算 `data/jx3api_config.json` 路径，但仓库没有该文件，当前三个服务也不从该路径读取接口配置；接口地址直接维护在服务代码中。
 6. `APIClient` 当前默认 `ssl_verify=False`，即外部 HTTPS 请求不校验证书。对传输安全有要求的部署应先评估并调整该设置。
 7. JX3API 服务初始化时会把 Token 和 Ticket 写入 debug 日志。不要公开调试日志，建议二次开发时移除敏感值输出。

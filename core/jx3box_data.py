@@ -38,6 +38,13 @@ ACHIEVEMENT_CHOICES = [
 
 ACHIEVEMENT_CHOICE_MAP = {index: (menu_id, title) for index, menu_id, title in ACHIEVEMENT_CHOICES}
 
+JX3BOX_API_BASE_URLS = {
+    "node": "https://node.jx3box.com",
+    "next2": "https://next2.jx3box.com",
+    "cms": "https://cms.jx3box.com",
+}
+
+
 class JX3BOXService:
     def __init__(self, config: AstrBotConfig, sqlite: AsyncSQLiteDB, cache_sqlite: Optional[AsyncSQLiteDB] = None):
         # 实例化 API Client
@@ -67,28 +74,110 @@ class JX3BOXService:
             }
 
 
+    async def _base_request(
+        self,
+        source: str,
+        api_path: str,
+        method: str = "GET",
+        params: Optional[Dict[str, Any]] = None,
+        out: Optional[str] = "data",
+    ) -> Optional[Any]:
+        """统一封装 JX3BOX Node、Next2 和 CMS 接口请求。"""
+        try:
+            if not self._api:
+                logger.error("API client is not initialized")
+                return None
+
+            base_url = JX3BOX_API_BASE_URLS.get(source)
+            if not base_url:
+                logger.error(f"不支持的 JX3BOX 数据源: {source}")
+                return None
+
+            normalized_path = api_path if api_path.startswith("/") else f"/{api_path}"
+            api_url = f"{base_url}{normalized_path}"
+            request_method = method.upper()
+
+            if request_method == "GET":
+                data = await self._api.get(api_url, params=params, out_key=out)
+            elif request_method == "POST":
+                data = await self._api.post(api_url, data=params, out_key=out)
+            else:
+                logger.error(f"不支持的 JX3BOX 请求方法: {request_method}")
+                return None
+
+            if not data:
+                logger.warning(f"获取接口信息失败或返回空数据: {api_url}")
+
+            return data
+
+        except Exception as e:
+            logger.error(f"JX3BOX 基础请求调用出错 ({source}:{api_path}): {e}")
+            return None
+
+
+    async def machangxiaoxi(self, srever: str, type: str, subtype: str) -> Dict[str, Any]:
+        """马场消息 """
+        return_data = self._init_return_data()
+
+        data = await self._base_request(
+            "next2",
+            "/api/game/reporter/horse",
+            "GET",
+            params={
+                "pageIndex":1,
+                "pageSize":1,
+                "server":srever,
+                "type":type,
+                "subtype":subtype,
+            },
+        )
+
+        if data == None:
+            return None
+        else:
+            data_list = data["list"][0]
+            return_data["status"] = data_list["id"]
+            return_data["data"] = (
+                f"区服：{srever}\n"
+                f"{data_list.get('content')}\n"
+                f"时间：{data_list.get('created_at')}\n"
+            )
+            return_data["code"] = 200
+
+            return return_data
+
+
+
+
+
     async def qiyugonglue(self, name: str) -> Dict[str, Any]:
         """奇遇攻略"""
         return_data = self._init_return_data()
         
         # 1. 调用基础请求
-        api_url = "https://node.jx3box.com/serendipities"
-        data = await self._api.get(api_url, params={"name": name}, out_key="list")
+        data = await self._base_request(
+            "node",
+            "/serendipities",
+            params={"name": name},
+            out="list",
+        )
         if not data:
             return_data["msg"] = "未找到该奇遇"
             return return_data
         
         # 提取dwID
         dwID = data[0]["dwID"]
-        url = f"https://node.jx3box.com/serendipity/{dwID}/achievement"
-        logger.debug(f"获取ID接口地址：{url}")
-
-        data1 = await self._api.get(url)
-        url1 = f"https://cms.jx3box.com/api/cms/wiki/post/type/achievement/source/{data1['achievement_id']}"
-        logger.debug(f"获取攻略接口地址：{url1}")
+        data1 = await self._base_request(
+            "node",
+            f"/serendipity/{dwID}/achievement",
+            out=None,
+        )
 
         # 获取奇遇攻略
-        data2 = await self._api.get(url1, out_key="data")
+        data2 = await self._base_request(
+            "cms",
+            f"/api/cms/wiki/post/type/achievement/source/{data1['achievement_id']}",
+        )
         if not data2:
             return_data["msg"] = "获取攻略数据异常"
             return return_data
@@ -142,8 +231,11 @@ class JX3BOXService:
         }
         
         # 2. 调用基础请求
-        api_url = "https://cms.jx3box.com/api/cms/app/pz"
-        data: Optional[Dict[str, Any]] = await self._api.get(api_url, params=params, out_key="data")
+        data: Optional[Dict[str, Any]] = await self._base_request(
+            "cms",
+            "/api/cms/app/pz",
+            params=params,
+        )
 
         # 验证数据
         if not data:
@@ -195,8 +287,11 @@ class JX3BOXService:
         params = {"subtype": kungfu}
         
         # 2. 调用基础请求
-        api_url = "https://cms.jx3box.com/api/cms/posts"    
-        data: Optional[Dict[str, Any]] = await self._api.get(api_url, params=params, out_key="data")
+        data: Optional[Dict[str, Any]] = await self._base_request(
+            "cms",
+            "/api/cms/posts",
+            params=params,
+        )
 
         if not data:
             return_data["msg"] = "未找到该心法一键宏"
@@ -230,10 +325,7 @@ class JX3BOXService:
         """宏 心法"""
         return_data = self._init_return_data()
 
-        url = f"https://cms.jx3box.com/api/cms/post/{pid}"
-        logger.debug(f"获取宏接口地址：{url}")
-
-        data = await self._api.get(url, out_key="data")
+        data = await self._base_request("cms", f"/api/cms/post/{pid}")
 
         if not isinstance(data, dict):
             return_data["msg"] = "获取宏数据异常"
@@ -313,13 +405,13 @@ class JX3BOXService:
             logger.error(f"写入资历缓存失败: {e}")
 
 
-    async def _get_achievement_base_data(self, cache_key: str, config_key: str) -> Optional[Dict[str, Any]]:
+    async def _get_achievement_base_data(self, cache_key: str, api_path: str) -> Optional[Dict[str, Any]]:
         """获取资历菜单或点数数据，优先使用未过期缓存"""
         cached, expired = await self._load_achievement_cache(cache_key)
         if cached and not expired:
             return cached
 
-        data: Optional[Dict[str, Any]] = await self._base_request(config_key, "GET")
+        data: Optional[Dict[str, Any]] = await self._base_request("node", api_path)
         if data and isinstance(data, dict):
             await self._save_achievement_cache(cache_key, data)
             return data
@@ -339,8 +431,11 @@ class JX3BOXService:
             return cached
 
         
-        api_url = "https://cms.jx3box.com/api/cms/pvx/item/group"
-        data = await self._api.get(api_url, params={"client":"std"}, out_key="data")
+        data = await self._base_request(
+            "cms",
+            "/api/cms/pvx/item/group",
+            params={"client": "std"},
+        )
         if isinstance(data, list) and data:
             await self._save_achievement_cache(cache_key, data)
             return data
@@ -485,10 +580,10 @@ class JX3BOXService:
             return_data["msg"] = "无法获取角色全区 ID"
             return return_data
 
-        achievement_data = await self._api.get(
-            "https://next2.jx3box.com/api/next2/user-achievements",
+        achievement_data = await self._base_request(
+            "next2",
+            "/api/next2/user-achievements",
             params={"jx3id": global_id},
-            out_key="data",
         )
         if not achievement_data or not isinstance(achievement_data, dict):
             return_data["msg"] = "未查询到资历数据"
@@ -507,11 +602,11 @@ class JX3BOXService:
 
         menu_payload = await self._get_achievement_base_data(
             "achievement_menus",
-            "jx3box_achievement_menus",
+            "/api/node/achievement/menus",
         )
         point_payload = await self._get_achievement_base_data(
             "achievement_points",
-            "jx3box_achievement_points",
+            "/api/node/achievement/points",
         )
         if not menu_payload or not point_payload:
             return_data["msg"] = "基础资历数据获取失败"
@@ -600,8 +695,13 @@ class JX3BOXService:
             "server": server,
             "aggregate_type": "hourly",
         }
-        api_url = "https://next2.jx3box.com/api/auction/"
-        price_data: Optional[List[Dict[str, Any]]] = await self._api.post(api_url, data=params, out_key="")
+        price_data: Optional[List[Dict[str, Any]]] = await self._base_request(
+            "next2",
+            "/api/auction/",
+            method="POST",
+            params=params,
+            out="",
+        )
 
 
         if not price_data or not isinstance(price_data, list):
@@ -664,4 +764,4 @@ class JX3BOXService:
             return_data["msg"] = "系统错误：模板文件不存在"
             return return_data
 
-        return return_data    
+        return return_data

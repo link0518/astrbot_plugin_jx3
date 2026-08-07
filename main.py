@@ -18,8 +18,8 @@ from .core.fun_basic import load_as_base64
 
 @register("astrbot_plugin_jx3", 
           "fxdyz", 
-          "通过调用剑网三API接口获取游戏数据，处理发送。", 
-          "3.2.0",
+          "聚合剑网三游戏数据，提供查询、图片渲染、本地避雷和后台推送。",
+          "3.2.1",
           "https://github.com/qsc20001102/astrbot_plugin_jx3"
 )
 class Jx3ApiPlugin(Star):
@@ -154,7 +154,13 @@ class Jx3ApiPlugin(Star):
         self.jx3api = JX3APIService(self.conf, self.plugin_sql_db, self.local_sql_db)
         self.aijx3 = AIJX3Service(self.conf, self.plugin_sql_db, self.local_sql_db)
         self.jx3box = JX3BOXService(self.conf, self.plugin_sql_db, self.local_sql_db)
-        self.jx3at = AsyncTask(cast(Context, self.context), self.conf, self.jx3api, self.local_sql_db)
+        self.jx3at = AsyncTask(
+            cast(Context, self.context),
+            self.conf,
+            self.jx3api,
+            self.jx3box,
+            self.local_sql_db,
+        )
         self.jx3cmd = MessageBuilder(self.server, self.jx3api, self.aijx3, self.jx3box, self.bilei, self.jx3at, self.icons)
 
 
