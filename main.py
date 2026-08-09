@@ -19,7 +19,7 @@ from .core.fun_basic import load_as_base64
 @register("astrbot_plugin_jx3", 
           "fxdyz", 
           "聚合剑网三游戏数据，提供查询、图片渲染、本地避雷和后台推送。",
-          "3.2.1",
+          "3.2.2",
           "https://github.com/qsc20001102/astrbot_plugin_jx3"
 )
 class Jx3ApiPlugin(Star):
