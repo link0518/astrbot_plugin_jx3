@@ -1611,7 +1611,7 @@ class JX3APIService:
 
         return await self._request_api(
             path="/server/status/check",
-            params= {"server": server},
+            params= {"server": server, "type": "其他"},
             processor=processor,
             template="qufuzhuangtai.html"
         ) 
@@ -1620,10 +1620,8 @@ class JX3APIService:
     async def kaifu(self, server: str) -> Dict[str, Any]:
         """开服状态查询"""
         async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
-            if not data.get("status") == "维护" :
-                status = 1
-            else:
-                status = 0
+            list_data = data[0]
+            status = list_data.get("status")
             
             if status == 1:
                 status_str = f"{server}服务器已开服，快冲，快冲！"
@@ -1637,7 +1635,7 @@ class JX3APIService:
 
         return await self._request_api(
             path="/server/status/check",
-            params= {"server": server},
+            params= {"server": server, "type": 1},
             processor=processor,
             template="qufuzhuangtai.html"
         ) 
