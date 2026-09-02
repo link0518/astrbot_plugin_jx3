@@ -684,6 +684,61 @@ class JX3APIService:
         ) 
 
 
+    async def shapan(self, server: str) -> Dict[str, Any]:
+        """阵营沙盘。"""
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:
+            if not isinstance(data, dict):
+                raise ValueError("沙盘接口返回的数据结构无效")
+
+            records = data.get("data")
+            if not isinstance(records, list) or not records:
+                raise ValueError("沙盘接口未返回据点数据")
+
+            items = []
+            for record in records:
+                if not isinstance(record, dict):
+                    continue
+
+                camp_id = record.get("campId")
+                if camp_id not in (1, 2):
+                    continue
+
+                castle_name = str(record.get("castleName") or "").strip()
+                if not castle_name:
+                    continue
+
+                items.append(
+                    {
+                        "castle_name": castle_name,
+                        "camp_key": "浩" if camp_id == 1 else "恶",
+                        "camp_name": str(record.get("campName") or ""),
+                        "tong_name": str(record.get("tongName") or ""),
+                        "master_name": str(record.get("masterName") or ""),
+                        "ride_piece": int(record.get("ridePiece") or 0),
+                        "defend_count": int(record.get("defendCount") or 0),
+                    }
+                )
+
+            if not items:
+                raise ValueError("沙盘接口未返回有效据点")
+
+            update_time = format_time(data.get("update"))
+            return_data["data"] = {
+                "zone": str(data.get("zone") or ""),
+                "server": str(data.get("server") or server),
+                "reset": int(data.get("reset") or 0),
+                "update_time": update_time,
+                "items": items,
+            }
+
+        return await self._request_api(
+            path="/sand/records",
+            params={"server": server, "token": self.token},
+            processor=processor,
+            template="shapan.html",
+        )
+
+
     async def zhueevent(self,server: str,limit: str) -> Dict[str, Any]:
         """诛恶事件"""
         async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
@@ -1414,9 +1469,7 @@ class JX3APIService:
         """维护公告"""
         async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
             result = data[0]
-            return_data["status"] = result.get('id')
-
-            result_msg = "维护推送\n"
+            result_msg = "维护公告\n"
             # 仅展示前1条，避免消息过长
             for i, item in enumerate(data[:limit], 1): 
                 result_msg += f"{i}. 【{item.get('type', '无类型')}】\n"
@@ -1438,9 +1491,7 @@ class JX3APIService:
         """新闻资讯"""
         async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
             result = data[0]
-            return_data["status"] = int(result.get('catid'))
-
-            result_msg = "新闻资讯推送\n"
+            result_msg = "新闻资讯\n"
             # 仅展示前1条，避免消息过长
             for i, item in enumerate(data[:limit], 1): 
                 result_msg += f"{i}. 【{item.get('type', '无类型')}】\n"

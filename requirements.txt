@@ -2,4 +2,3 @@ matplotlib
 aiofiles
 aiosqlite
 aiohttp
-apscheduler

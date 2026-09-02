@@ -6,7 +6,7 @@
       "enable": {
         "description": "是否启用",
         "type": "bool",
-        "default": true,
+        "default": false,
         "hint": "是否启用指令前缀检查功能"
       },
       "text": {
@@ -33,118 +33,18 @@
     "description": "推栏标识",
     "type": "string",
     "default": "",
-    "hint": "通过抓包推栏APP账号登录信息获取推栏标识"
+    "hint": "通过抓包推栏APP账号登录信息获取推栏标识。"
   },
-  "kfts": {
-    "description": "开服监控配置",
-    "type": "object",
-    "items": {
-      "enable": {
-        "description": "开服监控功能开关",
-        "type": "bool",
-        "default": false,
-        "hint": "是否启用剑网三开服监控功能。"
-      },
-      "time": {
-        "description": "开服监控循环时间",
-        "type": "int",
-        "default": 60,
-        "hint": "请求服务器状态的循环时间，单位秒。"
-      },
-      "umos": {
-        "description": "开服监控推送列表",
-        "type": "list",
-        "hint": "可以填写多个会话唯一ID。",
-        "items": {
-            "type": "string",
-            "description": "会话唯一ID，可通过/std获取"
-        },
-        "default": []
-      }
-    }
+  "jx3api_wss": {
+    "description": "事件通道地址",
+    "type": "string",
+    "default": "wss://socket.nicemoe.cn",
+    "hint": "事件推送的WebSocket地址。"
   },
-  "xwts": {
-    "description": "新闻资讯推送",
-    "type": "object",
-    "items": {
-      "enable": {
-        "description": "新闻资讯推送功能开关",
-        "type": "bool",
-        "default": false,
-        "hint": "是否启用剑网三开新闻资讯推送功能。"
-      },
-      "time": {
-        "description": "获取最新资讯循环时间",
-        "type": "int",
-        "default": 280,
-        "hint": "请求最新资讯的循环时间，单位秒。"
-      },
-      "umos": {
-        "description": "推送列表",
-        "type": "list",
-        "hint": "可以填写多个会话唯一ID。",
-        "items": {
-            "type": "string",
-            "description": "会话唯一ID，可通过/std获取"
-        },
-        "default": []
-      }
-    }
-  },
-  "smts": {
-    "description": "刷马消息推送",
-    "type": "object",
-    "items": {
-      "enable": {
-        "description": "刷马消息推送功能开关",
-        "type": "bool",
-        "default": false,
-        "hint": "是否启用剑网三开刷马消息推送功能。"
-      },
-      "time": {
-        "description": "获取最新消息循环时间",
-        "type": "int",
-        "default": 60,
-        "hint": "请求最新消息的循环时间，单位秒。"
-      },
-      "umos": {
-        "description": "推送列表",
-        "type": "list",
-        "hint": "可以填写多个会话唯一ID。",
-        "items": {
-            "type": "string",
-            "description": "会话唯一ID，可通过/std获取"
-        },
-        "default": []
-      }
-    }
-  },
-  "ctts": {
-    "description": "赤兔消息推送",
-    "type": "object",
-    "items": {
-      "enable": {
-        "description": "赤兔消息推送功能开关",
-        "type": "bool",
-        "default": false,
-        "hint": "是否启用剑网三开赤兔消息推送功能。"
-      },
-      "time": {
-        "description": "获取最新消息循环时间",
-        "type": "int",
-        "default": 60,
-        "hint": "请求最新消息的循环时间，单位秒。"
-      },
-      "umos": {
-        "description": "推送列表",
-        "type": "list",
-        "hint": "可以填写多个会话唯一ID。",
-        "items": {
-            "type": "string",
-            "description": "会话唯一ID，可通过/std获取"
-        },
-        "default": []
-      }
-    }
+  "jx3api_wss_token": {
+    "description": "事件推送令牌",
+    "type": "string",
+    "default": "",
+    "hint": "用于付费事件推送，不填写只推送免费事件。"
   }
 }

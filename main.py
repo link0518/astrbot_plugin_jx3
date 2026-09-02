@@ -9,17 +9,16 @@ from astrbot.api import AstrBotConfig
 
 from .core.sqlite import AsyncSQLiteDB
 from .core.jx3api_data import JX3APIService
-from .core.aijx3_data import AIJX3Service
 from .core.jx3box_data import JX3BOXService
-from .core.async_task import AsyncTask
+from .core.event_push import EventPushService
 from .core.bilei_data import BiLeidata
 from .core.message import MessageBuilder
 from .core.fun_basic import load_as_base64
 
 @register("astrbot_plugin_jx3", 
           "fxdyz", 
-          "聚合剑网三游戏数据，提供查询、图片渲染、本地避雷和后台推送。",
-          "3.2.3",
+          "聚合剑网三游戏数据，提供查询、图片渲染、本地避雷和实时事件推送。",
+          "3.3.1",
           "https://github.com/qsc20001102/astrbot_plugin_jx3"
 )
 class Jx3ApiPlugin(Star):
@@ -58,18 +57,17 @@ class Jx3ApiPlugin(Star):
         try:
             # 数据库初始化
             await self.init_bilei_data()
-            await self.init_tuishong_data()
             await self.init_achievement_cache_data()
 
             # 连接插件数据
             await self.plugin_sql_db.connect()
 
-            # 开启后台推送
-            await self.jx3at.init_tasks()
+            # 开启实时事件通道
+            await self.event_push.initialize()
 
         except Exception as e:
-            if self.jx3at is not None:
-                await self.jx3at.destroy()
+            if self.event_push is not None:
+                await self.event_push.stop()
             logger.exception("功能模块初始化失败")
             raise
 
@@ -82,14 +80,11 @@ class Jx3ApiPlugin(Star):
     async def terminate(self):
         """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
         
-        if self.jx3at:
-            await self.jx3at.destroy()
+        if self.event_push:
+            await self.event_push.stop()
 
         if self.jx3api:
             await self.jx3api.close()
-
-        if self.aijx3:
-            await self.aijx3.close()
 
         if self.jx3box:
             await self.jx3box.close()
@@ -115,18 +110,18 @@ class Jx3ApiPlugin(Star):
         self.local_data_path = self.local_data_dir / "local_data.db"
         # SQLite插件路径
         self.plugin_data_path = self.plugin_data_dir /"plugin_data.db"
-        # API配置文件路径
-        self.api_data_path = self.plugin_data_dir / "jx3api_config.json"
+
         # 图片文件路径
         self.plugin_temp_img = self.plugin_temp_dir / "img"
+        self.plugin_temp_sand = self.plugin_temp_img / "sand"
         self.plugin_temp_sect = self.plugin_temp_dir / "sect"
         self.plugin_temp_serendipity = self.plugin_temp_dir / "serendipity"
 
         # 数据路径打印
         logger.debug(f"本地数据路径: {self.local_data_path}")
         logger.debug(f"插件数据路径: {self.plugin_data_path}")
-        logger.debug(f"API配置文件路径: {self.api_data_path}")
         logger.debug(f"图片文件路径: {self.plugin_temp_img}")
+        logger.debug(f"沙盘图片文件路径: {self.plugin_temp_sand}")
         logger.debug(f"图片文件路径: {self.plugin_temp_sect}")
         logger.debug(f"图片文件路径: {self.plugin_temp_serendipity}")
 
@@ -134,10 +129,12 @@ class Jx3ApiPlugin(Star):
     def load_local_base64(self):
         """加载图片文件的base64编码"""
         img = load_as_base64(str(self.plugin_temp_img))
+        sand = load_as_base64(str(self.plugin_temp_sand))
         sect = load_as_base64(str(self.plugin_temp_sect))
         serendipity = load_as_base64(str(self.plugin_temp_serendipity))
         self.icons =  {
             "img": img,
+            "sand": sand,
             "sect": sect,
             "serendipity": serendipity
         }        
@@ -152,16 +149,20 @@ class Jx3ApiPlugin(Star):
         # 剑网三功能实例化
         self.bilei = BiLeidata(self.local_sql_db)
         self.jx3api = JX3APIService(self.conf, self.plugin_sql_db, self.local_sql_db)
-        self.aijx3 = AIJX3Service(self.conf, self.plugin_sql_db, self.local_sql_db)
         self.jx3box = JX3BOXService(self.conf, self.plugin_sql_db, self.local_sql_db)
-        self.jx3at = AsyncTask(
+        self.event_push = EventPushService(
             cast(Context, self.context),
             self.conf,
-            self.jx3api,
-            self.jx3box,
             self.local_sql_db,
         )
-        self.jx3cmd = MessageBuilder(self.server, self.jx3api, self.aijx3, self.jx3box, self.bilei, self.jx3at, self.icons)
+        self.jx3cmd = MessageBuilder(
+            self.server,
+            self.jx3api,
+            self.jx3box,
+            self.bilei,
+            self.event_push,
+            self.icons,
+        )
 
 
     async def init_bilei_data(self):
@@ -179,24 +180,6 @@ class Jx3ApiPlugin(Star):
         )
         """)
     
-
-    async def init_tuishong_data(self):
-        """初始化推送数据表"""
-        # 创建tuishong表
-        await self.local_sql_db.execute("""
-        CREATE TABLE IF NOT EXISTS tuishong (
-            id INTEGER PRIMARY KEY CHECK (id = 1),
-            kfts INTEGER DEFAULT 1,
-            xwts INTEGER DEFAULT 0,
-            smts INTEGER DEFAULT 0,
-            ctts INTEGER DEFAULT 0
-        )
-        """)
-        await self.local_sql_db.execute("""
-        INSERT OR IGNORE INTO tuishong (id)
-        VALUES (1)
-        """)        
-
 
     async def init_achievement_cache_data(self):
         """初始化资历基础数据缓存表"""
@@ -313,10 +296,7 @@ class Jx3ApiPlugin(Star):
             "资历": self. jx3cmd.zili,
             "交易行": self. jx3cmd.jiaoyihang,
 
-            "开服推送": self. jx3cmd.kaifhujiank,
-            "新闻推送": self. jx3cmd.xinwenzhixun,
-            "刷马推送": self. jx3cmd.shuamamsg,
-            "赤兔推送": self. jx3cmd.chitusg,
+            "事件推送": self.jx3cmd.shijian_tuisong,
             "避雷添加": self.jx3cmd.bilei_add,
             "避雷查看": self.jx3cmd.bilei_all,
             "避雷查询": self.jx3cmd.bilei_select,

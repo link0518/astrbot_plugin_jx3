@@ -1,0 +1,67 @@
+{# template-title: 阵营沙盘 #}
+{#
+坐标调整说明：
+1. 搜索 data-castle="据点名" 定位据点。
+2. 第一个 img 的 left/top 是领地图层坐标。
+3. 第二个 img 的 left/top 是据点图标坐标。
+4. span 的 left/top 是竖排据点名坐标。
+坐标均以 1339 × 916 的 background.png 左上角为 (0, 0)。
+#}
+
+{% set castle_map = {} %}
+{% for item in items %}
+    {% set _ = castle_map.update({item.castle_name: item.camp_key}) %}
+{% endfor %}
+
+{% macro camp(name) %}{{ castle_map.get(name, '') }}{% endmacro %}
+{% macro image(name) %}{{ icons.sand.get(name, '') }}{% endmacro %}
+
+<main
+    class="sand-map"
+    aria-label="{{ zone }} {{ server }}阵营沙盘，更新时间{{ update_time }}"
+    data-server="{{ server }}"
+    data-update-time="{{ update_time }}"
+>
+    <img class="sand-map__background" src="{{ image('background') }}" alt="">
+
+    <div class="sand-castle" data-castle="恶人谷">
+        <img class="sand-layer sand-layer--territory" style="left:222px;top:64px" src="{{ image('恶_恶人谷') }}" alt="">
+        <img class="sand-layer sand-layer--icon" style="left:300px;top:103px" src="{{ image('图标_恶_恶人谷') }}" alt="">
+        <span class="sand-castle__name" style="left:380px;top:103px">恶人谷</span>
+    </div>
+
+    {% if camp('凛风堡') %}<div class="sand-castle" data-castle="凛风堡"><img class="sand-layer sand-layer--territory" style="left:299px;top:117px" src="{{ image(camp('凛风堡') ~ '_凛风堡') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:435px;top:186px" src="{{ image('图标_' ~ camp('凛风堡') ~ '_凛风堡') }}" alt=""><span class="sand-castle__name" style="left:485px;top:176px">凛风堡</span></div>{% endif %}
+    {% if camp('神池岭') %}<div class="sand-castle" data-castle="神池岭"><img class="sand-layer sand-layer--territory" style="left:260px;top:259px" src="{{ image(camp('神池岭') ~ '_神池岭') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:280px;top:288px" src="{{ image('图标_' ~ camp('神池岭') ~ '_02') }}" alt=""><span class="sand-castle__name" style="left:320px;top:278px">神池岭</span></div>{% endif %}
+    {% if camp('烈日岗') %}<div class="sand-castle" data-castle="烈日岗"><img class="sand-layer sand-layer--territory" style="left:160px;top:321px" src="{{ image(camp('烈日岗') ~ '_烈日岗') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:239px;top:402px" src="{{ image('图标_' ~ camp('烈日岗') ~ '_01') }}" alt=""><span class="sand-castle__name" style="left:285px;top:392px">烈日岗</span></div>{% endif %}
+    {% if camp('扶风郡') %}<div class="sand-castle" data-castle="扶风郡"><img class="sand-layer sand-layer--territory" style="left:446px;top:241px" src="{{ image(camp('扶风郡') ~ '_扶风郡') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:477px;top:276px" src="{{ image('图标_' ~ camp('扶风郡') ~ '_01') }}" alt=""><span class="sand-castle__name" style="left:527px;top:266px">扶风郡</span></div>{% endif %}
+    {% if camp('世外坡') %}<div class="sand-castle" data-castle="世外坡"><img class="sand-layer sand-layer--territory" style="left:384px;top:286px" src="{{ image(camp('世外坡') ~ '_世外坡') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:451px;top:361px" src="{{ image('图标_' ~ camp('世外坡') ~ '_05') }}" alt=""><span class="sand-castle__name" style="left:491px;top:351px">世外坡</span></div>{% endif %}
+    {% if camp('飞沙关') %}<div class="sand-castle" data-castle="飞沙关"><img class="sand-layer sand-layer--territory" style="left:513px;top:187px" src="{{ image(camp('飞沙关') ~ '_飞沙关') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:521px;top:196px" src="{{ image('图标_' ~ camp('飞沙关') ~ '_01') }}" alt=""><span class="sand-castle__name" style="left:561px;top:186px">飞沙关</span></div>{% endif %}
+    {% if camp('龙门镇') %}<div class="sand-castle" data-castle="龙门镇"><img class="sand-layer sand-layer--territory" style="left:546px;top:171px" src="{{ image(camp('龙门镇') ~ '_龙门镇') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:601px;top:216px" src="{{ image('图标_' ~ camp('龙门镇') ~ '_02') }}" alt=""><span class="sand-castle__name" style="left:641px;top:206px">龙门镇</span></div>{% endif %}
+    {% if camp('凤鸣堡') %}<div class="sand-castle" data-castle="凤鸣堡"><img class="sand-layer sand-layer--territory" style="left:174px;top:547px" src="{{ image(camp('凤鸣堡') ~ '_凤鸣堡') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:213px;top:576px" src="{{ image('图标_' ~ camp('凤鸣堡') ~ '_04') }}" alt=""><span class="sand-castle__name" style="left:253px;top:566px">凤鸣堡</span></div>{% endif %}
+    {% if camp('惊虬谷') %}<div class="sand-castle" data-castle="惊虬谷"><img class="sand-layer sand-layer--territory" style="left:161px;top:438px" src="{{ image(camp('惊虬谷') ~ '_惊虬谷') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:283px;top:498px" src="{{ image('图标_' ~ camp('惊虬谷') ~ '_01') }}" alt=""><span class="sand-castle__name" style="left:323px;top:488px">惊虬谷</span></div>{% endif %}
+    {% if camp('日月崖') %}<div class="sand-castle" data-castle="日月崖"><img class="sand-layer sand-layer--territory" style="left:406px;top:408px" src="{{ image(camp('日月崖') ~ '_日月崖') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:483px;top:482px" src="{{ image('图标_' ~ camp('日月崖') ~ '_02') }}" alt=""><span class="sand-castle__name" style="left:523px;top:472px">日月崖</span></div>{% endif %}
+    {% if camp('卧龙坡') %}<div class="sand-castle" data-castle="卧龙坡"><img class="sand-layer sand-layer--territory" style="left:377px;top:529px" src="{{ image(camp('卧龙坡') ~ '_卧龙坡') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:471px;top:578px" src="{{ image('图标_' ~ camp('卧龙坡') ~ '_03') }}" alt=""><span class="sand-castle__name" style="left:511px;top:568px">卧龙坡</span></div>{% endif %}
+    {% if camp('啖杏林') %}<div class="sand-castle" data-castle="啖杏林"><img class="sand-layer sand-layer--territory" style="left:653px;top:205px" src="{{ image(camp('啖杏林') ~ '_啖杏林') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:667px;top:226px" src="{{ image('图标_' ~ camp('啖杏林') ~ '_01') }}" alt=""><span class="sand-castle__name" style="left:687px;top:266px">啖杏林</span></div>{% endif %}
+    {% if camp('枫湖寨') %}<div class="sand-castle" data-castle="枫湖寨"><img class="sand-layer sand-layer--territory" style="left:650px;top:254px" src="{{ image(camp('枫湖寨') ~ '_枫湖寨') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:729px;top:294px" src="{{ image('图标_' ~ camp('枫湖寨') ~ '_03') }}" alt=""><span class="sand-castle__name" style="left:759px;top:284px">枫湖寨</span></div>{% endif %}
+    {% if camp('不空关') %}<div class="sand-castle" data-castle="不空关"><img class="sand-layer sand-layer--territory" style="left:543px;top:422px" src="{{ image(camp('不空关') ~ '_不空关') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:631px;top:446px" src="{{ image('图标_' ~ camp('不空关') ~ '_04') }}" alt=""><span class="sand-castle__name" style="left:671px;top:436px">不空关</span></div>{% endif %}
+    {% if camp('激流坞') %}<div class="sand-castle" data-castle="激流坞"><img class="sand-layer sand-layer--territory" style="left:583px;top:485px" src="{{ image(camp('激流坞') ~ '_激流坞') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:609px;top:520px" src="{{ image('图标_' ~ camp('激流坞') ~ '_01') }}" alt=""><span class="sand-castle__name" style="left:649px;top:510px">激流坞</span></div>{% endif %}
+    {% if camp('澜沧城') %}<div class="sand-castle" data-castle="澜沧城"><img class="sand-layer sand-layer--territory" style="left:274px;top:680px" src="{{ image(camp('澜沧城') ~ '_澜沧城') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:321px;top:772px" src="{{ image('图标_' ~ camp('澜沧城') ~ '_03') }}" alt=""><span class="sand-castle__name" style="left:361px;top:762px">澜沧城</span></div>{% endif %}
+    {% if camp('霜戈堡') %}<div class="sand-castle" data-castle="霜戈堡"><img class="sand-layer sand-layer--territory" style="left:201px;top:656px" src="{{ image(camp('霜戈堡') ~ '_霜戈堡') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:253px;top:694px" src="{{ image('图标_' ~ camp('霜戈堡') ~ '_01') }}" alt=""><span class="sand-castle__name" style="left:293px;top:684px">霜戈堡</span></div>{% endif %}
+    {% if camp('金门关') %}<div class="sand-castle" data-castle="金门关"><img class="sand-layer sand-layer--territory" style="left:788px;top:177px" src="{{ image(camp('金门关') ~ '_金门关') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:835px;top:266px" src="{{ image('图标_' ~ camp('金门关') ~ '_04') }}" alt=""><span class="sand-castle__name" style="left:875px;top:256px">金门关</span></div>{% endif %}
+    {% if camp('青云坞') %}<div class="sand-castle" data-castle="青云坞"><img class="sand-layer sand-layer--territory" style="left:884px;top:198px" src="{{ image(camp('青云坞') ~ '_青云坞') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:919px;top:232px" src="{{ image('图标_' ~ camp('青云坞') ~ '_01') }}" alt=""><span class="sand-castle__name" style="left:959px;top:222px">青云坞</span></div>{% endif %}
+    {% if camp('逐鹿坪') %}<div class="sand-castle" data-castle="逐鹿坪"><img class="sand-layer sand-layer--territory" style="left:724px;top:445px" src="{{ image(camp('逐鹿坪') ~ '_逐鹿坪') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:773px;top:488px" src="{{ image('图标_' ~ camp('逐鹿坪') ~ '_03') }}" alt=""><span class="sand-castle__name" style="left:813px;top:478px">逐鹿坪</span></div>{% endif %}
+    {% if camp('盘龙坞') %}<div class="sand-castle" data-castle="盘龙坞"><img class="sand-layer sand-layer--territory" style="left:653px;top:530px" src="{{ image(camp('盘龙坞') ~ '_盘龙坞') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:729px;top:590px" src="{{ image('图标_' ~ camp('盘龙坞') ~ '_05') }}" alt=""><span class="sand-castle__name" style="left:769px;top:580px">盘龙坞</span></div>{% endif %}
+    {% if camp('千岩关') %}<div class="sand-castle" data-castle="千岩关"><img class="sand-layer sand-layer--territory" style="left:456px;top:635px" src="{{ image(camp('千岩关') ~ '_千岩关') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:541px;top:788px" src="{{ image('图标_' ~ camp('千岩关') ~ '_01') }}" alt=""><span class="sand-castle__name" style="left:581px;top:778px">千岩关</span></div>{% endif %}
+    {% if camp('大理山城') %}<div class="sand-castle" data-castle="大理山城"><img class="sand-layer sand-layer--territory" style="left:455px;top:660px" src="{{ image(camp('大理山城') ~ '_大理山城') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:487px;top:676px" src="{{ image('图标_' ~ camp('大理山城') ~ '_04') }}" alt=""><span class="sand-castle__name" style="left:527px;top:666px">大理山城</span></div>{% endif %}
+    {% if camp('秋雨堡') %}<div class="sand-castle" data-castle="秋雨堡"><img class="sand-layer sand-layer--territory" style="left:774px;top:372px" src="{{ image(camp('秋雨堡') ~ '_秋雨堡') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:825px;top:424px" src="{{ image('图标_' ~ camp('秋雨堡') ~ '_01') }}" alt=""><span class="sand-castle__name" style="left:865px;top:414px">秋雨堡</span></div>{% endif %}
+    {% if camp('红莲岗') %}<div class="sand-castle" data-castle="红莲岗"><img class="sand-layer sand-layer--territory" style="left:758px;top:313px" src="{{ image(camp('红莲岗') ~ '_红莲岗') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:849px;top:338px" src="{{ image('图标_' ~ camp('红莲岗') ~ '_02') }}" alt=""><span class="sand-castle__name" style="left:889px;top:328px">红莲岗</span></div>{% endif %}
+    {% if camp('武王城') %}<div class="sand-castle" data-castle="武王城"><img class="sand-layer sand-layer--territory" style="left:713px;top:484px" src="{{ image(camp('武王城') ~ '_武王城') }}" alt=""><img class="sand-layer sand-layer--icon" style="left:857px;top:614px" src="{{ image('图标_' ~ camp('武王城') ~ '_武王城') }}" alt=""><span class="sand-castle__name" style="left:917px;top:604px">武王城</span></div>{% endif %}
+
+    <div class="sand-castle" data-castle="浩气盟">
+        <img class="sand-layer sand-layer--territory" style="left:834px;top:577px" src="{{ image('浩_浩气盟') }}" alt="">
+        <img class="sand-layer sand-layer--icon" style="left:913px;top:676px" src="{{ image('图标_浩_浩气盟') }}" alt="">
+        <span class="sand-castle__name" style="left:983px;top:686px">浩气盟</span>
+    </div>
+
+    <img class="sand-map__frontline" src="{{ image('阵营防线') }}" alt="">
+</main>

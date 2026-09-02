@@ -115,41 +115,6 @@ class JX3BOXService:
             return None
 
 
-    async def machangxiaoxi(self, srever: str, type: str, subtype: str) -> Dict[str, Any]:
-        """马场消息 """
-        return_data = self._init_return_data()
-
-        data = await self._base_request(
-            "next2",
-            "/api/game/reporter/horse",
-            "GET",
-            params={
-                "pageIndex":1,
-                "pageSize":1,
-                "server":srever,
-                "type":type,
-                "subtype":subtype,
-            },
-        )
-
-        if data == None:
-            return None
-        else:
-            data_list = data["list"][0]
-            return_data["status"] = data_list["id"]
-            return_data["data"] = (
-                f"区服：{srever}\n"
-                f"{data_list.get('content')}\n"
-                f"时间：{data_list.get('created_at')}\n"
-            )
-            return_data["code"] = 200
-
-            return return_data
-
-
-
-
-
     async def qiyugonglue(self, name: str) -> Dict[str, Any]:
         """奇遇攻略"""
         return_data = self._init_return_data()

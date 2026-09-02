@@ -7,9 +7,8 @@ from astrbot.core.utils.session_waiter import (
 )
 
 from .jx3api_data import JX3APIService
-from .aijx3_data import AIJX3Service
 from .jx3box_data import JX3BOXService
-from .async_task import AsyncTask
+from .event_push import EventPushService
 from .bilei_data import BiLeidata
 
 
@@ -41,18 +40,16 @@ class MessageBuilder:
     def __init__(self, 
                  server: str, 
                  jx3api: JX3APIService, 
-                 aijx3: AIJX3Service,
                  jx3box: JX3BOXService,  
                  bilei: BiLeidata, 
-                 jx3at: AsyncTask, 
+                 event_push: EventPushService,
                  icons: dict[str, dict[str, str]]
             ):
         self.server = server
         self.jx3api = jx3api
-        self.aijx3 = aijx3
         self.jx3box = jx3box
         self.bilei = bilei
-        self.jx3at = jx3at
+        self.event_push = event_push
         self.icons = icons
 
 
@@ -453,7 +450,8 @@ class MessageBuilder:
 
     async def  shapan(self, event: AstrMessageEvent,server: str = ""):
         """ 沙盘 服务器"""
-        return await self.image_msg(event, lambda: self.aijx3.shapan(server))  
+        server = self.serverdefault(server)
+        return await self.T2I_image_msg(event, lambda: self.jx3api.shapan(server))
 
     async def  zhueevent(self, event: AstrMessageEvent, server: str):
         """ 诛恶事件 服务器"""
@@ -698,22 +696,16 @@ class MessageBuilder:
         return await self.plain_msg(event, lambda: self.bilei.delete(id))
 
 
-    async def  kaifhujiank(self, event: AstrMessageEvent):
-        """ 开服监控"""     
-        return_msg = await self.jx3at.get_task_info("kfts")
-        await event.send(event.plain_result(return_msg)) 
-
-    async def  xinwenzhixun(self, event: AstrMessageEvent):
-        """ 新闻推送"""     
-        return_msg = await self.jx3at.get_task_info("xwts")
-        await event.send(event.plain_result(return_msg)) 
-
-    async def  shuamamsg(self, event: AstrMessageEvent):
-        """ 刷马推送"""     
-        return_msg = await self.jx3at.get_task_info("smts")
-        await event.send(event.plain_result(return_msg)) 
-
-    async def  chitusg(self, event: AstrMessageEvent):
-        """ 赤兔推送"""     
-        return_msg = await self.jx3at.get_task_info("ctts")
-        await event.send(event.plain_result(return_msg)) 
+    async def shijian_tuisong(
+        self,
+        event: AstrMessageEvent,
+        first: str = "",
+        second: str = "",
+    ):
+        """管理当前会话的实时事件订阅。"""
+        return_msg = await self.event_push.configure(
+            event.unified_msg_origin,
+            first,
+            second,
+        )
+        await event.send(event.plain_result(return_msg))

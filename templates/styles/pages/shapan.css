@@ -1,0 +1,85 @@
+html,
+body.jx3-template--shapan {
+    width: fit-content;
+    height: 954px;
+    min-width: 0;
+    overflow: hidden;
+    background: #fff !important;
+}
+
+body.jx3-template--shapan {
+    padding: 22px 15px 16px 55px;
+}
+
+.jx3-template--shapan .jx3-frame {
+    width: 1339px;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.jx3-template--shapan .jx3-frame::before,
+.jx3-template--shapan .jx3-frame::after {
+    display: none;
+}
+
+.sand-map {
+    position: relative;
+    width: 1339px;
+    height: 916px;
+    overflow: hidden;
+}
+
+.sand-map img {
+    display: block;
+    max-width: none;
+    user-select: none;
+}
+
+.sand-map__background {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 1339px;
+    height: 916px;
+}
+
+.sand-layer,
+.sand-map__neutral-labels img {
+    position: absolute;
+}
+
+.sand-layer--territory {
+    z-index: 1;
+}
+
+.sand-map__frontline {
+    position: absolute;
+    left: 119px;
+    top: 198px;
+    z-index: 2;
+    width: 727px;
+    height: 491px;
+}
+
+.sand-map__neutral-labels img {
+    z-index: 3;
+}
+
+.sand-layer--icon {
+    z-index: 4;
+}
+
+.sand-castle__name {
+    position: absolute;
+    z-index: 5;
+    display: block;
+    width: 1em;
+    color: #fffcd0;
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    font-size: 12px;
+    line-height: 18px;
+    text-shadow: 1px 1px 1px #000;
+}
