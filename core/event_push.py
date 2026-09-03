@@ -15,6 +15,7 @@ from astrbot.api.star import Context
 
 from .sqlite import AsyncSQLiteDB
 from .server_binding import ServerBindingService
+from .access_control import AccessControlService
 
 
 DEFAULT_WSS_URL = "wss://socket.nicemoe.cn"
@@ -72,11 +73,13 @@ class EventPushService:
         config: AstrBotConfig,
         sqlite: AsyncSQLiteDB,
         server_binding: ServerBindingService,
+        access_control: Optional[AccessControlService] = None,
     ):
         self.context = context
         self.config = config
         self.sql = sqlite
         self.server_binding = server_binding
+        self.access_control = access_control
         self.url = str(config.get("jx3api_wss", "") or DEFAULT_WSS_URL).strip()
         self.token = str(config.get("jx3api_wss_token", "") or "").strip()
         self._runner: Optional[asyncio.Task] = None
@@ -255,6 +258,13 @@ class EventPushService:
             return
 
         recipients = await self._enabled_sessions(action)
+        # 按使用范围过滤：已被管理员停用的群不再收到任何事件推送。
+        if self.access_control is not None:
+            recipients = [
+                pair
+                for pair in recipients
+                if await self.access_control.session_allowed(pair[0])
+            ]
         if "server" in detail:
             event_server = self.server_binding.resolve_server(detail.get("server"))
             recipients = [

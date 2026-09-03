@@ -34,6 +34,10 @@
           <span>心法条目</span>
           <strong id="kungfu-count">—</strong>
         </div>
+        <div class="summary__item">
+          <span>使用范围名单</span>
+          <strong id="access-entry-count">—</strong>
+        </div>
       </section>
 
       <nav class="tabs" aria-label="管理分类" role="tablist">
@@ -41,6 +45,7 @@
         <button class="tab" type="button" role="tab" aria-selected="false" data-tab="subscriptions">事件订阅</button>
         <button class="tab" type="button" role="tab" aria-selected="false" data-tab="aliases">区服别名</button>
         <button class="tab" type="button" role="tab" aria-selected="false" data-tab="kungfu">心法别名</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-tab="access">使用范围</button>
       </nav>
 
       <section class="panel is-active" id="bindings-panel" role="tabpanel">
@@ -118,9 +123,64 @@
           </table>
         </div>
       </section>
+
+      <section class="panel" id="access-panel" role="tabpanel" hidden>
+        <div class="section-intro">
+          <div><h2>使用范围模式</h2><p>控制本插件在哪些会话可用。默认“全部开放”不影响现有部署；切换为白名单或黑名单后，按下方名单对群生效，私聊是否可用由独立开关决定。</p></div>
+        </div>
+        <div class="mode-grid" role="radiogroup" aria-label="使用范围模式">
+          <label class="mode-card">
+            <input type="radio" name="access-mode" value="all" />
+            <span class="mode-card__name">全部开放</span>
+            <span class="mode-card__desc">所有群与私聊均可使用插件，名单不生效</span>
+          </label>
+          <label class="mode-card">
+            <input type="radio" name="access-mode" value="whitelist" />
+            <span class="mode-card__name">白名单</span>
+            <span class="mode-card__desc">只有名单内的群可以使用，其他群触发指令会被忽略</span>
+          </label>
+          <label class="mode-card">
+            <input type="radio" name="access-mode" value="blacklist" />
+            <span class="mode-card__name">黑名单</span>
+            <span class="mode-card__desc">名单内的群被停用，其他群正常使用</span>
+          </label>
+        </div>
+        <div class="access-toggles">
+          <label class="access-toggle">
+            <input type="checkbox" id="access-private" />
+            <span><strong>允许私聊使用</strong><em>关闭后私聊触发指令会被忽略，名单只约束群</em></span>
+          </label>
+          <label class="access-toggle">
+            <input type="checkbox" id="access-reply" />
+            <span><strong>被拒时回复提示</strong><em>关闭后未授权会话触发指令保持静默</em></span>
+          </label>
+        </div>
+        <form class="editor" id="access-form">
+          <label>
+            <span>会话 ID / 群号</span>
+            <input id="access-key" name="key" maxlength="512" list="access-key-options" placeholder="完整会话 ID 或纯群号，例如 123456789" required />
+          </label>
+          <label>
+            <span>备注（可选）</span>
+            <input id="access-note" name="note" maxlength="64" placeholder="例如：亲友服群" />
+          </label>
+          <button class="button button--primary" type="submit">添加 / 更新条目</button>
+        </form>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>会话 ID / 群号</th><th>备注</th><th class="actions">操作</th></tr></thead>
+            <tbody id="access-entries-body"></tbody>
+          </table>
+        </div>
+        <div class="section-intro recent-head">
+          <div><h2>最近活跃的群</h2><p>群内触发过插件指令的会话会记录在这里（数据仅本插件可见），可一键加入名单，白名单模式下无需手动抄群号。</p></div>
+        </div>
+        <div class="recent-list" id="access-recent-body"></div>
+      </section>
     </main>
 
     <datalist id="server-options"></datalist>
+    <datalist id="access-key-options"></datalist>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script type="module" src="./app.js"></script>
   </body>

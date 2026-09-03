@@ -18,6 +18,7 @@ from .core.event_push import EVENT_NAMES, EventPushService
 from .core.bilei_data import BiLeidata
 from .core.kungfu_alias import KungfuAliasService
 from .core.server_binding import ServerBindingService
+from .core.access_control import AccessControlService
 from .core.message import MessageBuilder
 from .core.fun_basic import load_as_base64
 
@@ -27,7 +28,7 @@ PLUGIN_NAME = "astrbot_plugin_jx3"
 @register("astrbot_plugin_jx3", 
           "fxdyz", 
           "聚合剑网三游戏数据，提供查询、图片渲染、本地避雷和实时事件推送。",
-          "3.5.2",
+          "3.5.3",
           "https://github.com/link0518/astrbot_plugin_jx3"
 )
 class Jx3ApiPlugin(Star):
@@ -77,6 +78,9 @@ class Jx3ApiPlugin(Star):
             await self.server_binding.update_server_catalog(
                 await self.jx3api.server_list()
             )
+
+            # 初始化使用范围控制（需先于事件推送启动）
+            await self.access_control.initialize()
 
             # 开启实时事件通道
             await self.event_push.initialize()
@@ -171,11 +175,13 @@ class Jx3ApiPlugin(Star):
             self.local_sql_db,
             self.server_alias_seed_path,
         )
+        self.access_control = AccessControlService(self.local_sql_db)
         self.event_push = EventPushService(
             cast(Context, self.context),
             self.conf,
             self.local_sql_db,
             self.server_binding,
+            self.access_control,
         )
         self.jx3cmd = MessageBuilder(
             self.jx3api,
@@ -487,6 +493,21 @@ class Jx3ApiPlugin(Star):
 
         cmd, args, handler = command
 
+        # 记录会话来源（管理页据此列出“最近活跃的群”），
+        # 再按当前使用范围模式判定本会话/本群是否允许使用插件。
+        group_id = event.get_group_id() or ""
+        await self.access_control.record_usage(event.unified_msg_origin, group_id)
+        allowed, deny_reason = self.access_control.is_allowed(
+            event.unified_msg_origin, group_id
+        )
+        if not allowed:
+            # 已确认是本插件指令，同样阻止后续插件与默认 LLM 继续处理。
+            event.stop_event()
+            event.should_call_llm(True)
+            if self.access_control.reply_on_deny:
+                yield event.plain_result(self.access_control.deny_text(deny_reason))
+            return
+
         # 一旦确认是本插件指令,立即阻止后续插件和默认 LLM 继续处理。
         event.stop_event()
         event.should_call_llm(True)
@@ -552,6 +573,9 @@ class Jx3ApiPlugin(Star):
             ("aliases/delete", self.page_delete_aliases, ["POST"], "删除区服别名"),
             ("kungfu/save", self.page_save_kungfu, ["POST"], "保存心法别名"),
             ("servers/refresh", self.page_refresh_servers, ["POST"], "刷新区服目录"),
+            ("access/config", self.page_access_config, ["POST"], "保存插件使用范围配置"),
+            ("access/entries/add", self.page_access_entry_add, ["POST"], "添加使用范围名单条目"),
+            ("access/entries/delete", self.page_access_entry_delete, ["POST"], "删除使用范围名单条目"),
         )
         for path, handler, methods, description in routes:
             context.register_web_api(
@@ -566,6 +590,7 @@ class Jx3ApiPlugin(Star):
         subscriptions = await self.event_push.list_subscription_statuses()
         aliases = await self.server_binding.list_aliases()
         kungfu = await self.kungfu_alias.list_kungfu()
+        access_status = await self.access_control.get_status()
         return json_response(
             {
                 "bindings": bindings,
@@ -574,6 +599,11 @@ class Jx3ApiPlugin(Star):
                 "kungfu": kungfu,
                 "servers": self.server_binding.known_servers(),
                 "events": {str(action): name for action, name in EVENT_NAMES.items()},
+                "access": {
+                    **access_status,
+                    "entries": await self.access_control.list_entries(),
+                    "recent_groups": await self.access_control.list_recent_groups(),
+                },
             }
         )
 
@@ -653,6 +683,44 @@ class Jx3ApiPlugin(Star):
             return error_response("区服目录刷新失败", status_code=502)
         await self.server_binding.update_server_catalog(servers)
         return json_response({"servers": self.server_binding.known_servers()})
+
+    async def page_access_config(self):
+        """保存插件使用范围配置（模式、私聊开关、拒绝提示开关）。"""
+        payload = await request.json(default={})
+        if not isinstance(payload, dict):
+            return error_response("请求正文必须是 JSON 对象", status_code=400)
+        try:
+            await self.access_control.set_config(
+                mode=payload.get("mode"),
+                private_allowed=payload.get("private_allowed"),
+                reply_on_deny=payload.get("reply_on_deny"),
+            )
+        except ValueError as exc:
+            return error_response(str(exc), status_code=400)
+        return json_response({"saved": True})
+
+    async def page_access_entry_add(self):
+        """添加或更新一条使用范围名单条目。"""
+        payload = await request.json(default={})
+        if not isinstance(payload, dict):
+            return error_response("请求正文必须是 JSON 对象", status_code=400)
+        try:
+            await self.access_control.add_entry(
+                str(payload.get("key") or ""),
+                str(payload.get("note") or ""),
+            )
+        except ValueError as exc:
+            return error_response(str(exc), status_code=400)
+        return json_response({"saved": True})
+
+    async def page_access_entry_delete(self):
+        """删除一条使用范围名单条目。"""
+        payload = await request.json(default={})
+        key = str(payload.get("key") or "") if isinstance(payload, dict) else ""
+        if not key.strip():
+            return error_response("会话 ID / 群号不能为空", status_code=400)
+        await self.access_control.delete_entry(key)
+        return json_response({"deleted": True})
 
 
 

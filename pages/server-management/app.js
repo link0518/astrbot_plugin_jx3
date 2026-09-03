@@ -1,5 +1,8 @@
 const bridge = window.AstrBotPluginPage;
-const state = { bindings: [], subscriptions: [], aliases: [], kungfu: [], servers: [], events: {} };
+const state = {
+  bindings: [], subscriptions: [], aliases: [], kungfu: [], servers: [], events: {},
+  access: { mode: "all", private_allowed: true, reply_on_deny: false, entries: [], recent_groups: [] },
+};
 let toastTimer;
 
 const byId = (id) => document.getElementById(id);
@@ -41,6 +44,7 @@ function renderSummary() {
   byId("subscription-count").textContent = String(state.subscriptions.filter((item) => item.enabled).length);
   byId("alias-count").textContent = String(state.aliases.reduce((total, item) => total + item.aliases.length, 0));
   byId("kungfu-count").textContent = String(state.kungfu.length);
+  byId("access-entry-count").textContent = String(state.access.entries.length);
 }
 
 function renderServerOptions() {
@@ -190,6 +194,93 @@ function renderKungfu() {
   }));
 }
 
+function renderAccessControls() {
+  const radio = document.querySelector(`input[name="access-mode"][value="${state.access.mode}"]`);
+  if (radio) radio.checked = true;
+  byId("access-private").checked = Boolean(state.access.private_allowed);
+  byId("access-reply").checked = Boolean(state.access.reply_on_deny);
+}
+
+function renderAccessEntries() {
+  const body = byId("access-entries-body");
+  if (!state.access.entries.length) {
+    body.replaceChildren(emptyRow(3, "暂无名单条目 —— 切换为白名单或黑名单模式后，此名单生效"));
+    return;
+  }
+  body.replaceChildren(...state.access.entries.map((item) => {
+    const row = document.createElement("tr");
+    const key = document.createElement("td");
+    const note = document.createElement("td");
+    const actions = document.createElement("td");
+    key.dataset.label = "会话 ID / 群号";
+    note.dataset.label = "备注";
+    actions.dataset.label = "操作";
+    key.textContent = item.key;
+    note.textContent = item.note || "—";
+    actions.className = "actions";
+    actions.append(
+      button("编辑", "", () => {
+        byId("access-key").value = item.key;
+        byId("access-note").value = item.note || "";
+        byId("access-key").focus();
+      }),
+      button("删除", "link-button--danger", async () => {
+        if (!window.confirm(`确认从名单中删除 ${item.key}？`)) return;
+        await mutate("access/entries/delete", { key: item.key }, "名单条目已删除");
+      }),
+    );
+    row.append(key, note, actions);
+    return row;
+  }));
+}
+
+function renderAccessKeyOptions() {
+  const list = byId("access-key-options");
+  const seen = new Set();
+  const values = [];
+  state.access.recent_groups.forEach((item) => {
+    if (!seen.has(item.group_id)) {
+      seen.add(item.group_id);
+      values.push(item.group_id);
+    }
+  });
+  list.replaceChildren(...values.map((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    return option;
+  }));
+}
+
+function renderAccessRecent() {
+  const body = byId("access-recent-body");
+  if (!state.access.recent_groups.length) {
+    const empty = document.createElement("p");
+    empty.className = "recent-empty";
+    empty.textContent = "暂无记录 —— 群内触发过任意插件指令后，该群会出现在这里，可直接加入名单。";
+    body.replaceChildren(empty);
+    return;
+  }
+  const listed = new Set(state.access.entries.map((item) => item.key));
+  body.replaceChildren(...state.access.recent_groups.map((item) => {
+    const chip = document.createElement("div");
+    chip.className = "recent-item";
+    const meta = document.createElement("div");
+    meta.className = "recent-item__meta";
+    const group = document.createElement("strong");
+    group.textContent = item.group_id;
+    const detail = document.createElement("span");
+    detail.textContent = `${item.session_id} · ${item.updated_at}`;
+    meta.append(group, detail);
+    const addButton = button("加入名单", "", async () => {
+      await mutate("access/entries/add", { key: item.group_id, note: "" }, "已加入名单");
+    });
+    addButton.disabled = listed.has(item.group_id);
+    addButton.title = addButton.disabled ? "已在名单中" : "以群号加入当前名单";
+    chip.append(meta, addButton);
+    return chip;
+  }));
+}
+
 function render() {
   renderSummary();
   renderServerOptions();
@@ -197,6 +288,10 @@ function render() {
   renderSubscriptions();
   renderAliases();
   renderKungfu();
+  renderAccessControls();
+  renderAccessEntries();
+  renderAccessKeyOptions();
+  renderAccessRecent();
 }
 
 async function loadData() {
@@ -257,6 +352,31 @@ byId("kungfu-form").addEventListener("submit", async (event) => {
     name: byId("kungfu-name").value,
     aliases: byId("kungfu-aliases").value,
   }, "心法配置已保存");
+  if (saved) event.currentTarget.reset();
+});
+
+async function saveAccessConfig() {
+  const checked = document.querySelector('input[name="access-mode"]:checked');
+  const mode = checked ? checked.value : "all";
+  return mutate("access/config", {
+    mode,
+    private_allowed: byId("access-private").checked,
+    reply_on_deny: byId("access-reply").checked,
+  }, "使用范围配置已保存");
+}
+
+document.querySelectorAll('input[name="access-mode"]').forEach((radio) => {
+  radio.addEventListener("change", saveAccessConfig);
+});
+byId("access-private").addEventListener("change", saveAccessConfig);
+byId("access-reply").addEventListener("change", saveAccessConfig);
+
+byId("access-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const saved = await mutate("access/entries/add", {
+    key: byId("access-key").value,
+    note: byId("access-note").value,
+  }, "名单条目已保存");
   if (saved) event.currentTarget.reset();
 });
 
