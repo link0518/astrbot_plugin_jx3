@@ -7,58 +7,65 @@
 
 /* 卡片 */
 .card {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 16px 18px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+    background: var(--jx3-surface);
+    border: 1px solid var(--jx3-border-soft);
+    border-radius: var(--jx3-radius-md);
+    padding: 18px 22px;
+    box-shadow: var(--jx3-shadow-sm);
     display: flex;
     align-items: center;
 }
 
 /* 时间 */
 .time {
-    width: 70px;
+    width: 80px;
     text-align: center;
+    font-family: var(--jx3-font-title);
     font-size: 26px;
     font-weight: 700;
-    color: #2563eb;
+    color: var(--jx3-red);
     flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
 }
 
 /* 内容 */
 .content {
     flex: 1;
-    padding: 0 16px;
+    padding: 0 18px;
 }
 
 .stage {
-    font-size: 22px;
+    font-family: var(--jx3-font-title);
+    font-size: 20px;
     font-weight: 700;
+    color: var(--jx3-text);
     margin-bottom: 6px;
+    letter-spacing: 0.03em;
 }
 
 .meta {
-    font-size: 18px;
-    color: #666;
+    font-size: 15px;
+    color: var(--jx3-text-muted);
     margin-bottom: 6px;
 }
 
 .desc {
-    font-size: 20px;
+    font-size: 16px;
     color: var(--jx3-text-secondary);
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
 /* 图标 */
 .icon {
-    width: 36px;
-    height: 36px;
+    width: 38px;
+    height: 38px;
     border-radius: 8px;
-    background: rgba(114, 169, 213, 0.16);
+    border: 1px solid var(--jx3-red-border);
+    background: var(--jx3-red-soft);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 18px;
     font-weight: 700;
-    color: var(--jx3-blue);
+    color: var(--jx3-red);
 }

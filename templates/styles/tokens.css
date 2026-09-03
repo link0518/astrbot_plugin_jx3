@@ -1,27 +1,32 @@
 :root {
-    --jx3-bg-deep: #04111d;
-    --jx3-bg: #071a2b;
-    --jx3-bg-raised: #0a2238;
-    --jx3-surface: #0d2942;
-    --jx3-surface-strong: #113451;
-    --jx3-surface-soft: #173d5d;
-    --jx3-surface-muted: #1b4567;
-    --jx3-border: #9a7432;
-    --jx3-border-strong: #c09647;
-    --jx3-border-soft: rgba(203, 160, 78, 0.36);
-    --jx3-border-faint: rgba(141, 175, 207, 0.18);
-    --jx3-gold: #e1b766;
-    --jx3-gold-bright: #f2cf82;
-    --jx3-gold-muted: #b89655;
-    --jx3-text: #f5f0e6;
-    --jx3-text-secondary: #c4d2df;
-    --jx3-text-muted: #879db2;
-    --jx3-blue: #72a9d5;
-    --jx3-green: #62bc92;
-    --jx3-red: #d56a63;
-    --jx3-purple: #a98bd2;
-    --jx3-shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.18);
-    --jx3-shadow-md: 0 12px 30px rgba(0, 0, 0, 0.24);
+    --jx3-bg-deep: #ede8dc;
+    --jx3-bg: #f7f4ed;
+    --jx3-bg-raised: #fbf9f4;
+    --jx3-surface: #ffffff;
+    --jx3-surface-strong: #fcfbf9;
+    --jx3-surface-soft: #f8f5ee;
+    --jx3-surface-muted: #f3efe6;
+    --jx3-border: #e0d8cc;
+    --jx3-border-strong: #c8bda9;
+    --jx3-border-soft: rgba(180, 165, 145, 0.32);
+    --jx3-border-faint: rgba(180, 165, 145, 0.18);
+    --jx3-gold: #a67428;
+    --jx3-gold-bright: #b88636;
+    --jx3-gold-muted: #8c6426;
+    --jx3-text: #23272e;
+    --jx3-text-secondary: #525866;
+    --jx3-text-muted: #888e99;
+    --jx3-blue: #325d88;
+    --jx3-blue-soft: rgba(50, 93, 136, 0.08);
+    --jx3-green: #2d7a56;
+    --jx3-green-soft: rgba(45, 122, 86, 0.08);
+    --jx3-red: #ba2f2f;
+    --jx3-red-bright: #d13834;
+    --jx3-red-soft: rgba(186, 47, 47, 0.08);
+    --jx3-red-border: rgba(186, 47, 47, 0.28);
+    --jx3-purple: #764f92;
+    --jx3-shadow-sm: 0 2px 8px rgba(60, 45, 30, 0.04);
+    --jx3-shadow-md: 0 4px 18px rgba(60, 45, 30, 0.06);
     --jx3-radius-sm: 6px;
     --jx3-radius-md: 10px;
     --jx3-radius-lg: 14px;
@@ -33,7 +38,8 @@
     --jx3-space-6: 24px;
     --jx3-space-8: 32px;
     --jx3-page-width: 1200px;
-    --jx3-font: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", Arial, sans-serif;
+    --jx3-font-title: "LXGW WenKai", "STKaiti", "KaiTi", "楷体", "Kaiti SC", "Source Han Serif CN", "Songti SC", "SimSun", serif;
+    --jx3-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif;
 }
 
 .jx3-template--mingjiantongji {

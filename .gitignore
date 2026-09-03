@@ -24,6 +24,7 @@ env/
 .idea/
 .vscode/
 .DS_Store
+.workbuddy
 Thumbs.db
 
 # 本地日志和临时文件

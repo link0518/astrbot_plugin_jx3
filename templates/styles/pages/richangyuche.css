@@ -8,44 +8,73 @@
 /* 表头 */
 .week {
     text-align: center;
+    font-family: var(--jx3-font-title);
     font-size: 18px;
     font-weight: 700;
-    color: var(--jx3-text-secondary);
+    color: var(--jx3-text);
+    padding-bottom: 8px;
+    letter-spacing: 0.05em;
 }
 
 /* 卡片基础 */
 .card {
-    min-height: 120px;
-    border-radius: 12px;
-    padding: 12px;
+    min-height: 124px;
+    border-radius: var(--jx3-radius-md);
+    padding: 14px 16px;
     box-sizing: border-box;
-    background: transparent;
+    background: var(--jx3-surface);
+    border: 1px solid var(--jx3-border-soft);
+    box-shadow: var(--jx3-shadow-sm);
+    transition: transform 0.2s ease;
 }
 
 /* 状态样式 */
 .card.past {
-    background: rgba(71, 91, 108, 0.72);
-    color: var(--jx3-text-secondary);
+    background: var(--jx3-surface-soft);
+    color: var(--jx3-text-muted);
+    opacity: 0.85;
+}
+
+.card.past .line {
+    color: var(--jx3-text-muted);
 }
 
 .card.today {
-    background: rgba(53, 113, 165, 0.9);
-    color: var(--jx3-text);
+    background: var(--jx3-surface);
+    border: 2px solid var(--jx3-red);
+    box-shadow: 0 4px 16px rgba(186, 47, 47, 0.12);
+}
+
+.card.today .date {
+    color: var(--jx3-red);
+}
+
+.card.today .date::after {
+    display: inline-block;
+    content: " (今)";
+    font-size: 13px;
+    font-weight: 700;
 }
 
 .card.future {
-    background: rgba(13, 41, 66, 0.82);
+    background: var(--jx3-surface);
     color: var(--jx3-text);
-    border: 1px solid var(--jx3-border-faint);
+    border: 1px solid var(--jx3-border-soft);
 }
 
 /* 内容 */
 .date {
+    font-family: var(--jx3-font-title);
+    font-size: 17px;
     font-weight: 700;
     margin-bottom: 8px;
+    color: var(--jx3-text);
+    letter-spacing: 0.03em;
 }
 
 .line {
-    font-size: 16px;
+    font-size: 15px;
+    line-height: 1.5;
     margin-top: 6px;
+    color: var(--jx3-text-secondary);
 }

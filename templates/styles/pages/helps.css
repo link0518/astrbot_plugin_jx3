@@ -1,13 +1,11 @@
 .help-page {
     position: relative;
-    padding: 22px;
+    padding: 28px 32px;
     overflow: hidden;
-    border: 1px solid rgba(224, 200, 141, 0.72);
-    border-radius: 20px;
-    background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.035), transparent 24%),
-        rgba(8, 27, 49, 0.92);
-    box-shadow: inset 0 0 32px rgba(126, 161, 216, 0.06);
+    border: 1px solid var(--jx3-border-soft);
+    border-radius: var(--jx3-radius-lg);
+    background: var(--jx3-surface);
+    box-shadow: var(--jx3-shadow-sm);
 }
 
 .help-header {
@@ -15,25 +13,30 @@
     align-items: center;
     justify-content: space-between;
     gap: 24px;
-    margin-bottom: 18px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--jx3-border-soft);
 }
 
 .top-name {
-    color: #fff0c8;
-    font-size: 24px;
-    font-weight: 800;
+    color: var(--jx3-text);
+    font-family: var(--jx3-font-title);
+    font-size: 28px;
+    font-weight: 700;
     letter-spacing: 0.08em;
 }
 
 .top-summary {
-    margin-top: 5px;
+    margin-top: 6px;
     font-size: 14px;
+    color: var(--jx3-text-muted);
 }
 
 .top-desc {
     font-size: 14px;
     line-height: 1.75;
     text-align: right;
+    color: var(--jx3-text-secondary);
 }
 
 .section-grid {
@@ -46,6 +49,9 @@
 .section {
     min-width: 0;
     overflow: hidden;
+    background: var(--jx3-surface-soft);
+    border: 1px solid var(--jx3-border-soft);
+    border-radius: var(--jx3-radius-md);
 }
 
 .section.span-2 {
@@ -57,19 +63,21 @@
 }
 
 .section-title {
-    padding: 11px 15px;
-    border-bottom: 1px solid rgba(220, 199, 145, 0.3);
-    background: linear-gradient(90deg, rgba(198, 165, 93, 0.24), rgba(105, 138, 194, 0.08));
-    font-size: 19px;
-    font-weight: 800;
-    letter-spacing: 0.05em;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--jx3-border-soft);
+    background: #f5f0e6;
+    color: var(--jx3-text);
+    font-family: var(--jx3-font-title);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
 }
 
 .section-body {
     display: grid;
     grid-template-columns: 1fr;
     gap: 0 18px;
-    padding: 7px 13px 10px;
+    padding: 10px 16px 12px;
 }
 
 .span-2 .section-body {
@@ -79,11 +87,11 @@
 .feature {
     display: grid;
     grid-template-columns: 88px minmax(0, 1fr);
-    gap: 9px;
+    gap: 10px;
     align-items: start;
     min-width: 0;
     padding: 8px 0;
-    border-bottom: 1px dashed rgba(186, 205, 239, 0.15);
+    border-bottom: 1px dashed var(--jx3-border-faint);
 }
 
 .feature-name {
@@ -91,23 +99,32 @@
     font-size: 14px;
     line-height: 1.5;
     font-weight: 700;
+    color: var(--jx3-text);
 }
 
 .commands {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 6px;
     min-width: 0;
 }
 
 .command {
     display: inline-block;
-    padding: 3px 7px;
-    border: 1px solid rgba(157, 184, 228, 0.22);
-    border-radius: 5px;
+    padding: 3px 8px;
+    border: 1px solid rgba(50, 93, 136, 0.2);
+    border-radius: 4px;
     font-size: 12px;
     line-height: 1.5;
     word-break: break-all;
+    color: var(--jx3-blue);
+    background: var(--jx3-blue-soft);
+}
+
+.command:hover {
+    color: var(--jx3-red);
+    border-color: var(--jx3-red-border);
+    background: var(--jx3-red-soft);
 }
 
 .ranking-section .section-body {
@@ -121,11 +138,12 @@
 .ranking-list {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 5px;
+    gap: 6px;
 }
 
 .ranking-list .command {
     width: 100%;
+    text-align: center;
 }
 
 .trial-feature {
@@ -141,32 +159,33 @@
 }
 
 .section--danger {
-    border-color: rgba(213, 106, 99, 0.54) !important;
+    border-color: var(--jx3-red-border) !important;
 }
 
 .section--danger .section-title {
-    color: #ffd6d3;
-    background: linear-gradient(90deg, rgba(176, 65, 65, 0.3), rgba(105, 138, 194, 0.06));
+    color: var(--jx3-red);
+    background: var(--jx3-red-soft);
 }
 
 .section--success {
-    border-color: rgba(98, 188, 146, 0.52) !important;
+    border-color: rgba(45, 122, 86, 0.28) !important;
 }
 
 .section--success .section-title {
-    color: #d8ffeb;
-    background: linear-gradient(90deg, rgba(39, 148, 103, 0.28), rgba(105, 138, 194, 0.06));
+    color: var(--jx3-green);
+    background: var(--jx3-green-soft);
 }
 
 .help-footer {
-    margin-top: 17px;
-    padding: 13px 16px 2px;
-    border-top: 1px solid rgba(216, 195, 140, 0.24);
+    margin-top: 24px;
+    padding: 16px 20px 2px;
+    border-top: 1px solid var(--jx3-border-soft);
     font-size: 13px;
     line-height: 1.8;
     text-align: center;
+    color: var(--jx3-text-muted);
 }
 
 .help-footer strong {
-    color: #e6d4a4;
+    color: var(--jx3-red);
 }

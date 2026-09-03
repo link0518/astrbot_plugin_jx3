@@ -87,10 +87,11 @@ body.jx3-template--shapan {
     display: block;
     width: 1em;
     color: #fffcd0;
-    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-    font-size: 15px;
+    font-family: var(--jx3-font-title);
+    font-size: 16px;
     line-height: 20px;
-    text-shadow: 1px 1px 1px #000;
+    font-weight: 700;
+    text-shadow: 1px 1px 2px #000, -1px -1px 2px #000;
 }
 
 .sand-castle__guild {
@@ -98,7 +99,7 @@ body.jx3-template--shapan {
     z-index: 6;
     width: 110px;
     color: #fffcd0;
-    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    font-family: var(--jx3-font);
     font-size: 14px;
     font-weight: 600;
     line-height: 18px;

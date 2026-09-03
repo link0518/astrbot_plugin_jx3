@@ -1,3 +1,5 @@
+import re
+
 from astrbot.core import html_renderer
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain
@@ -10,6 +12,15 @@ from .jx3api_data import JX3APIService
 from .jx3box_data import JX3BOXService
 from .event_push import EventPushService
 from .bilei_data import BiLeidata
+
+
+# 截图质量:100 会显著放大图片体积并拖慢出图与上传。
+# AstrBot 远端 T2I 渲染服务默认仅 40;综合清晰度取 85(JPEG,视觉近乎无损)。
+IMAGE_QUALITY = 85
+
+# 模板内图标引用的写法固定为 icons.<分组>.<key> / icons.<分组>.get(...)
+# 渲染时据此只注入模板实际用到的图标组,而不是全量 (~10MB base64)。
+_ICON_GROUP_PATTERN = re.compile(r"icons\.(img|sand|sect|serendipity)")
 
 
 class MessageBuilder:
@@ -49,6 +60,33 @@ class MessageBuilder:
         self.bilei = bilei
         self.event_push = event_push
         self.icons = icons
+
+
+    def pick_icons(self, template_html: str) -> dict[str, dict[str, str]]:
+        """按模板实际引用的图标组裁剪 icons,避免每次注入全量 base64。
+
+        self.icons 启动时会把 img/sand/sect/serendipity 四组全部图片
+        (~8.4MB 资源,base64 后约 10MB)编码进内存。而全插件模板中只有
+        少数页面真正引用本地图标,且各自只用其中一组或几组:
+          - img:         交易行(货币小图标)
+          - sect:        名剑统计/各类排行/师徒/资历(心法图标)
+          - sand:        沙盘(地图切片)
+          - serendipity: 奇遇相关页面(奇遇图标)
+        逐个请求全量注入会白白增加 Jinja 上下文与浏览器解码开销。
+        这里读取模板 HTML,用正则找出引用的分组并只返回对应子集;
+        无引用时返回空 dict。出现 icons 关键字但识别不出分组时,
+        保守退回全量,避免模板运行期缺失键。
+        """
+        if not isinstance(template_html, str) or "icons" not in template_html:
+            return {}
+        groups = set(_ICON_GROUP_PATTERN.findall(template_html))
+        if not groups:
+            return dict(self.icons)
+        return {
+            group: self.icons[group]
+            for group in groups
+            if group in self.icons
+        }
 
 
     async def html_render(
@@ -91,7 +129,7 @@ class MessageBuilder:
         try:
             if data["code"] == 200:
                 options = {
-                    "quality": 100,
+                    "quality": IMAGE_QUALITY,
                     "device_scale_factor_level": "normal",
                     "full_page": True,
                     "omit_background": False,
@@ -100,7 +138,8 @@ class MessageBuilder:
                 options.update(render_options or {})
                 if options.get("type") == "png":
                     options.pop("quality", None)
-                data["data"]["icons"] = self.icons
+                # 只注入该模板用到的图标组,避免全量 base64 拖慢渲染
+                data["data"]["icons"] = self.pick_icons(data["temp"])
                 url = await self.html_render(data["temp"], data["data"], options=options)
                 await event.send(event.image_result(url)) 
             else:
@@ -249,13 +288,13 @@ class MessageBuilder:
                         return
 
                     options = {
-                        "quality": 100,
+                        "quality": IMAGE_QUALITY,
                         "device_scale_factor_level": "normal",
                         "full_page": True,
                         "omit_background": False,
                         "type": "jpeg"
                     }
-                    data["data"]["icons"] = self.icons
+                    data["data"]["icons"] = self.pick_icons(data["temp"])
                     url = await self.html_render(data["temp"], data["data"], options=options)
                     await new_event.send(new_event.image_result(url))
                 except Exception as e:

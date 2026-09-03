@@ -1,127 +1,160 @@
 .goods-image {
-        display: block;
-        width: 100%;
-        border-radius: 16px;
-        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-        margin-bottom: 14px;
-    }
+    display: block;
+    width: 100%;
+    border-radius: var(--jx3-radius-lg);
+    box-shadow: var(--jx3-shadow-sm);
+    border: 1px solid var(--jx3-border-soft);
+    margin-bottom: 16px;
+}
 
-    .goods-desc {
-        font-size: 16px;
-        line-height: 1.8;
-        color: var(--jx3-text-secondary);
-        margin: 0 0 10px;
-        text-align: left;
-    }
+.goods-desc {
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--jx3-text-secondary);
+    margin: 0 0 12px;
+    text-align: left;
+}
 
-    .meta-row {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 20px 40px;
-        font-size: 18px;
-        margin-bottom: 30px;
-        color: var(--jx3-text-muted);
-    }
+.meta-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px 40px;
+    font-size: 18px;
+    margin-bottom: 30px;
+    color: var(--jx3-text-muted);
+}
 
-    .meta-row .price {
-        color: var(--jx3-gold-bright);
-        font-weight: 800;
-    }
+.meta-row .price {
+    color: var(--jx3-red);
+    font-weight: 800;
+}
 
-    .table-wrapper {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 20px;
-        align-items: start;
-    }
+.table-wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    align-items: start;
+}
 
-    .table-card {
-        width: 100%;
-        min-width: 0;
-    }
+.table-card {
+    width: 100%;
+    min-width: 0;
+}
 
-    .table-title {
-        font-size: 20px;
-        font-weight: 700;
-        margin-bottom: 8px;
-        text-align: center;
-        color: var(--jx3-gold-bright);
-    }
+.table-title {
+    font-family: var(--jx3-font-title);
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-align: center;
+    color: var(--jx3-text);
+    letter-spacing: 0.04em;
+}
 
-    .table-scroll {
-        width: 100%;
-        overflow-x: auto;
-        border-radius: 12px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-    }table {
-        min-width: 420px;
-        text-align: left;
-    }th,
-    td {
-        white-space: nowrap;
-    }
+.table-scroll {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: var(--jx3-radius-md);
+    background: var(--jx3-surface);
+    border: 1px solid var(--jx3-border-soft);
+    box-shadow: var(--jx3-shadow-sm);
+}
 
-    th {
-        font-weight: 700;
-    }
+table {
+    width: 100%;
+    min-width: 380px;
+    text-align: left;
+    border-collapse: collapse;
+}
 
-    .server-col {
-        font-weight: 600;
-    }
+th,
+td {
+    white-space: nowrap;
+    padding: 12px 14px;
+}
 
-    .price-col {
-        color: var(--jx3-gold-bright);
-        font-weight: 700;
-    }
+th {
+    font-family: var(--jx3-font-title);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--jx3-text);
+    background: #f4eee5;
+    border-bottom: 1px solid var(--jx3-border);
+}
 
-    .empty-row {
-        height: 80px;
-        padding: 28px 10px;
-        text-align: center;
-        color: var(--jx3-text-muted);
-        font-weight: 400;
-    }
+td {
+    border-bottom: 1px solid var(--jx3-border-faint);
+    color: var(--jx3-text-secondary);
+}
 
-    /* ===== 万宝楼公示（蓝色） ===== */
+tbody tr:nth-child(even) {
+    background: rgba(246, 242, 234, 0.45);
+}
 
-    .table-card.notice .table-title {
-        color: var(--jx3-blue);
-    }
+tbody tr:hover {
+    background: rgba(186, 47, 47, 0.035);
+}
 
-    .table-card.notice .price-col {
-        color: var(--jx3-blue);
-    }
+.server-col {
+    font-weight: 600;
+    color: var(--jx3-text);
+}
 
-    .table-card.notice thead {
-        background: rgba(63, 111, 153, 0.78);
-    }
+.price-col {
+    color: var(--jx3-red);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
 
-    /* ===== 万宝楼在售（绿色） ===== */
+.empty-row {
+    height: 80px;
+    padding: 28px 10px;
+    text-align: center;
+    color: var(--jx3-text-muted);
+    font-weight: 400;
+    font-family: var(--jx3-font-title);
+}
 
-    .table-card.sale .table-title {
-        color: var(--jx3-green);
-    }
+/* ===== 万宝楼公示（蓝色） ===== */
+.table-card.notice .table-title {
+    color: var(--jx3-blue);
+}
 
-    .table-card.sale .price-col {
-        color: var(--jx3-green);
-    }
+.table-card.notice .price-col {
+    color: var(--jx3-blue);
+}
 
-    .table-card.sale thead {
-        background: rgba(43, 111, 82, 0.78);
-    }
+.table-card.notice thead {
+    background: rgba(50, 93, 136, 0.08);
+    color: var(--jx3-blue);
+}
 
-    /* ===== 查询区服（紫色） ===== */
+/* ===== 万宝楼在售（绿色） ===== */
+.table-card.sale .table-title {
+    color: var(--jx3-green);
+}
 
-    .table-card.query .table-title {
-        color: var(--jx3-purple);
-    }
+.table-card.sale .price-col {
+    color: var(--jx3-green);
+}
 
-    .table-card.query .price-col {
-        color: var(--jx3-purple);
-    }
+.table-card.sale thead {
+    background: rgba(45, 122, 86, 0.08);
+    color: var(--jx3-green);
+}
 
-    .table-card.query thead {
-        background: rgba(90, 67, 126, 0.8);
-    }
+/* ===== 查询区服（紫色） ===== */
+.table-card.query .table-title {
+    color: var(--jx3-purple);
+}
+
+.table-card.query .price-col {
+    color: var(--jx3-purple);
+}
+
+.table-card.query thead {
+    background: rgba(118, 79, 146, 0.08);
+    color: var(--jx3-purple);
+}

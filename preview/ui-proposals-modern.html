@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="g">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>剑网3机器人 · 现代风 UI 方案预览</title>
+<style>
+/* ============ 通用骨架（与真实模板结构一致） ============ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+.wrap { width: 980px; margin: 0 auto; padding: 28px 0 60px; }
+.header { margin-bottom: 18px; }
+.header h1 { font-size: 30px; line-height: 1.3; }
+.meta { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 8px; font-size: 14px; }
+.cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+.card { padding: 16px 18px; }
+.card .label { font-size: 13px; }
+.card .value { font-size: 26px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.section-title { font-size: 17px; font-weight: 700; margin: 22px 0 10px; display: flex; align-items: center; gap: 10px; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { padding: 12px 14px; text-align: left; }
+.item { display: flex; align-items: center; gap: 10px; }
+.item-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; flex: none; }
+.price { display: flex; align-items: center; gap: 8px; font-variant-numeric: tabular-nums; }
+.money-part { display: inline-flex; align-items: center; gap: 3px; }
+.money-icon { width: 16px; height: 16px; }
+
+/* ============ 切换条 ============ */
+.switcher { position: sticky; top: 0; z-index: 10; padding: 12px 0; backdrop-filter: blur(10px); }
+.switcher-inner { width: 980px; margin: 0 auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.switcher .tip { font-size: 13px; margin-right: 6px; opacity: .75; }
+.switcher button { cursor: pointer; border: none; padding: 7px 16px; border-radius: 999px; font-size: 14px; font-weight: 600; transition: all .18s; }
+.theme-desc { width: 980px; margin: 4px auto 0; font-size: 13px; opacity: .8; }
+
+/* ================================================================
+   E · 极简留白 —— Notion 风
+   ================================================================ */
+[data-theme="e"] body { background: #fafafa; color: #1a1a1a; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; }
+[data-theme="e"] .switcher { background: rgba(250,250,250,.92); border-bottom: 1px solid #e5e5e5; }
+[data-theme="e"] .switcher button { background: #efefef; color: #555; }
+[data-theme="e"] .switcher button.active { background: #4f46e5; color: #fff; }
+[data-theme="e"] .header { padding: 8px 2px 18px; border-bottom: 1px solid #e5e5e5; background: none; }
+[data-theme="e"] .header h1 { font-size: 28px; font-weight: 700; letter-spacing: -.01em; }
+[data-theme="e"] .meta { color: #8a8a8a; gap: 14px; }
+[data-theme="e"] .cards { gap: 24px; }
+[data-theme="e"] .card { padding: 4px 2px; border: none; background: none; }
+[data-theme="e"] .card .label { color: #8a8a8a; }
+[data-theme="e"] .card .value { color: #1a1a1a; font-size: 30px; letter-spacing: -.02em; }
+[data-theme="e"] .card .value em { font-style: normal; color: #4f46e5; }
+[data-theme="e"] .section-title { color: #1a1a1a; font-size: 15px; }
+[data-theme="e"] .section-title::before { content: ""; width: 14px; height: 3px; background: #4f46e5; border-radius: 2px; }
+[data-theme="e"] .table-box { border: none; border-top: 2px solid #1a1a1a; background: none; }
+[data-theme="e"] thead { background: none; }
+[data-theme="e"] th { color: #8a8a8a; font-size: 12px; font-weight: 600; letter-spacing: .06em; border-bottom: 1px solid #e5e5e5; text-transform: uppercase; }
+[data-theme="e"] td { border-bottom: 1px solid #f0f0f0; color: #37352f; }
+[data-theme="e"] tbody tr:hover { background: #f7f6f3; }
+[data-theme="e"] .item-icon { background: #efefed; color: #37352f; border-radius: 6px; }
+[data-theme="e"] .price { color: #1a1a1a; font-weight: 600; }
+[data-theme="e"] .time, [data-theme="e"] .sample { color: #8a8a8a; }
+
+/* ================================================================
+   F · 毛玻璃深色 —— Glassmorphism
+   ================================================================ */
+[data-theme="f"] body { color: #f1f5f9; font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #0c1a2e 100%); min-height: 100vh; }
+[data-theme="f"] body::before { content: ""; position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(600px 300px at 80% 0%, rgba(56,189,248,.18), transparent 60%),
+                radial-gradient(500px 400px at 10% 90%, rgba(129,140,248,.16), transparent 60%); }
+[data-theme="f"] .switcher { background: rgba(15,23,42,.7); border-bottom: 1px solid rgba(255,255,255,.08); }
+[data-theme="f"] .switcher button { background: rgba(255,255,255,.08); color: #b6c2d4; }
+[data-theme="f"] .switcher button.active { background: #38bdf8; color: #082f49; }
+[data-theme="f"] .header { background: rgba(255,255,255,.06); backdrop-filter: blur(14px);
+    border: 1px solid rgba(255,255,255,.12); border-radius: 18px; padding: 24px 28px;
+    box-shadow: 0 8px 32px rgba(2,6,23,.4); }
+[data-theme="f"] .header h1 { color: #fff; letter-spacing: .01em; }
+[data-theme="f"] .header h1 em { font-style: normal; color: #38bdf8; }
+[data-theme="f"] .meta { color: #94a3b8; }
+[data-theme="f"] .card { background: rgba(255,255,255,.05); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,.10); border-radius: 16px; box-shadow: 0 6px 20px rgba(2,6,23,.3); }
+[data-theme="f"] .card .label { color: #94a3b8; }
+[data-theme="f"] .card .value { color: #7dd3fc; }
+[data-theme="f"] .section-title { color: #e2e8f0; }
+[data-theme="f"] .section-title::before { content: ""; width: 4px; height: 16px; border-radius: 2px; background: #38bdf8; box-shadow: 0 0 12px rgba(56,189,248,.7); }
+[data-theme="f"] .table-box { background: rgba(255,255,255,.045); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,.10); border-radius: 18px; overflow: hidden; box-shadow: 0 8px 32px rgba(2,6,23,.35); }
+[data-theme="f"] thead { background: rgba(255,255,255,.05); }
+[data-theme="f"] th { color: #7dd3fc; font-size: 13px; letter-spacing: .08em; border-bottom: 1px solid rgba(125,211,252,.25); }
+[data-theme="f"] td { border-bottom: 1px solid rgba(255,255,255,.06); color: #cbd5e1; }
+[data-theme="f"] tbody tr:hover { background: rgba(56,189,248,.07); }
+[data-theme="f"] .item-icon { background: rgba(56,189,248,.14); color: #7dd3fc; border: 1px solid rgba(56,189,248,.3); }
+[data-theme="f"] .price { color: #fcd34d; font-weight: 700; }
+[data-theme="f"] .time, [data-theme="f"] .sample { color: #94a3b8; }
+
+/* ================================================================
+   G · 新中式黛蓝 —— 现代国风
+   ================================================================ */
+[data-theme="g"] body { background: #eef1f5; color: #23282f; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; }
+[data-theme="g"] .switcher { background: rgba(238,241,245,.92); border-bottom: 1px solid #d5dce6; }
+[data-theme="g"] .switcher button { background: #dde3ec; color: #4c5a70; }
+[data-theme="g"] .switcher button.active { background: #2f4b7c; color: #fff; }
+[data-theme="g"] .header { background: #fbfcfe; border: 1px solid #dde3ec; border-radius: 10px; padding: 26px 30px;
+    box-shadow: 0 3px 14px rgba(47,75,124,.08); border-left: 4px solid #2f4b7c; }
+[data-theme="g"] .header h1 { font-family: "Noto Serif SC", "Source Han Serif SC", "STSong", "SimSun", serif;
+    color: #1c2330; letter-spacing: .06em; font-weight: 700; }
+[data-theme="g"] .header h1::after { content: ""; display: block; width: 64px; height: 2px; margin-top: 12px;
+    background: linear-gradient(90deg, #b08d57, rgba(176,141,87,0)); }
+[data-theme="g"] .meta { color: #7a8698; }
+[data-theme="g"] .meta span + span::before { content: "·"; margin-right: 18px; color: #b08d57; }
+[data-theme="g"] .card { background: #fbfcfe; border: 1px solid #dde3ec; border-radius: 10px; box-shadow: 0 2px 10px rgba(47,75,124,.06); }
+[data-theme="g"] .card .label { color: #7a8698; }
+[data-theme="g"] .card .value { color: #2f4b7c; font-family: "Noto Serif SC", "STSong", "SimSun", serif; }
+[data-theme="g"] .section-title { color: #1c2330; font-family: "Noto Serif SC", "STSong", "SimSun", serif; letter-spacing: .06em; }
+[data-theme="g"] .section-title::before { content: ""; width: 8px; height: 8px; background: #b08d57; transform: rotate(45deg); border-radius: 1px; }
+[data-theme="g"] .table-box { background: #fbfcfe; border: 1px solid #dde3ec; border-radius: 10px; overflow: hidden; box-shadow: 0 3px 14px rgba(47,75,124,.08); }
+[data-theme="g"] thead { background: #f2f5fa; }
+[data-theme="g"] th { color: #2f4b7c; font-family: "Noto Serif SC", "STSong", "SimSun", serif; font-size: 15px; letter-spacing: .10em; border-bottom: 2px solid #2f4b7c; }
+[data-theme="g"] td { border-bottom: 1px solid #e8edf4; color: #3d4552; }
+[data-theme="g"] tbody tr:nth-child(even) { background: #f7f9fc; }
+[data-theme="g"] tbody tr:hover { background: #eef3f9; }
+[data-theme="g"] .item-icon { background: #2f4b7c; color: #f4f7fb; border-radius: 6px; font-family: "STSong", "SimSun", serif; }
+[data-theme="g"] .price { color: #9c6b1e; font-weight: 700; }
+[data-theme="g"] .time, [data-theme="g"] .sample { color: #7a8698; }
+
+/* ================================================================
+   H · 双色调数据卡 —— Linear / Vercel 风
+   ================================================================ */
+[data-theme="h"] body { background: #0a0a0a; color: #ededed; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; }
+[data-theme="h"] .switcher { background: rgba(10,10,10,.85); border-bottom: 1px solid rgba(255,255,255,.08); }
+[data-theme="h"] .switcher button { background: rgba(255,255,255,.07); color: #a1a1a1; }
+[data-theme="h"] .switcher button.active { background: #ededed; color: #0a0a0a; }
+[data-theme="h"] .header { background: #111111; border: 1px solid rgba(255,255,255,.09); border-radius: 16px;
+    padding: 26px 30px; position: relative; overflow: hidden; }
+[data-theme="h"] .header::before, [data-theme="h"] .card::before, [data-theme="h"] .table-box::before {
+    content: ""; position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent); }
+[data-theme="h"] .header h1 { font-weight: 700; letter-spacing: -.02em; color: #fff; }
+[data-theme="h"] .meta { color: #707070; font-size: 13px; }
+[data-theme="h"] .card { background: #111111; border: 1px solid rgba(255,255,255,.09); border-radius: 16px; position: relative; overflow: hidden; }
+[data-theme="h"] .card .label { color: #707070; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+[data-theme="h"] .card .value { color: #fff; font-size: 32px; letter-spacing: -.03em; font-family: "SF Mono", "Cascadia Code", "Consolas", monospace; }
+[data-theme="h"] .section-title { color: #ededed; font-size: 14px; letter-spacing: .02em; }
+[data-theme="h"] .section-title::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,.8); }
+[data-theme="h"] .table-box { background: #111111; border: 1px solid rgba(255,255,255,.09); border-radius: 16px; overflow: hidden; position: relative; }
+[data-theme="h"] thead { background: rgba(255,255,255,.03); }
+[data-theme="h"] th { color: #707070; font-size: 12px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,.09); }
+[data-theme="h"] td { border-bottom: 1px solid rgba(255,255,255,.05); color: #c4c4c4; }
+[data-theme="h"] tbody tr:last-child td { border-bottom: none; }
+[data-theme="h"] tbody tr:hover { background: rgba(255,255,255,.03); }
+[data-theme="h"] .item-icon { background: rgba(255,255,255,.06); color: #ededed; border: 1px solid rgba(255,255,255,.12); border-radius: 8px; }
+[data-theme="h"] .price { color: #fff; font-weight: 600; font-family: "SF Mono", "Cascadia Code", "Consolas", monospace; }
+[data-theme="h"] .time, [data-theme="h"] .sample { color: #707070; font-family: "SF Mono", "Cascadia Code", "Consolas", monospace; font-size: 13px; }
+
+/* ================================================================
+   I · 莫兰迪暖调 —— 低饱和浅色
+   ================================================================ */
+[data-theme="i"] body { background: #f5f2ed; color: #3d3a36; font-family: "Microsoft YaHei", "PingFang SC", sans-serif; }
+[data-theme="i"] .switcher { background: rgba(245,242,237,.92); border-bottom: 1px solid #e2dcd2; }
+[data-theme="i"] .switcher button { background: #e8e2d8; color: #7d766b; }
+[data-theme="i"] .switcher button.active { background: #7d9bbf; color: #fff; }
+[data-theme="i"] .header { background: #fdfcfa; border: 1px solid #e8e2d8; border-radius: 18px; padding: 26px 30px;
+    box-shadow: 0 4px 18px rgba(120,105,85,.08); }
+[data-theme="i"] .header h1 { color: #33302c; font-weight: 700; }
+[data-theme="i"] .header h1 em { font-style: normal; color: #7d9bbf; }
+[data-theme="i"] .meta { color: #9b948a; }
+[data-theme="i"] .meta span { background: #f0ebe3; border-radius: 999px; padding: 3px 12px; }
+[data-theme="i"] .card { background: #fdfcfa; border: 1px solid #e8e2d8; border-radius: 18px; box-shadow: 0 3px 12px rgba(120,105,85,.06); }
+[data-theme="i"] .card .label { color: #9b948a; }
+[data-theme="i"] .card .value { color: #7d9bbf; }
+[data-theme="i"] .card:nth-child(2) .value { color: #c4907f; }
+[data-theme="i"] .card:nth-child(3) .value { color: #8fa98a; }
+[data-theme="i"] .card:nth-child(4) .value { color: #b39cc4; }
+[data-theme="i"] .section-title { color: #33302c; }
+[data-theme="i"] .section-title::before { content: ""; width: 5px; height: 18px; border-radius: 3px; background: #c4907f; }
+[data-theme="i"] .table-box { background: #fdfcfa; border: 1px solid #e8e2d8; border-radius: 18px; overflow: hidden; box-shadow: 0 4px 18px rgba(120,105,85,.08); }
+[data-theme="i"] thead { background: #f3efe8; }
+[data-theme="i"] th { color: #7d766b; font-size: 13px; letter-spacing: .05em; border-bottom: 1px solid #e2dcd2; }
+[data-theme="i"] td { border-bottom: 1px solid #f0ebe3; color: #55504a; }
+[data-theme="i"] tbody tr:last-child td { border-bottom: none; }
+[data-theme="i"] tbody tr:hover { background: #f7f4ee; }
+[data-theme="i"] .item-icon { background: linear-gradient(135deg, #a8bed6, #7d9bbf); color: #fff; border-radius: 10px; }
+[data-theme="i"] .price { color: #b08a4f; font-weight: 700; }
+[data-theme="i"] .time, [data-theme="i"] .sample { color: #9b948a; }
+</style>
+</head>
+<body>
+
+<div class="switcher">
+    <div class="switcher-inner">
+        <span class="tip">同一内容 × 5 套现代风主题：</span>
+        <button data-t="e">E · 极简留白</button>
+        <button data-t="f">F · 毛玻璃深色</button>
+        <button data-t="g" class="active">G · 新中式黛蓝</button>
+        <button data-t="h">H · 双色调数据卡</button>
+        <button data-t="i">I · 莫兰迪暖调</button>
+    </div>
+    <div class="theme-desc" id="desc"></div>
+</div>
+
+<div class="wrap">
+    <div class="header">
+        <h1>交易行：五彩石 · 梦江南</h1>
+        <div class="meta">
+            <span>展示 6 条价格数据</span>
+            <span>匹配 1 个物品</span>
+            <span>生成时间：2026-09-03 19:30</span>
+        </div>
+    </div>
+
+    <div class="cards">
+        <div class="card"><div class="label">当前最低价</div><div class="value">1金 28银</div></div>
+        <div class="card"><div class="label">24h 均价</div><div class="value">1金 35银</div></div>
+        <div class="card"><div class="label">在售数量</div><div class="value">1,742</div></div>
+        <div class="card"><div class="label">样本数量</div><div class="value">326</div></div>
+    </div>
+
+    <div class="section-title">价格明细</div>
+    <div class="table-box">
+        <table>
+            <thead>
+                <tr><th style="width:40%">物品</th><th style="width:26%">物价</th><th style="width:12%">数量</th><th style="width:22%">数据时间</th></tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+const rows = [
+    ["五彩石", [["1", "jin"], ["28", "yin"], ["50", "tong"]], 58, "09-03 19:28"],
+    ["天蚕丝", [["86", "yin"], ["20", "tong"]], 310, "09-03 19:26"],
+    ["九转还魂丹", [["2", "jin"], ["05", "yin"]], 96, "09-03 19:24"],
+    ["玄晶", [["12", "jin"], ["66", "yin"]], 12, "09-03 19:21"],
+    ["马嵬驿密信", [["45", "yin"]], 875, "09-03 19:18"],
+    ["龙门飞剑·礼盒", [["388", "jin"]], 3, "09-03 19:05"],
+];
+const iconBase = "../templates/img/";
+document.getElementById("tbody").innerHTML = rows.map(r => `
+    <tr>
+        <td><div class="item"><div class="item-icon">${r[0][0]}</div><div>${r[0]}</div></div></td>
+        <td><div class="price">${r[1].map(p => `<span class="money-part"><span>${p[0]}</span><img class="money-icon" src="${iconBase}${p[1]}.png"></span>`).join("")}</div></td>
+        <td class="sample">${r[2]}</td>
+        <td class="time">${r[3]}</td>
+    </tr>`).join("");
+
+const descs = {
+    e: "E · 极简留白：Notion 风，几乎无装饰，靠留白和字重分层，靛蓝只点缀关键处。最耐看、信息密度最高，但“剑三味”最淡。",
+    f: "F · 毛玻璃深色：深蓝紫渐变底 + 磨砂玻璃面板 + 冰蓝高光。科技感强，注意：依赖 backdrop-filter，落地前需验证截图内核支持。",
+    g: "G · 新中式黛蓝：花青 + 赭石金 + 宋体标题，故宫文创式现代国风。既现代又不丢武侠身份，与剑三调性匹配度最高（推荐）。",
+    h: "H · 双色调数据卡：Linear/Vercel 风纯黑底 + 等宽字体大数字 + 渐变发丝高光。锐利极简，辨识度极高，最“开发者审美”。",
+    i: "I · 莫兰迪暖调：燕麦底 + 雾蓝/陶土粉低饱和配色，柔和治愈，长时间看不累，女性用户多的群接受度高。",
+};
+const descEl = document.getElementById("desc");
+function setTheme(t) {
+    document.documentElement.setAttribute("data-theme", t);
+    document.querySelectorAll(".switcher button").forEach(b => b.classList.toggle("active", b.dataset.t === t));
+    descEl.textContent = descs[t];
+}
+document.querySelectorAll(".switcher button").forEach(b => b.addEventListener("click", () => setTheme(b.dataset.t)));
+setTheme("g");
+</script>
+</body>
+</html>

@@ -1,158 +1,181 @@
 .meta {
-        margin-bottom: 26px;
-        color: #7a7f99;
-        font-size: 18px;
-        text-align: center;
-    }table {
-        table-layout: fixed;
-    }th,
-    td {
-        height: 66px;
-        vertical-align: middle;
-    }
+    margin-bottom: 24px;
+    color: var(--jx3-text-muted);
+    font-size: 17px;
+    text-align: center;
+}
 
-    th {
-        height: 52px;
-        font-size: 18px;
-        font-weight: 700;
-        text-align: center;
-        white-space: nowrap;
-    }
+table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+}
 
-    /*
-     * 列宽分配
-     */
-    .rank-width {
-        width: 8%;
-    }
+th,
+td {
+    height: 64px;
+    vertical-align: middle;
+}
 
-    .avatar-width {
-        width: 9%;
-    }
+th {
+    height: 50px;
+    font-family: var(--jx3-font-title);
+    font-size: 17px;
+    font-weight: 700;
+    text-align: center;
+    white-space: nowrap;
+    color: var(--jx3-text);
+    background: #f4eee5;
+    border-bottom: 1px solid var(--jx3-border);
+}
 
-    .force-width {
-        width: 19%;
-    }
+td {
+    border-bottom: 1px solid var(--jx3-border-faint);
+}
 
-    .role-width {
-        width: 25%;
-    }
+tbody tr:nth-child(even) {
+    background: rgba(246, 242, 234, 0.45);
+}
 
-    .server-width {
-        width: 23%;
-    }
+tbody tr:hover {
+    background: rgba(186, 47, 47, 0.035);
+}
 
-    .score-width {
-        width: 16%;
-    }
+/* 列宽分配 */
+.rank-width {
+    width: 8%;
+}
 
-    /*
-     * 排名列
-     */
-    .rank-col {
-        color: #d93939;
-        font-size: 18px;
-        font-weight: 800;
-        text-align: center;
-        white-space: nowrap;
-    }
+.avatar-width {
+    width: 9%;
+}
 
-    /*
-     * 头像列
-     */
-    .avatar-col {
-        padding-left: 4px;
-        padding-right: 4px;
-        text-align: center;
-    }
+.force-width {
+    width: 19%;
+}
 
-    .avatar {
-        display: block;
-        width: 46px;
-        height: 46px;
-        margin: 0 auto;
-        border-radius: 50%;
-        object-fit: cover;
-        background: #eef2f8;
-    }
+.role-width {
+    width: 25%;
+}
 
-    /*
-     * 职业列
-     */
-    .force-col {
-        padding-left: 4px;
-        padding-right: 4px;
-        text-align: center;
-    }
+.server-width {
+    width: 23%;
+}
 
-    .force {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 9px;
-        width: 100%;
-        min-width: 0;
-        color: var(--jx3-text);
-        font-size: 17px;
-        font-weight: 700;
-        white-space: nowrap;
-    }
+.score-width {
+    width: 16%;
+}
 
-    .force-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: contain;
-        flex: 0 0 auto;
-        background: #eef2f8;
-    }
+/* 排名列 */
+.rank-col {
+    color: var(--jx3-text-secondary);
+    font-family: var(--jx3-font-title);
+    font-size: 18px;
+    font-weight: 800;
+    text-align: center;
+    white-space: nowrap;
+}
 
-    .force-name {
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+tr:nth-child(1) .rank-col {
+    color: var(--jx3-red);
+}
 
-    /*
-     * 角色列
-     */
-    .role-name-col {
-        padding-left: 10px;
-        padding-right: 10px;
-        color: var(--jx3-text);
-        font-size: 17px;
-        font-weight: 600;
-        text-align: center;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+tr:nth-child(2) .rank-col {
+    color: #5c6270;
+}
 
-    /*
-     * 服务器列
-     */
-    .server-col {
-        padding-left: 8px;
-        padding-right: 8px;
-        color: var(--jx3-text-secondary);
-        font-size: 17px;
-        text-align: center;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+tr:nth-child(3) .rank-col {
+    color: #8c6845;
+}
 
-    /*
-     * 资历列
-     */
-    .score-col {
-        padding-left: 6px;
-        padding-right: 10px;
-        color: #d93939;
-        font-size: 18px;
-        font-weight: 800;
-        text-align: center;
-        white-space: nowrap;
-        font-variant-numeric: tabular-nums;
-    }
+/* 头像列 */
+.avatar-col {
+    padding-left: 4px;
+    padding-right: 4px;
+    text-align: center;
+}
+
+.avatar {
+    display: block;
+    width: 44px;
+    height: 44px;
+    margin: 0 auto;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #fbf9f5;
+    border: 1px solid var(--jx3-border-soft);
+}
+
+/* 职业列 */
+.force-col {
+    padding-left: 4px;
+    padding-right: 4px;
+    text-align: center;
+}
+
+.force {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    width: 100%;
+    min-width: 0;
+    color: var(--jx3-text);
+    font-size: 16px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.force-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: contain;
+    flex: 0 0 auto;
+    background: #fbf9f5;
+    border: 1px solid var(--jx3-border-soft);
+}
+
+.force-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 角色列 */
+.role-name-col {
+    padding-left: 10px;
+    padding-right: 10px;
+    color: var(--jx3-text);
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 服务器列 */
+.server-col {
+    padding-left: 8px;
+    padding-right: 8px;
+    color: var(--jx3-text-secondary);
+    font-size: 16px;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 资历列 */
+.score-col {
+    padding-left: 6px;
+    padding-right: 10px;
+    color: var(--jx3-red);
+    font-size: 18px;
+    font-weight: 800;
+    text-align: center;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}

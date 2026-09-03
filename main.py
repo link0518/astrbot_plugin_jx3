@@ -1,5 +1,6 @@
 import inspect
 import re
+import time
 from pathlib import Path
 from sys import maxsize
 from typing import cast
@@ -54,6 +55,11 @@ class Jx3ApiPlugin(Star):
 
         # 声明指令集
         self.command_map = {}
+
+        # 指令去重:同一会话 + 同一指令 + 同一参数在途时,提示并跳过。
+        # 键 -> 发起时刻(time.monotonic),渲染/发图慢时防止连发重复触发。
+        self._pending_tasks: dict[tuple, float] = {}
+        self._pending_ttl = 90.0
 
         logger.info("jx3api插件初始化完成")
 
@@ -481,9 +487,22 @@ class Jx3ApiPlugin(Star):
 
         cmd, args, handler = command
 
-        # 一旦确认是本插件指令，立即阻止后续插件和默认 LLM 继续处理。
+        # 一旦确认是本插件指令,立即阻止后续插件和默认 LLM 继续处理。
         event.stop_event()
         event.should_call_llm(True)
+
+        # 在途去重:渲染发图较慢,用户连发同一指令时提示一次即可,
+        # 避免同一查询被重复触发、排队堆积。按「会话+发送者+指令+参数」去重,
+        # 群里不同成员发相同请求互不影响。
+        sender_id = event.get_sender_id()
+        key = (event.unified_msg_origin, sender_id, cmd, tuple(args))
+        now = time.monotonic()
+        pending_since = self._pending_tasks.get(key)
+        if pending_since is not None and now - pending_since < self._pending_ttl:
+            logger.info(f"指令 [{cmd}] 仍在处理中,忽略重复触发")
+            yield event.plain_result("该查询正在处理中,请稍候,请勿重复发送~")
+            return
+        self._pending_tasks[key] = now
 
         try:
             args = await self._prepare_server_args(handler, event, args)
@@ -493,6 +512,11 @@ class Jx3ApiPlugin(Star):
         except Exception as e:
             logger.exception(f"指令执行失败: {cmd}, error={e}")
             yield event.plain_result("参数错误或执行失败")
+        finally:
+            # 指令结束(无论成败)立刻释放,允许再次触发;
+            # 若已被后续同键请求顶替(超时场景),只清理自己的标记。
+            if self._pending_tasks.get(key) == now:
+                self._pending_tasks.pop(key, None)
 
     async def bind_server(
         self,
