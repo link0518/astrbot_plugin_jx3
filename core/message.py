@@ -14,9 +14,10 @@ from .event_push import EventPushService
 from .bilei_data import BiLeidata
 
 
-# 截图质量:100 会显著放大图片体积并拖慢出图与上传。
-# AstrBot 远端 T2I 渲染服务默认仅 40;综合清晰度取 85(JPEG,视觉近乎无损)。
-IMAGE_QUALITY = 85
+# 渲染截图质量,保留最高画质 100。
+# 注意:调低(如 85)能明显减小图片体积并加快出图/上传,
+# 但部分文字/描边场景会出现可见画质损失,当前按需求保留 100。
+IMAGE_QUALITY = 100
 
 # 模板内图标引用的写法固定为 icons.<分组>.<key> / icons.<分组>.get(...)
 # 渲染时据此只注入模板实际用到的图标组,而不是全量 (~10MB base64)。
