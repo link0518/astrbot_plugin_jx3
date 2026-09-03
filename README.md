@@ -36,7 +36,7 @@
 
 ### 环境要求
 
-- AstrBot `>= 4.11.0`
+- AstrBot `>= 4.24.1`（管理页依赖 Plugin Pages）
 - 能够运行当前 AstrBot 版本的 Python 环境
 - 能够访问插件使用的外部数据源
 - 图片类指令需要 AstrBot 的 HTML 渲染能力正常可用
@@ -80,13 +80,12 @@ pip install -r data/plugins/astrbot_plugin_jx3/requirements.txt
 | --- | --- | --- | --- |
 | `prefix.enable` | `bool` | `true` | 是否启用指令前缀检查 |
 | `prefix.text` | `string` | `剑三` | 指令前缀内容 |
-| `server` | `string` | `梦江南` | 查询指令未输入服务器时使用的默认服务器 |
 | `jx3api_token` | `string` | 空 | JX3API Token |
 | `jx3api_ticket` | `string` | 空 | 部分名剑和心法接口需要的推栏 Ticket |
 | `jx3api_wss` | `string` | `wss://socket.nicemoe.cn` | JX3API 事件通道地址 |
 | `jx3api_wss_token` | `string` | 空 | 事件版令牌；免费事件无需填写 |
 
-会话订阅不再写入插件配置，而是通过 `事件推送` 指令保存到本地 SQLite。修改 WebSocket 地址或事件版令牌后需要重新加载插件。
+会话区服绑定、区服别名和事件订阅均保存在本地 SQLite。修改 WebSocket 地址或事件版令牌后需要重新加载插件。
 
 ### Token 与 Ticket
 
@@ -118,7 +117,18 @@ JX3API Token 可从 [JX3API](https://www.jx3api.com/) 获取。推栏 Ticket 通
 - 当前分发器按空白切分消息，因此角色名、物品名、备注等单个参数不能包含空格。
 - 未识别的消息会被忽略；已识别的指令会停止继续传播给其他插件。
 - 缺少必填参数、数字转换失败或执行异常时，入口层统一回复 `参数错误或执行失败`。
-- 当前默认服务器并不会自动补齐所有可选服务器参数；除 `烟花` 外，请按指令表显式填写需要的服务器。
+- 未绑定区服时按指令表提供标准参数。绑定后可以省略 `server` 参数；显式填写完整参数时仍优先使用本次输入的区服。
+- 标准区服名和 WebUI 中配置的别名都可用于查询。对于区服后的可选参数，分发器通过当前有效区服目录和别名判断首个参数是显式区服还是后续参数。
+
+### 会话区服绑定
+
+| 指令 | 作用 |
+| --- | --- |
+| `绑定区服` | 查看当前会话的绑定状态 |
+| `绑定区服 梦江南` | 将当前会话绑定到指定区服；支持区服别名 |
+| `解绑区服` | 解除当前会话绑定 |
+
+例如会话已经绑定 `梦江南` 后，`战绩 角色名 33` 等价于 `战绩 梦江南 角色名 33`；仍可发送 `战绩 唯我独尊 角色名 33` 临时查询其他区服。
 
 ## 指令参考
 
@@ -140,7 +150,7 @@ JX3API Token 可从 [JX3API](https://www.jx3api.com/) 获取。推栏 Ticket 通
 | `关隘` | 查询关隘首领状态；图片 | Token |
 | `赤兔`、`本周赤兔` | 查询当日或本周赤兔记录；文本 | Token |
 | `阵营奉献 [阵营]` | 查询阵营奉献事件，固定最多 50 条；图片 | Token |
-| `烟花 [服务器] [角色]` | 查询烟花记录；服务器为空时使用配置值；图片 | Token |
+| `烟花 服务器 [角色]` | 查询指定服务器的烟花记录；已绑定会话可省略服务器；图片 | Token |
 | `刷马 服务器` | 查询刷马聊天情报；文本 | Token |
 | `马场 服务器` | 查询未过期马场记录；文本 | Token |
 
@@ -194,7 +204,7 @@ JX3API Token 可从 [JX3API](https://www.jx3api.com/) 获取。推栏 Ticket 通
 | 指令 | 说明与输出 | 凭据 |
 | --- | --- | --- |
 | `帮战 服务器` | 帮战记录；图片 | 无 |
-| `沙盘 [服务器]` | 查询 JX3API 据点归属并使用本地图层渲染阵营沙盘；服务器可省略 | Token |
+| `沙盘 服务器` | 查询 JX3API 据点归属并使用本地图层渲染阵营沙盘；已绑定会话可省略服务器 | Token |
 | `诛恶 服务器` | 诛恶事件，固定最多 20 条；图片 | Token |
 
 ### 角色名片与奇遇
@@ -290,7 +300,11 @@ JX3API Token 可从 [JX3API](https://www.jx3api.com/) 获取。推栏 Ticket 通
 | `事件推送 2001 关闭` | 为当前会话取消订阅事件 `2001` |
 | `事件推送 列表` | 查看支持的全部事件编号 |
 
-总开关和具体事件开关必须同时开启，消息才会发送到当前会话。免费事件为：`2001` 开服状态、`2002` 官方新闻、`2003` 版本更新、`2004` 八卦速报、`2005` 关隘首领、`2006` 云从预告。其他事件需要独立的事件版令牌。
+总开关和具体事件开关必须同时开启，消息才会发送到当前会话。事件正文包含 `server` 时，只向绑定该区服和未绑定区服的订阅会话发送；不含服务器的新闻、版本更新等事件不受区服过滤影响。免费事件为：`2001` 开服状态、`2002` 官方新闻、`2003` 版本更新、`2004` 八卦速报、`2005` 关隘首领、`2006` 云从预告。其他事件需要独立的事件版令牌。
+
+### WebUI 插件管理
+
+AstrBot 插件详情页中的“剑网三插件管理”页面提供四个页签：会话绑定、事件订阅、区服别名和心法别名。页面可以新增、修改或解除任意会话绑定，查看所有会话的事件总开关及订阅编号，为每个标准区服配置多个别名，并维护心法的 JX3BOX 配装 ID、标准名称和最多 5 个别名。管理页通过 AstrBot Plugin Pages 桥接调用插件 Web API，不直接访问 Dashboard 凭据。
 
 ## 业务流程
 
@@ -301,11 +315,11 @@ flowchart LR
     C --> D["MessageBuilder 参数适配"]
     D --> E1["JX3APIService"]
     D --> E2["JX3BOXService"]
-    D --> E3["BiLeidata / EventPushService"]
+    D --> E3["BiLeidata / EventPushService / KungfuAliasService"]
     E1 --> F["APIClient"]
     E2 --> F
     F --> G["外部 HTTP 数据源"]
-    E3 --> H["plugin_data.db / local_data.db"]
+    E3 --> H["local_data.db"]
     E1 --> I["标准返回对象"]
     E2 --> I
     E3 --> I
@@ -318,18 +332,21 @@ flowchart LR
 
 `main.py` 中的 `Jx3ApiPlugin` 是插件入口。构造阶段完成以下工作：
 
-1. 读取前缀、默认服务器、Token、Ticket 和 WebSocket 配置。
-2. 计算插件目录、AstrBot 数据目录、模板目录和两个 SQLite 文件路径。
+1. 读取前缀、Token、Ticket 和 WebSocket 配置。
+2. 计算插件目录、AstrBot 数据目录、本地 SQLite 和模板目录路径。
 3. 把 `templates/img`、`templates/img/sand`、`templates/sect`、`templates/serendipity` 中的图片读取为 base64 Data URL。
-4. 创建本地数据库、随包数据库、两个数据服务、避雷服务、事件推送服务和消息构建器。
+4. 创建本地数据库、两个数据服务、心法别名服务、避雷服务、事件推送服务和消息构建器。
 
 异步初始化阶段会连接数据库并创建以下本地表：
 
 - `bilei`：避雷记录。
 - `event_push_subscriptions`：按 AstrBot 会话保存事件总开关和每个事件编号的订阅开关。
+- `session_server_bindings`：两列结构，保存会话 ID 与绑定区服。
+- `server_aliases`：保存标准区服名及其 JSON 别名列表。
+- `kungfu`：保存 JX3BOX 配装 ID、标准心法名及最多 5 个别名。
 - `achievement_cache`：JSON 基础数据缓存及更新时间。
 
-随后连接随包的 `plugin_data.db`、启动 JX3API WebSocket 事件通道，最后建立指令映射。插件停用时会关闭事件通道、两个 HTTP Session 和两个 SQLite 连接。
+`kungfu` 表首次创建时从 `data/kungfu.json` 幂等导入 32 条默认心法，`server_aliases` 表从 `data/server_aliases.json` 幂等导入默认区服别名；已存在的本地记录均不会被覆盖。随后启动 JX3API WebSocket 事件通道并建立指令映射。插件停用时会关闭事件通道、两个 HTTP Session 和本地 SQLite 连接。
 
 ### 2. 指令分发
 
@@ -423,12 +440,13 @@ AstrBot 的渲染接口接收完整 HTML 字符串，因此插件不会依赖渲
 
 ### 6. 本地数据与缓存
 
-插件使用两个 SQLite 文件：
+插件只使用 AstrBot 插件数据目录中的 `local_data.db`。心法和区服别名默认目录分别以 `data/kungfu.json`、`data/server_aliases.json` 随插件分发，启动时幂等写入本地数据库，之后可通过 WebUI 修改。
 
 | 文件 | 生命周期 | 内容 |
 | --- | --- | --- |
-| `data/plugin_data.db` | 随插件分发，只读基础数据为主 | `kungfu` 心法名称、别名和 JX3BOX 配装 ID |
-| AstrBot 插件数据目录下的 `local_data.db` | 运行时创建和维护 | 避雷记录、事件订阅、资历与交易行基础数据缓存 |
+| AstrBot 插件数据目录下的 `local_data.db` | 运行时创建和维护 | 心法与别名、避雷记录、会话区服绑定、区服别名、事件订阅及基础数据缓存 |
+| `data/kungfu.json` | 随插件分发，只在初始化时读取 | 32 条默认心法、别名和 JX3BOX 配装 ID |
+| `data/server_aliases.json` | 随插件分发，只在初始化时读取 | 默认标准区服及其别名 |
 
 `achievement_cache` 同时被资历基础数据和交易行物品分组复用。每个接口快照以一条 JSON 记录保存，当前使用 `achievement_menus`、`achievement_points` 和 `trade_item_groups` 三个键。缓存有效期为 30 天；缓存过期后优先全量刷新，上游请求失败时继续使用可解析的旧缓存兜底。资历菜单与点数的刷新接口分别为 JX3BOX Node 的 `/api/node/achievement/menus` 和 `/api/node/achievement/points`。
 
@@ -436,7 +454,7 @@ AstrBot 的渲染接口接收完整 HTML 字符串，因此插件不会依赖渲
 
 `core/event_push.py` 与 JX3API WebSocket 保持长连接，每 30 秒发送协议心跳。连接中断后按 1、2、4、8 秒递增重试，最大间隔为 30 秒；插件卸载时会取消心跳和重连任务并关闭连接。
 
-每条消息按 `action` 识别事件，正文优先读取 `detail`，同时兼容 `data`。分发前查询 `event_push_subscriptions`：只有当前会话的 `enabled=1` 且对应 `action_编号=1` 时才发送。会话 ID 直接取当前消息的 `unified_msg_origin`，无需手动填写。
+每条消息按 `action` 识别事件，正文优先读取 `detail`，同时兼容 `data`。分发时联查会话区服绑定：正文包含 `server` 时仅保留同区服或未绑定区服的接收会话，正文不含 `server` 时不做区服过滤。之后只有会话的 `enabled=1` 且对应 `action_编号=1` 时才发送。会话 ID 直接取当前消息的 `unified_msg_origin`。
 
 表中使用 `action_1001` 这类列名保存各事件开关，并在新增事件编号时自动为旧数据库补列。升级时旧的 `tuishong` 轮询状态表会被删除。
 
@@ -452,17 +470,22 @@ astrbot_plugin_jx3/
 ├── CHANGELOG.md             # 版本更新记录
 ├── LICENSE                  # GNU AGPL v3
 ├── data/
-│   └── plugin_data.db       # 随包心法/别名基础数据
+│   ├── kungfu.json          # 心法、别名与配装 ID 默认种子
+│   └── server_aliases.json  # 区服别名默认种子
 ├── core/
 │   ├── jx3api_data.py       # JX3API 业务服务
 │   ├── jx3box_data.py       # JX3BOX 业务服务与缓存逻辑
 │   ├── message.py           # 文本、图片、消息链和两轮会话构建
 │   ├── request.py           # aiohttp 请求封装
 │   ├── event_push.py        # WebSocket 事件通道与会话订阅
+│   ├── server_binding.py    # 会话区服绑定、别名与区服目录
+│   ├── kungfu_alias.py      # 本地心法目录初始化、校验与 WebUI 写入
 │   ├── bilei_data.py        # 避雷数据增删改查
 │   ├── sqlite.py            # aiosqlite 通用封装
 │   ├── fun_basic.py         # 图标、时间和货币格式化工具
 │   └── template.py          # 模板组合、异步读取与内存缓存
+├── pages/
+│   └── server-management/   # AstrBot 会话管理 WebUI
 └── templates/
     ├── layouts/
     │   └── base.html        # 唯一的完整 HTML 文档骨架
@@ -502,9 +525,9 @@ git diff --check
 
 ## 当前版本状态
 
-以下内容是对 v3.3.1 当前源码的静态核对结果，部署和二次开发前应注意：
+以下内容是对 v3.4.0 当前源码的静态核对结果，部署和二次开发前应注意：
 
-1. `烟花` 和 `沙盘` 会通过 `serverdefault()` 补齐默认服务器，其他可选服务器参数仍会原样传为空字符串。
+1. 带区服参数的指令在入口层统一进行会话绑定补齐和别名解析；新增此类指令时参数名应继续使用 `server`。
 2. `JX3BOXService` 通过统一的 `_base_request()` 分发 Node、Next2 和 CMS 请求；资历菜单与点数缓存过期后分别从 `/api/node/achievement/menus` 和 `/api/node/achievement/points` 刷新。
 3. `APIClient` 当前默认 `ssl_verify=False`，即外部 HTTPS 请求不校验证书。对传输安全有要求的部署应先评估并调整该设置。
 4. JX3API 服务初始化时会把 Token 和 Ticket 写入 debug 日志。不要公开调试日志，建议二次开发时移除敏感值输出。

@@ -10,7 +10,7 @@ from astrbot.api import logger
 from astrbot.api import AstrBotConfig
 import astrbot.api.message_components as Comp
 
-from .request import APIClient
+from .request import APIClient, APIErrorResponse
 from .sqlite import AsyncSQLiteDB
 from .fun_basic import load_template,gold_to_parts,week_to_num,compare_date_str,format_time,format_remaining
 
@@ -47,6 +47,22 @@ class JX3APIService:
         if self._api:
             await self._api.close()
 
+    async def server_list(self) -> list[str]:
+        """获取当前有效区服名称，供会话绑定和参数消歧使用。"""
+        data = await self._base_request(
+            "/server/status/check",
+            {"server": "", "type": "其他"},
+        )
+        if not isinstance(data, list):
+            return []
+        return sorted(
+            {
+                str(item.get("server") or "").strip()
+                for item in data
+                if isinstance(item, dict) and item.get("server")
+            }
+        )
+
 
     def _init_return_data(self) -> Dict[str, Any]:
             """初始化标准的返回数据结构"""
@@ -75,7 +91,13 @@ class JX3APIService:
 
             base_url = "https://www.jx3api.com"
             api_url = base_url + api_path
-            data = await self._api.get(api_url, params=params, out_key=out)
+            data = await self._api.get(
+                api_url,
+                params=params,
+                out_key=out,
+                success_codes=(200, "200"),
+                return_error=True,
+            )
             
             if not data:
                 logger.warning(f"获取接口信息失败或返回空数据: {api_url}")
@@ -100,6 +122,9 @@ class JX3APIService:
         return_data = self._init_return_data()
 
         data = await self._base_request(path, params)
+        if isinstance(data, APIErrorResponse):
+            return_data["msg"] = data.message or "获取接口信息失败"
+            return return_data
         if data is None:
             return_data["msg"] = "获取接口信息失败"
             return return_data

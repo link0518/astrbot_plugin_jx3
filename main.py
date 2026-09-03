@@ -1,24 +1,32 @@
 import inspect
+import re
 from pathlib import Path
+from sys import maxsize
 from typing import cast
 
 from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Context, Star, register, StarTools
 from astrbot.api import logger
 from astrbot.api import AstrBotConfig
+from astrbot.api.web import error_response, json_response, request
 
 from .core.sqlite import AsyncSQLiteDB
 from .core.jx3api_data import JX3APIService
 from .core.jx3box_data import JX3BOXService
-from .core.event_push import EventPushService
+from .core.event_push import EVENT_NAMES, EventPushService
 from .core.bilei_data import BiLeidata
+from .core.kungfu_alias import KungfuAliasService
+from .core.server_binding import ServerBindingService
 from .core.message import MessageBuilder
 from .core.fun_basic import load_as_base64
+
+
+PLUGIN_NAME = "astrbot_plugin_jx3"
 
 @register("astrbot_plugin_jx3", 
           "fxdyz", 
           "聚合剑网三游戏数据，提供查询、图片渲染、本地避雷和实时事件推送。",
-          "3.3.1",
+          "3.4.0",
           "https://github.com/qsc20001102/astrbot_plugin_jx3"
 )
 class Jx3ApiPlugin(Star):
@@ -34,16 +42,14 @@ class Jx3ApiPlugin(Star):
         else:
             logger.info(f"未启用指令前缀功能。")
 
-        # 默认服务器
-        self.server = self.conf.get("server","梦江南")
-        logger.info(f"配置加载默认服务器：{self.server}")
-
         # 获取数据文件路径
         self.get_data_path()
         # 加载图片base64编码
         self.load_local_base64()
         # 构造所有类
         self.create_all()
+        # 注册插件管理页接口
+        self._register_web_apis(context)
 
 
         # 声明指令集
@@ -58,9 +64,13 @@ class Jx3ApiPlugin(Star):
             # 数据库初始化
             await self.init_bilei_data()
             await self.init_achievement_cache_data()
+            await self.kungfu_alias.initialize()
+            await self.server_binding.initialize()
 
-            # 连接插件数据
-            await self.plugin_sql_db.connect()
+            # 获取区服目录，用于识别完整参数与区服别名。
+            await self.server_binding.update_server_catalog(
+                await self.jx3api.server_list()
+            )
 
             # 开启实时事件通道
             await self.event_push.initialize()
@@ -92,9 +102,6 @@ class Jx3ApiPlugin(Star):
         if self.local_sql_db:
             await self.local_sql_db.close()
             
-        if self.plugin_sql_db:
-            await self.plugin_sql_db.close()
-            
         logger.info("jx3api插件已卸载/停用")
 
 
@@ -108,8 +115,8 @@ class Jx3ApiPlugin(Star):
 
         # SQLite本地路径
         self.local_data_path = self.local_data_dir / "local_data.db"
-        # SQLite插件路径
-        self.plugin_data_path = self.plugin_data_dir /"plugin_data.db"
+        self.kungfu_seed_path = self.plugin_data_dir / "kungfu.json"
+        self.server_alias_seed_path = self.plugin_data_dir / "server_aliases.json"
 
         # 图片文件路径
         self.plugin_temp_img = self.plugin_temp_dir / "img"
@@ -119,7 +126,8 @@ class Jx3ApiPlugin(Star):
 
         # 数据路径打印
         logger.debug(f"本地数据路径: {self.local_data_path}")
-        logger.debug(f"插件数据路径: {self.plugin_data_path}")
+        logger.debug(f"心法种子数据路径: {self.kungfu_seed_path}")
+        logger.debug(f"区服别名种子数据路径: {self.server_alias_seed_path}")
         logger.debug(f"图片文件路径: {self.plugin_temp_img}")
         logger.debug(f"沙盘图片文件路径: {self.plugin_temp_sand}")
         logger.debug(f"图片文件路径: {self.plugin_temp_sect}")
@@ -145,18 +153,25 @@ class Jx3ApiPlugin(Star):
         """构造所有类"""
         # 数据库实例化
         self.local_sql_db = AsyncSQLiteDB(str(self.local_data_path))
-        self.plugin_sql_db = AsyncSQLiteDB(str(self.plugin_data_path))
         # 剑网三功能实例化
         self.bilei = BiLeidata(self.local_sql_db)
-        self.jx3api = JX3APIService(self.conf, self.plugin_sql_db, self.local_sql_db)
-        self.jx3box = JX3BOXService(self.conf, self.plugin_sql_db, self.local_sql_db)
+        self.jx3api = JX3APIService(self.conf, self.local_sql_db, self.local_sql_db)
+        self.jx3box = JX3BOXService(self.conf, self.local_sql_db, self.local_sql_db)
+        self.kungfu_alias = KungfuAliasService(
+            self.local_sql_db,
+            self.kungfu_seed_path,
+        )
+        self.server_binding = ServerBindingService(
+            self.local_sql_db,
+            self.server_alias_seed_path,
+        )
         self.event_push = EventPushService(
             cast(Context, self.context),
             self.conf,
             self.local_sql_db,
+            self.server_binding,
         )
         self.jx3cmd = MessageBuilder(
-            self.server,
             self.jx3api,
             self.jx3box,
             self.bilei,
@@ -296,6 +311,8 @@ class Jx3ApiPlugin(Star):
             "资历": self. jx3cmd.zili,
             "交易行": self. jx3cmd.jiaoyihang,
 
+            "绑定区服": self.bind_server,
+            "解绑区服": self.unbind_server,
             "事件推送": self.jx3cmd.shijian_tuisong,
             "避雷添加": self.jx3cmd.bilei_add,
             "避雷查看": self.jx3cmd.bilei_all,
@@ -313,7 +330,9 @@ class Jx3ApiPlugin(Star):
 
         # 前缀模式
         if self.prefix.get("enable"):
-            prefix = self.prefix.get("text")
+            prefix = str(self.prefix.get("text") or "").strip()
+            if not prefix:
+                return None
             if text.startswith(prefix):
                 text = text[len(prefix):].strip()
             else:
@@ -321,6 +340,90 @@ class Jx3ApiPlugin(Star):
                 return None
 
         return text.split()
+
+    def resolve_command(self, event: AstrMessageEvent):
+        """从 AstrBot 处理后文本和平台原始文本中识别本插件指令。"""
+        processed_text = event.message_str
+        original_text = getattr(event.message_obj, "message_str", "")
+        seen = set()
+
+        for text in (processed_text, original_text):
+            if not isinstance(text, str):
+                continue
+
+            text = text.strip()
+            if not text or text in seen:
+                continue
+            seen.add(text)
+
+            parts = self.parse_message(text)
+            if not parts:
+                continue
+
+            cmd, *args = parts
+            handler = self.command_map.get(cmd)
+            if handler:
+                return cmd, args, handler
+
+        return None
+
+    async def _prepare_server_args(
+        self,
+        handler,
+        event: AstrMessageEvent,
+        args: list[str],
+    ) -> list[str]:
+        """为带 server 参数的指令补齐会话绑定，并解析区服别名。"""
+        params = [
+            parameter
+            for parameter in inspect.signature(handler).parameters.values()
+            if parameter.name not in {"self", "event"}
+        ]
+        server_index = next(
+            (index for index, parameter in enumerate(params) if parameter.name == "server"),
+            None,
+        )
+        if server_index is None:
+            return args
+
+        prepared = list(args)
+        bound_server = await self.server_binding.get_binding(
+            event.unified_msg_origin
+        )
+        has_server_arg = server_index < len(prepared)
+
+        if bound_server:
+            required_count = sum(
+                parameter.default is inspect.Parameter.empty
+                for parameter in params
+            )
+            has_required_parameter_after_server = any(
+                parameter.default is inspect.Parameter.empty
+                for parameter in params[server_index + 1:]
+            )
+            explicit_server = (
+                has_server_arg
+                and (
+                    self.server_binding.is_known_server(prepared[server_index])
+                    or len(prepared) >= len(params)
+                    or (
+                        has_required_parameter_after_server
+                        and len(prepared) >= required_count
+                    )
+                )
+            )
+            if explicit_server:
+                prepared[server_index] = self.server_binding.resolve_server(
+                    prepared[server_index]
+                )
+            else:
+                prepared.insert(server_index, bound_server)
+        elif has_server_arg:
+            prepared[server_index] = self.server_binding.resolve_server(
+                prepared[server_index]
+            )
+
+        return prepared
 
 
     async def _call_with_auto_args(self, handler, event: AstrMessageEvent, args: list[str]):
@@ -361,33 +464,171 @@ class Jx3ApiPlugin(Star):
         return await handler(*call_args)
 
 
-    @filter.event_message_type(filter.EventMessageType.ALL)
+    @filter.event_message_type(
+        filter.EventMessageType.ALL,
+        priority=maxsize - 10,
+    )
     async def on_all_message(self, event: AstrMessageEvent):
         """解析所有消息"""
         if not self.command_map:
             logger.debug("插件尚未初始化完成，忽略消息")
             return
         
-        # 获取消息
-        parts = self.parse_message(event.message_str)
-        if not parts:
+        command = self.resolve_command(event)
+        if not command:
             logger.debug("未触发指令，忽略消息")
             return
 
-        cmd, *args = parts
-        handler = self.command_map.get(cmd)
-        if not handler:
-            logger.debug("指令函数为空，忽略消息")
-            return
+        cmd, args, handler = command
+
+        # 一旦确认是本插件指令，立即阻止后续插件和默认 LLM 继续处理。
+        event.stop_event()
+        event.should_call_llm(True)
 
         try:
-            event.stop_event()
+            args = await self._prepare_server_args(handler, event, args)
             ret = await self._call_with_auto_args(handler, event, args)
             if ret is not None:
                 yield ret
         except Exception as e:
             logger.exception(f"指令执行失败: {cmd}, error={e}")
             yield event.plain_result("参数错误或执行失败")
+
+    async def bind_server(
+        self,
+        event: AstrMessageEvent,
+        server_name: str = "",
+    ):
+        """查看或设置当前会话绑定区服。"""
+        session_id = event.unified_msg_origin
+        if not server_name.strip():
+            bound_server = await self.server_binding.get_binding(session_id)
+            text = (
+                f"当前会话绑定区服：{bound_server}"
+                if bound_server
+                else "当前会话尚未绑定区服。\n用法：绑定区服 区服名"
+            )
+        else:
+            server = self.server_binding.resolve_server(server_name)
+            await self.server_binding.set_binding(session_id, server)
+            text = f"当前会话已绑定区服：{server}"
+        await event.send(event.plain_result(text))
+
+    async def unbind_server(self, event: AstrMessageEvent):
+        """解除当前会话的区服绑定。"""
+        await self.server_binding.delete_binding(event.unified_msg_origin)
+        await event.send(event.plain_result("当前会话已解除区服绑定。"))
+
+    def _register_web_apis(self, context: Context):
+        routes = (
+            ("dashboard", self.page_dashboard, ["GET"], "读取会话管理数据"),
+            ("bindings/save", self.page_save_binding, ["POST"], "保存会话区服绑定"),
+            ("bindings/delete", self.page_delete_binding, ["POST"], "删除会话区服绑定"),
+            ("aliases/save", self.page_save_aliases, ["POST"], "保存区服别名"),
+            ("aliases/delete", self.page_delete_aliases, ["POST"], "删除区服别名"),
+            ("kungfu/save", self.page_save_kungfu, ["POST"], "保存心法别名"),
+            ("servers/refresh", self.page_refresh_servers, ["POST"], "刷新区服目录"),
+        )
+        for path, handler, methods, description in routes:
+            context.register_web_api(
+                f"/{PLUGIN_NAME}/{path}",
+                handler,
+                methods,
+                description,
+            )
+
+    async def page_dashboard(self):
+        bindings = await self.server_binding.list_bindings()
+        subscriptions = await self.event_push.list_subscription_statuses()
+        aliases = await self.server_binding.list_aliases()
+        kungfu = await self.kungfu_alias.list_kungfu()
+        return json_response(
+            {
+                "bindings": bindings,
+                "subscriptions": subscriptions,
+                "aliases": aliases,
+                "kungfu": kungfu,
+                "servers": self.server_binding.known_servers(),
+                "events": {str(action): name for action, name in EVENT_NAMES.items()},
+            }
+        )
+
+    async def page_save_binding(self):
+        payload = await request.json(default={})
+        if not isinstance(payload, dict):
+            return error_response("请求正文必须是 JSON 对象", status_code=400)
+        try:
+            await self.server_binding.set_binding(
+                str(payload.get("session_id") or ""),
+                str(payload.get("server") or ""),
+            )
+        except ValueError as exc:
+            return error_response(str(exc), status_code=400)
+        return json_response({"saved": True})
+
+    async def page_delete_binding(self):
+        payload = await request.json(default={})
+        session_id = str(payload.get("session_id") or "") if isinstance(payload, dict) else ""
+        if not session_id.strip():
+            return error_response("会话 ID 不能为空", status_code=400)
+        await self.server_binding.delete_binding(session_id)
+        return json_response({"deleted": True})
+
+    async def page_save_aliases(self):
+        payload = await request.json(default={})
+        if not isinstance(payload, dict):
+            return error_response("请求正文必须是 JSON 对象", status_code=400)
+        raw_aliases = payload.get("aliases", [])
+        if isinstance(raw_aliases, str):
+            aliases = re.split(r"[,，;；\n]+", raw_aliases)
+        elif isinstance(raw_aliases, list):
+            aliases = [str(value) for value in raw_aliases]
+        else:
+            return error_response("别名必须是字符串或数组", status_code=400)
+        try:
+            await self.server_binding.set_aliases(
+                str(payload.get("server") or ""),
+                aliases,
+            )
+        except ValueError as exc:
+            return error_response(str(exc), status_code=400)
+        return json_response({"saved": True})
+
+    async def page_delete_aliases(self):
+        payload = await request.json(default={})
+        server = str(payload.get("server") or "") if isinstance(payload, dict) else ""
+        if not server.strip():
+            return error_response("标准区服名不能为空", status_code=400)
+        await self.server_binding.delete_aliases(server)
+        return json_response({"deleted": True})
+
+    async def page_save_kungfu(self):
+        payload = await request.json(default={})
+        if not isinstance(payload, dict):
+            return error_response("请求正文必须是 JSON 对象", status_code=400)
+        raw_aliases = payload.get("aliases", [])
+        if isinstance(raw_aliases, str):
+            aliases = re.split(r"[,，;；\n]+", raw_aliases)
+        elif isinstance(raw_aliases, list):
+            aliases = [str(value) for value in raw_aliases]
+        else:
+            return error_response("别名必须是字符串或数组", status_code=400)
+        try:
+            await self.kungfu_alias.save(
+                payload.get("pzid"),
+                payload.get("name"),
+                aliases,
+            )
+        except ValueError as exc:
+            return error_response(str(exc), status_code=400)
+        return json_response({"saved": True})
+
+    async def page_refresh_servers(self):
+        servers = await self.jx3api.server_list()
+        if not servers:
+            return error_response("区服目录刷新失败", status_code=502)
+        await self.server_binding.update_server_catalog(servers)
+        return json_response({"servers": self.server_binding.known_servers()})
 
 
 

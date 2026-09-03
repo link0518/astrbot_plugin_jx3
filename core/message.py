@@ -38,14 +38,12 @@ class MessageBuilder:
     )
 
     def __init__(self, 
-                 server: str, 
                  jx3api: JX3APIService, 
                  jx3box: JX3BOXService,  
                  bilei: BiLeidata, 
                  event_push: EventPushService,
                  icons: dict[str, dict[str, str]]
             ):
-        self.server = server
         self.jx3api = jx3api
         self.jx3box = jx3box
         self.bilei = bilei
@@ -69,13 +67,6 @@ class MessageBuilder:
         )
     
 
-    def serverdefault(self,server) -> str:
-        """加载配置默认服务器"""
-        if server == "":
-            return self.server
-        return server
-
-
     async def plain_msg(self, event: AstrMessageEvent, action):
         """最终将数据整理成文本发送"""
         data= await action()
@@ -89,7 +80,12 @@ class MessageBuilder:
             await event.send(event.plain_result("猪脑过载，请稍后再试")) 
 
 
-    async def T2I_image_msg(self, event: AstrMessageEvent, action):
+    async def T2I_image_msg(
+        self,
+        event: AstrMessageEvent,
+        action,
+        render_options: dict | None = None,
+    ):
         """最终将数据渲染成图片发送"""
         data = await action()
         try:
@@ -101,6 +97,9 @@ class MessageBuilder:
                     "omit_background": False,
                     "type": "jpeg"
                 }
+                options.update(render_options or {})
+                if options.get("type") == "png":
+                    options.pop("quality", None)
                 data["data"]["icons"] = self.icons
                 url = await self.html_render(data["temp"], data["data"], options=options)
                 await event.send(event.image_result(url)) 
@@ -109,7 +108,7 @@ class MessageBuilder:
 
         except Exception as e:
             logger.error(f"功能函数执行错误: {e}")
-            await event.send(event.plain_result("猪脑过载，请稍后再试")) 
+            await event.send(event.plain_result("猪脑过载，请稍后再试"))
 
 
     async def image_msg(self, event: AstrMessageEvent, action):
@@ -324,9 +323,9 @@ class MessageBuilder:
         """ 阵营事件 阵营"""
         return await self.T2I_image_msg(event, lambda: self.jx3api.zhenyingevent(name,50))
 
-    async def  yanhuachaxun(self, event: AstrMessageEvent,server: str = "",name: str = "" ):
+    async def  yanhuachaxun(self, event: AstrMessageEvent,server: str,name: str = "" ):
         """ 烟花 服务器 角色"""
-        return await self.T2I_image_msg(event, lambda: self.jx3api.yanhuachaxun( self.serverdefault(server),name))
+        return await self.T2I_image_msg(event, lambda: self.jx3api.yanhuachaxun(server,name))
 
     async def  shuma(self, event: AstrMessageEvent,server: str ): 
         """ 刷马 服务器"""
@@ -448,10 +447,13 @@ class MessageBuilder:
         """ 帮战 服务器"""
         return await self.T2I_image_msg(event, lambda: self.jx3api.bangzhanjilu(server))
 
-    async def  shapan(self, event: AstrMessageEvent,server: str = ""):
+    async def  shapan(self, event: AstrMessageEvent,server: str):
         """ 沙盘 服务器"""
-        server = self.serverdefault(server)
-        return await self.T2I_image_msg(event, lambda: self.jx3api.shapan(server))
+        return await self.T2I_image_msg(
+            event,
+            lambda: self.jx3api.shapan(server),
+            render_options={"omit_background": True, "type": "png"},
+        )
 
     async def  zhueevent(self, event: AstrMessageEvent, server: str):
         """ 诛恶事件 服务器"""

@@ -1,0 +1,8 @@
+{
+  "pages": {
+    "server-management": {
+      "title": "剑网三插件管理",
+      "description": "管理会话区服绑定、事件订阅状态、区服别名和心法别名。"
+    }
+  }
+}

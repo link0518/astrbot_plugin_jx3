@@ -14,6 +14,7 @@ from astrbot.api.event import MessageChain
 from astrbot.api.star import Context
 
 from .sqlite import AsyncSQLiteDB
+from .server_binding import ServerBindingService
 
 
 DEFAULT_WSS_URL = "wss://socket.nicemoe.cn"
@@ -70,10 +71,12 @@ class EventPushService:
         context: Context,
         config: AstrBotConfig,
         sqlite: AsyncSQLiteDB,
+        server_binding: ServerBindingService,
     ):
         self.context = context
         self.config = config
         self.sql = sqlite
+        self.server_binding = server_binding
         self.url = str(config.get("jx3api_wss", "") or DEFAULT_WSS_URL).strip()
         self.token = str(config.get("jx3api_wss_token", "") or "").strip()
         self._runner: Optional[asyncio.Task] = None
@@ -252,6 +255,16 @@ class EventPushService:
             return
 
         recipients = await self._enabled_sessions(action)
+        if "server" in detail:
+            event_server = self.server_binding.resolve_server(detail.get("server"))
+            recipients = [
+                session_id
+                for session_id, bound_server in recipients
+                if not bound_server
+                or self.server_binding.resolve_server(bound_server) == event_server
+            ]
+        else:
+            recipients = [session_id for session_id, _ in recipients]
         if not recipients:
             return
 
@@ -271,13 +284,38 @@ class EventPushService:
         message_chain = MessageChain().message(text)
         await self.context.send_message(session_id, message_chain)
 
-    async def _enabled_sessions(self, action: int) -> list[str]:
+    async def _enabled_sessions(self, action: int) -> list[tuple[str, str]]:
         column = self._action_column(action)
         rows = await self.sql.fetch_all(
-            f"SELECT session_id FROM event_push_subscriptions "
-            f"WHERE enabled=1 AND {column}=1"
+            f"SELECT subscriptions.session_id, "
+            f"COALESCE(bindings.server, '') AS server "
+            f"FROM event_push_subscriptions AS subscriptions "
+            f"LEFT JOIN session_server_bindings AS bindings "
+            f"ON bindings.session_id=subscriptions.session_id "
+            f"WHERE subscriptions.enabled=1 "
+            f"AND subscriptions.{column}=1"
         )
-        return [str(row["session_id"]) for row in rows]
+        return [
+            (str(row["session_id"]), str(row.get("server") or "").strip())
+            for row in rows
+        ]
+
+    async def list_subscription_statuses(self) -> list[dict[str, Any]]:
+        rows = await self.sql.fetch_all(
+            "SELECT * FROM event_push_subscriptions ORDER BY session_id"
+        )
+        return [
+            {
+                "session_id": str(row["session_id"]),
+                "enabled": row.get("enabled") == 1,
+                "actions": [
+                    action
+                    for action in EVENT_ACTIONS
+                    if row.get(self._action_column(action)) == 1
+                ],
+            }
+            for row in rows
+        ]
 
     async def configure(
         self,

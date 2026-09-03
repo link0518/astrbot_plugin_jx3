@@ -2,10 +2,19 @@
 import json
 import aiohttp
 import asyncio
-from typing import Optional, Dict, Any, Union, List
+from dataclasses import dataclass
+from typing import Optional, Dict, Any, Union, List, Collection
 from aiohttp import ClientTimeout, ClientSession
 
 from astrbot.api import logger
+
+
+@dataclass(frozen=True, slots=True)
+class APIErrorResponse:
+    """保留接口业务错误，避免提取 data 时丢失 code/msg。"""
+
+    code: Any
+    message: str
 
 class APIClient:
     """
@@ -102,7 +111,7 @@ class APIClient:
             return None
 
     def _validate_api_payload(self, data: Any) -> Any:
-        """校验业务层面的 JSON 数据结构"""
+        """校验并规范化 JSON 数据结构。"""
         if not data:
             logger.error("API返回空数据")
             return None
@@ -114,32 +123,70 @@ class APIClient:
             except json.JSONDecodeError:
                 return None
         
-        if isinstance(data, dict) and 'code' in data:
-            # 兼容多种成功状态码：200, "0", 0, 1
-            code = data.get('code')
-            if code not in [200, "0", 0, 1]:
-                msg = data.get('msg') or data.get('message', '未知错误')
-                logger.error(f"API业务报错: code={code}, msg={msg}")
-                return None
-        
         return data
 
-    async def get(self, url: str, params: Optional[Dict] = None, out_key: Optional[str] = None) -> Any:
+    async def get(
+        self,
+        url: str,
+        params: Optional[Dict] = None,
+        out_key: Optional[str] = None,
+        success_codes: Optional[Collection[Any]] = None,
+        return_error: bool = False,
+    ) -> Any:
         """GET 请求封装"""
         data = await self._request('GET', url, params=params)
-        return self._extract_data(data, out_key)
+        return self._extract_data(
+            data,
+            out_key,
+            success_codes=success_codes,
+            return_error=return_error,
+        )
 
-    async def post(self, url: str, data: Optional[Dict] = None, out_key: Optional[str] = None) -> Any:
+    async def post(
+        self,
+        url: str,
+        data: Optional[Dict] = None,
+        out_key: Optional[str] = None,
+        success_codes: Optional[Collection[Any]] = None,
+        return_error: bool = False,
+    ) -> Any:
         """POST 请求封装 (默认发送 JSON)"""
         data = await self._request('POST', url, json_data=data)
-        return self._extract_data(data, out_key)
+        return self._extract_data(
+            data,
+            out_key,
+            success_codes=success_codes,
+            return_error=return_error,
+        )
 
-    def _extract_data(self, data: Any, key: Optional[str]) -> Any:
+    def _extract_data(
+        self,
+        data: Any,
+        key: Optional[str],
+        success_codes: Optional[Collection[Any]] = None,
+        return_error: bool = False,
+    ) -> Any:
         """辅助方法：从结果中提取指定字段"""
         if data is None:
             return None
         if isinstance(data, bytes):
             return data
+        if isinstance(data, dict) and 'code' in data:
+            allowed_codes = (
+                set(success_codes)
+                if success_codes is not None
+                else {200, "0", 0, 1}
+            )
+            code = data.get('code')
+            if code not in allowed_codes:
+                raw_message = data.get('msg') or data.get('message') or ""
+                message = str(raw_message).strip()
+                logger.error(
+                    f"API业务报错: code={code}, msg={message or '未知错误'}"
+                )
+                if return_error:
+                    return APIErrorResponse(code=code, message=message)
+                return None
         if key and isinstance(data, dict):
             return data.get(key, {})
         return data
