@@ -286,7 +286,7 @@ class AccessControlService:
         if reason == REASON_PRIVATE:
             return "本插件的私聊功能已被管理员停用，请在已启用的群内使用。"
         if self.mode == MODE_WHITELIST:
-            return "当前群未启用本插件功能，如需使用请联系管理员在插件管理页中开启。"
+            return "本群未授权，无法使用。"
         return "当前群已被管理员停用本插件功能。"
 
     @staticmethod
