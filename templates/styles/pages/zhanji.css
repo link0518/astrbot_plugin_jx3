@@ -148,12 +148,14 @@ tbody tr:hover {
     font-weight: 600;
 }
 
-/* 胜场整行浅绿底 */
-tbody tr.row-win {
+/* 胜场整行浅绿底。
+   注意：components.css 的全局斑马纹 .jx3-template tbody tr:nth-child(even) 具体度为 (0,2,2)，
+   且注入顺序在页面 CSS 之后，故此处用 body 页面作用域类把具体度提升到 (0,2,3) 确保生效。 */
+body.jx3-template--zhanji tbody tr.row-win {
     background: rgba(45, 122, 86, 0.16);
 }
 
-tbody tr.row-win:hover {
+body.jx3-template--zhanji tbody tr.row-win:hover {
     background: rgba(45, 122, 86, 0.26);
 }
 
