@@ -148,6 +148,15 @@ tbody tr:hover {
     font-weight: 600;
 }
 
+/* 胜场整行浅绿底 */
+tbody tr.row-win {
+    background: rgba(45, 122, 86, 0.16);
+}
+
+tbody tr.row-win:hover {
+    background: rgba(45, 122, 86, 0.26);
+}
+
 .mmr-up {
     color: var(--jx3-green);
     font-weight: 600;

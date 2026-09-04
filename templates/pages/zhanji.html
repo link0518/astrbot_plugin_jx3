@@ -65,7 +65,7 @@
 
         <tbody>
         {% for m in history %}
-            <tr>
+            <tr class="{{ 'row-win' if m.won else '' }}">
                 <td class="time-col start-time" data-ts="{{ m.startTime }}">{{ m.startTime }}</td>
                 <td class="duration-col">{{ m.endTime - m.startTime }}</td>
                 <td class="kungfu-col">{{ m.kungfu }}</td>
