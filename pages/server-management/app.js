@@ -25,6 +25,31 @@ function button(label, className, onClick) {
   return element;
 }
 
+// 面板的 iframe 沙箱未开放 allow-modals，原生 window.confirm 被静默禁用，
+// 因此删除类操作改用页内两步确认：第一次点击进入待确认态，3 秒内再点才执行。
+function confirmButton(label, className, onConfirm, armedLabel = "确认删除") {
+  let resetTimer;
+  const reset = () => {
+    clearTimeout(resetTimer);
+    element.dataset.armed = "";
+    element.classList.remove("link-button--armed");
+    element.textContent = label;
+  };
+  const element = button(label, className, async () => {
+    if (element.dataset.armed !== "1") {
+      element.dataset.armed = "1";
+      element.classList.add("link-button--armed");
+      element.textContent = armedLabel;
+      clearTimeout(resetTimer);
+      resetTimer = setTimeout(reset, 3000);
+      return;
+    }
+    reset();
+    await onConfirm();
+  });
+  return element;
+}
+
 function emptyRow(columnCount, message) {
   const row = document.createElement("tr");
   const cell = document.createElement("td");
@@ -79,10 +104,9 @@ function renderBindings() {
         byId("binding-server").value = item.server;
         byId("binding-server").focus();
       }),
-      button("解除绑定", "link-button--danger", async () => {
-        if (!window.confirm(`确认解除会话 ${item.session_id} 的区服绑定？`)) return;
-        await mutate("bindings/delete", { session_id: item.session_id }, "绑定已解除");
-      }),
+      confirmButton("解除绑定", "link-button--danger", () =>
+        mutate("bindings/delete", { session_id: item.session_id }, "绑定已解除"),
+      ),
     );
     row.append(session, server, actions);
     return row;
@@ -153,10 +177,9 @@ function renderAliases() {
         byId("alias-values").value = item.aliases.join(", ");
         byId("alias-values").focus();
       }),
-      button("删除", "link-button--danger", async () => {
-        if (!window.confirm(`确认删除 ${item.server} 的全部别名？`)) return;
-        await mutate("aliases/delete", { server: item.server }, "别名已删除");
-      }),
+      confirmButton("删除", "link-button--danger", () =>
+        mutate("aliases/delete", { server: item.server }, "别名已删除"),
+      ),
     );
     row.append(server, aliases, actions);
     return row;
@@ -224,10 +247,9 @@ function renderAccessEntries() {
         byId("access-note").value = item.note || "";
         byId("access-key").focus();
       }),
-      button("删除", "link-button--danger", async () => {
-        if (!window.confirm(`确认从名单中删除 ${item.key}？`)) return;
-        await mutate("access/entries/delete", { key: item.key }, "名单条目已删除");
-      }),
+      confirmButton("删除", "link-button--danger", () =>
+        mutate("access/entries/delete", { key: item.key }, "名单条目已删除"),
+      ),
     );
     row.append(key, note, actions);
     return row;

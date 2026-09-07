@@ -78,6 +78,7 @@ tbody tr:hover { background: color-mix(in srgb, var(--accent-soft) 42%, transpar
 [data-theme="dark"] .link-button { color: #8db9f4; }
 .link-button:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
 .link-button--danger { color: var(--danger); }
+.link-button--armed { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); font-weight: 750; }
 .state { display: inline-flex; align-items: center; gap: 7px; font-weight: 650; }
 .state::before { width: 8px; height: 8px; border-radius: 50%; background: currentColor; content: ""; }
 .state--on { color: var(--success); }
