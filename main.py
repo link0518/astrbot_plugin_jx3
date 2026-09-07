@@ -26,7 +26,7 @@ PLUGIN_NAME = "astrbot_plugin_jx3"
 @register("astrbot_plugin_jx3", 
           "fxdyz", 
           "聚合剑网三游戏数据，提供查询、图片渲染、本地避雷和实时事件推送。",
-          "3.4.6",
+          "3.4.7",
           "https://github.com/qsc20001102/astrbot_plugin_jx3"
 )
 class Jx3ApiPlugin(Star):
@@ -84,6 +84,7 @@ class Jx3ApiPlugin(Star):
         except Exception as e:
             if self.event_push is not None:
                 await self.event_push.stop()
+            await self.cache.stop()
             logger.exception("功能模块初始化失败")
             raise
 
@@ -96,6 +97,9 @@ class Jx3ApiPlugin(Star):
     async def terminate(self):
         """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
         
+        if self.cache:
+            await self.cache.stop()
+
         if self.event_push:
             await self.event_push.stop()
 

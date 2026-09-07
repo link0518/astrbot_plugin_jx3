@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 from astrbot.api.star import Context
 from astrbot.api.web import error_response, json_response, request
 
-from .event_push import EVENT_NAMES
+from .event_push import EVENT_NAMES, FREE_EVENT_ACTIONS
 
 if TYPE_CHECKING:
     from .bilei_data import BiLeidata
@@ -43,6 +43,18 @@ class WebUIService:
     def register(self, context: Context, plugin_name: str):
         routes = (
             ("dashboard", self.dashboard, ["GET"], "读取会话管理数据"),
+            (
+                "subscriptions/save",
+                self.save_subscription,
+                ["POST"],
+                "保存会话事件推送配置",
+            ),
+            (
+                "subscriptions/delete",
+                self.delete_subscription,
+                ["POST"],
+                "删除会话事件推送配置",
+            ),
             ("bindings/save", self.save_binding, ["POST"], "保存会话区服绑定"),
             ("bindings/delete", self.delete_binding, ["POST"], "删除会话区服绑定"),
             ("aliases/save", self.save_aliases, ["POST"], "保存区服别名"),
@@ -130,9 +142,8 @@ class WebUIService:
                 "aliases": aliases,
                 "kungfu": kungfu,
                 "servers": self.server_binding.standard_servers(),
-                "events": {
-                    str(action): name for action, name in EVENT_NAMES.items()
-                },
+                "events": {str(action): name for action, name in EVENT_NAMES.items()},
+                "free_event_actions": sorted(FREE_EVENT_ACTIONS),
                 "session_control": session_control,
                 "legacy_bilei": legacy_bilei,
                 "token_stats": token_stats,
@@ -140,12 +151,31 @@ class WebUIService:
             }
         )
 
+    async def save_subscription(self):
+        try:
+            payload = await self._json_payload()
+            await self.event_push.save_subscription(
+                payload.get("session_id"),
+                payload.get("enabled"),
+                payload.get("actions"),
+                payload.get("mode"),
+            )
+        except ValueError as exc:
+            return error_response(str(exc), status_code=400)
+        return json_response({"saved": True})
+
+    async def delete_subscription(self):
+        try:
+            payload = await self._json_payload()
+            await self.event_push.delete_subscription(payload.get("session_id"))
+        except ValueError as exc:
+            return error_response(str(exc), status_code=400)
+        return json_response({"deleted": True})
+
     async def save_binding(self):
         try:
             payload = await self._json_payload()
-            server = self.server_binding.resolve_standard_server(
-                payload.get("server")
-            )
+            server = self.server_binding.resolve_standard_server(payload.get("server"))
             if not server:
                 raise ValueError("绑定区服必须选择标准区服")
             await self.server_binding.set_binding(
@@ -277,7 +307,8 @@ class WebUIService:
         try:
             payload = await self._json_payload()
             await self.cache.set_limits(
-                payload.get("api_memory_entries"),
+                payload.get("api_memory_max_mb"),
+                payload.get("api_max_entries"),
                 payload.get("image_max_mb"),
             )
         except ValueError as exc:

@@ -3,7 +3,7 @@ import asyncio
 import contextlib
 import json
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import aiohttp
@@ -13,10 +13,9 @@ from astrbot.api import AstrBotConfig, logger
 from astrbot.api.event import MessageChain
 from astrbot.api.star import Context
 
-from .sqlite import AsyncSQLiteDB
 from .server_binding import ServerBindingService
 from .session_control import SessionControlService
-
+from .sqlite import AsyncSQLiteDB
 
 DEFAULT_WSS_URL = "wss://socket.nicemoe.cn"
 FREE_EVENT_ACTIONS = frozenset({2001, 2002, 2003, 2004, 2005, 2006})
@@ -68,17 +67,20 @@ SERVER_FIELDS = (
     ("服务器", "server", "text"),
 )
 EVENT_FIELDS = {
-    1001: SERVER_FIELDS + (
+    1001: SERVER_FIELDS
+    + (
         ("角色", "name", "text"),
         ("奇遇", "event", "text"),
         ("等级", "level", "text"),
         ("时间", "time", "time"),
     ),
-    1002: SERVER_FIELDS + (
+    1002: SERVER_FIELDS
+    + (
         ("地图", "map_name", "text"),
         ("刷新时间", "time", "time"),
     ),
-    1003: SERVER_FIELDS + (
+    1003: SERVER_FIELDS
+    + (
         ("名称", "name", "text"),
         ("地图", "map_name", "text"),
         ("马驹", "horse", "text"),
@@ -87,79 +89,92 @@ EVENT_FIELDS = {
     ),
     1004: SERVER_FIELDS + (("预告时间", "time", "time"),),
     1005: SERVER_FIELDS + (("开启时间", "time", "time"),),
-    1006: SERVER_FIELDS + (
+    1006: SERVER_FIELDS
+    + (
         ("点名角色", "name", "list"),
         ("时间", "time", "time"),
     ),
-    1007: SERVER_FIELDS + (
+    1007: SERVER_FIELDS
+    + (
         ("燃放者", "sender", "text"),
         ("接收者", "receiver", "text"),
         ("烟花", "firework", "text"),
         ("地图", "map_name", "text"),
         ("时间", "time", "time"),
     ),
-    1008: SERVER_FIELDS + (
+    1008: SERVER_FIELDS
+    + (
         ("马驹", "name", "text"),
         ("地图", "map_name", "text"),
         ("预告时间", "time", "time"),
     ),
-    1009: SERVER_FIELDS + (
+    1009: SERVER_FIELDS
+    + (
         ("马驹", "name", "text"),
         ("地图", "map_name", "text"),
         ("刷新时间", "refresh_time", "time"),
     ),
-    1010: SERVER_FIELDS + (
+    1010: SERVER_FIELDS
+    + (
         ("马驹", "name", "text"),
         ("地图", "map_name", "text"),
         ("捕获角色", "capture_role_name", "text"),
         ("角色阵营", "capture_camp_name", "text"),
         ("捕获时间", "capture_time", "time"),
     ),
-    1011: SERVER_FIELDS + (
+    1011: SERVER_FIELDS
+    + (
         ("马驹", "name", "text"),
         ("竞拍角色", "auction_role_name", "text"),
         ("角色阵营", "auction_camp_name", "text"),
         ("成交金额", "auction_amount", "text"),
         ("拍卖时间", "auction_time", "time"),
     ),
-    1012: SERVER_FIELDS + (
+    1012: SERVER_FIELDS
+    + (
         ("角色", "role_name", "text"),
         ("副本", "map_name", "text"),
         ("物品", "item_name", "text"),
         ("时间", "time", "time"),
     ),
-    1013: SERVER_FIELDS + (
+    1013: SERVER_FIELDS
+    + (
         ("竞拍角色", "role_name", "text"),
         ("阵营", "camp_name", "text"),
         ("物品", "item_name", "text"),
         ("成交金额", "item_amount", "text"),
         ("时间", "time", "time"),
     ),
-    1014: SERVER_FIELDS + (
+    1014: SERVER_FIELDS
+    + (
         ("地图", "map_name", "text"),
         ("时间", "time", "time"),
     ),
-    1015: SERVER_FIELDS + (
+    1015: SERVER_FIELDS
+    + (
         ("角色所在服", "role_server", "text"),
         ("点名角色", "role_name", "text"),
         ("时间", "time", "time"),
     ),
     1016: SERVER_FIELDS + (("预告时间", "time", "time"),),
-    1017: SERVER_FIELDS + (
+    1017: SERVER_FIELDS
+    + (
         ("阵营", "camp_name", "text"),
         ("帮会", "tong_name", "text"),
         ("角色", "role_name", "text"),
         ("据点", "castle_name", "text"),
         ("时间", "time", "time"),
     ),
-    1101: SERVER_FIELDS + (
+    1101: SERVER_FIELDS
+    + (
         ("战场类型", "battlefield_type", "text"),
         ("宣战帮会", "declaring_tong_name", "text"),
         ("应战帮会", "accepting_tong_name", "text"),
         ("领地帮会", "battlefield_tong_name", "text"),
         ("开始时间", "start_time", "time"),
     ),
-    1102: SERVER_FIELDS + (
+    1102: SERVER_FIELDS
+    + (
         ("战场类型", "battlefield_type", "text"),
         ("宣战帮会", "declaring_tong_name", "text"),
         ("应战帮会", "accepting_tong_name", "text"),
@@ -168,87 +183,102 @@ EVENT_FIELDS = {
         ("获胜积分", "victory_score", "text"),
         ("结束时间", "end_time", "time"),
     ),
-    1108: SERVER_FIELDS + (
+    1108: SERVER_FIELDS
+    + (
         ("战场类型", "battlefield_type", "text"),
         ("宣战帮会", "declaring_tong_name", "text"),
         ("应战帮会", "accepting_tong_name", "text"),
         ("持续时长（小时）", "duration_hours", "text"),
         ("开始时间", "start_time", "time"),
     ),
-    1109: SERVER_FIELDS + (
+    1109: SERVER_FIELDS
+    + (
         ("战场类型", "battlefield_type", "text"),
         ("宣战帮会", "declaring_tong_name", "text"),
         ("应战帮会", "accepting_tong_name", "text"),
         ("结束时间", "end_time", "time"),
     ),
-    1111: SERVER_FIELDS + (
+    1111: SERVER_FIELDS
+    + (
         ("据点", "castle_name", "text"),
         ("阵营", "camp_name", "text"),
         ("时间", "time", "time"),
     ),
-    1112: SERVER_FIELDS + (
+    1112: SERVER_FIELDS
+    + (
         ("据点", "castle_name", "text"),
         ("时间", "time", "time"),
     ),
-    1113: SERVER_FIELDS + (
+    1113: SERVER_FIELDS
+    + (
         ("阵营", "camp_name", "text"),
         ("地图", "map_name", "text"),
         ("据点", "castle_name", "text"),
         ("时间", "time", "time"),
     ),
-    1114: SERVER_FIELDS + (
+    1114: SERVER_FIELDS
+    + (
         ("阵营", "camp_name", "text"),
         ("帮会", "tong_name", "text"),
         ("据点", "castle_name", "text"),
         ("时间", "time", "time"),
     ),
-    1115: SERVER_FIELDS + (
+    1115: SERVER_FIELDS
+    + (
         ("阵营", "camp_name", "text"),
         ("据点", "castle_name", "text"),
         ("时间", "time", "time"),
     ),
-    1116: SERVER_FIELDS + (
+    1116: SERVER_FIELDS
+    + (
         ("阵营", "camp_name", "text"),
         ("贡献帮会", "tong_name", "list"),
         ("时间", "time", "time"),
     ),
-    1117: SERVER_FIELDS + (
+    1117: SERVER_FIELDS
+    + (
         ("阵营", "camp_name", "text"),
         ("贡献帮会", "tong_name", "list"),
         ("时间", "time", "time"),
     ),
-    1118: SERVER_FIELDS + (
+    1118: SERVER_FIELDS
+    + (
         ("阵营", "camp_name", "text"),
         ("贡献帮会", "tong_name", "list"),
         ("时间", "time", "time"),
     ),
-    1119: SERVER_FIELDS + (
+    1119: SERVER_FIELDS
+    + (
         ("阵营", "camp_name", "text"),
         ("竞拍角色", "role_name", "text"),
         ("物品", "item_name", "text"),
         ("成交金额", "item_amount", "text"),
         ("时间", "time", "time"),
     ),
-    1120: SERVER_FIELDS + (
+    1120: SERVER_FIELDS
+    + (
         ("阵营", "camp_name", "text"),
         ("分红帮会", "tong_name", "list"),
         ("分红金额", "split_amount", "text"),
         ("时间", "time", "time"),
     ),
-    1121: SERVER_FIELDS + (
+    1121: SERVER_FIELDS
+    + (
         ("阵营", "camp_name", "text"),
         ("分红帮会", "tong_name", "list"),
         ("分红金额", "split_amount", "text"),
         ("时间", "time", "time"),
     ),
-    1122: SERVER_FIELDS + (
+    1122: SERVER_FIELDS
+    + (
         ("阵营", "camp_name", "text"),
         ("指挥帮会", "chief_tong_name", "text"),
         ("分红帮会", "tong_name", "list"),
         ("分红金额", "split_amount", "text"),
         ("时间", "time", "time"),
     ),
-    2001: SERVER_FIELDS + (
+    2001: SERVER_FIELDS
+    + (
         ("状态", "status", "status"),
         ("时间", "time", "time"),
     ),
@@ -304,9 +334,9 @@ class EventPushService:
         self.session_control = session_control
         self.url = str(config.get("jx3api_wss", "") or DEFAULT_WSS_URL).strip()
         self.token = str(config.get("jx3api_wss_token", "") or "").strip()
-        self._runner: Optional[asyncio.Task] = None
-        self._session: Optional[ClientSession] = None
-        self._websocket: Optional[aiohttp.ClientWebSocketResponse] = None
+        self._runner: asyncio.Task | None = None
+        self._session: ClientSession | None = None
+        self._websocket: aiohttp.ClientWebSocketResponse | None = None
         self._stopping = asyncio.Event()
 
     async def initialize(self):
@@ -321,8 +351,7 @@ class EventPushService:
 
     async def _init_subscription_table(self):
         columns = ",\n".join(
-            f"action_{action} INTEGER NOT NULL DEFAULT 0"
-            for action in EVENT_ACTIONS
+            f"action_{action} INTEGER NOT NULL DEFAULT 0" for action in EVENT_ACTIONS
         )
         await self.sql.execute(
             f"""
@@ -418,7 +447,7 @@ class EventPushService:
                 if self._stopping.is_set():
                     break
 
-                delay = min(2 ** retry_count, 30)
+                delay = min(2**retry_count, 30)
                 retry_count += 1
                 logger.info(f"JX3API 事件通道将在 {delay} 秒后重连")
                 try:
@@ -543,6 +572,72 @@ class EventPushService:
             for row in rows
         ]
 
+    async def save_subscription(
+        self, session_id: Any, enabled: Any, actions: Any, mode: Any
+    ):
+        """Create or replace a session's complete subscription selection.
+
+        Args:
+            session_id: AstrBot unified message origin.
+            enabled: Boolean master switch.
+            actions: List of supported integer event IDs; empty clears selections.
+            mode: Either create or update, checked atomically against the database.
+
+        Raises:
+            ValueError: Invalid input, duplicate creation, or missing update target.
+        """
+        if not isinstance(session_id, str) or not session_id.strip():
+            raise ValueError("会话 ID 不能为空，且必须是字符串")
+        session_id = session_id.strip()
+        if len(session_id) > 512:
+            raise ValueError("会话 ID 不能超过 512 个字符")
+        if not isinstance(enabled, bool):
+            raise ValueError("事件推送总开关必须是布尔值")
+        if not isinstance(actions, list):
+            raise ValueError("已订阅事件必须是事件编号数组")
+        if any(
+            type(action) is not int or action not in EVENT_NAMES for action in actions
+        ):
+            raise ValueError("已订阅事件包含不支持的事件编号")
+        if mode not in ("create", "update"):
+            raise ValueError("保存模式必须是 create 或 update")
+
+        selected = set(actions)
+        data: dict[str, Any] = {"enabled": int(enabled)}
+        data.update(
+            {
+                self._action_column(action): int(action in selected)
+                for action in EVENT_ACTIONS
+            }
+        )
+        data["updated_at"] = self._now_text()
+        if mode == "create":
+            columns = ", ".join(data)
+            placeholders = ", ".join("?" for _ in data)
+            affected = await self.sql.execute_affected(
+                f"INSERT INTO event_push_subscriptions (session_id, {columns}) "
+                f"VALUES (?, {placeholders}) ON CONFLICT(session_id) DO NOTHING",
+                (session_id, *data.values()),
+            )
+            if not affected:
+                raise ValueError("该会话已有推送配置，请在列表中点击编辑")
+        else:
+            assignments = ", ".join(f"{column}=?" for column in data)
+            affected = await self.sql.execute_affected(
+                f"UPDATE event_push_subscriptions SET {assignments} WHERE session_id=?",
+                (*data.values(), session_id),
+            )
+            if not affected:
+                raise ValueError("该会话推送配置已不存在，请刷新页面后重新添加")
+
+    async def delete_subscription(self, session_id: Any):
+        if not isinstance(session_id, str) or not session_id.strip():
+            raise ValueError("会话 ID 不能为空，且必须是字符串")
+        session_id = session_id.strip()
+        if len(session_id) > 512:
+            raise ValueError("会话 ID 不能超过 512 个字符")
+        await self.sql.delete("event_push_subscriptions", "session_id=?", (session_id,))
+
     async def configure(
         self,
         session_id: str,
@@ -624,9 +719,7 @@ class EventPushService:
         switch = "开启" if row.get("enabled") == 1 else "关闭"
         selected = "、".join(subscriptions) if subscriptions else "无"
         return (
-            f"事件推送总开关：{switch}\n"
-            f"已订阅事件：{selected}\n\n"
-            f"{self._usage_text()}"
+            f"事件推送总开关：{switch}\n已订阅事件：{selected}\n\n{self._usage_text()}"
         )
 
     @staticmethod
@@ -688,8 +781,7 @@ class EventPushService:
     @staticmethod
     def _event_list_text() -> str:
         free = "\n".join(
-            f"{action}：{EVENT_NAMES[action]}"
-            for action in sorted(FREE_EVENT_ACTIONS)
+            f"{action}：{EVENT_NAMES[action]}" for action in sorted(FREE_EVENT_ACTIONS)
         )
         paid = "\n".join(
             f"{action}：{EVENT_NAMES[action]}"

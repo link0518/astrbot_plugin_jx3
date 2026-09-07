@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hashlib
 import json
 import os
@@ -98,11 +99,13 @@ class CacheService:
     DEFAULT_API_TTL = 300
     DEFAULT_IMAGE_TTL = 600
     MAX_TTL_SECONDS = 30 * 24 * 60 * 60
-    DEFAULT_MAX_MEMORY_ENTRIES = 256
+    DEFAULT_MAX_MEMORY_BYTES = 16 * 1024 * 1024
+    DEFAULT_MAX_API_ENTRIES = 256
     DEFAULT_MAX_IMAGE_BYTES = 512 * 1024 * 1024
-    MAX_MEMORY_ENTRIES_LIMIT = 100_000
+    MAX_MEMORY_MB_LIMIT = 1024
+    MAX_API_ENTRIES_LIMIT = 100_000
     MAX_IMAGE_MB_LIMIT = 10_240
-    STALE_RETENTION_SECONDS = 7 * 24 * 60 * 60
+    CLEANUP_INTERVAL_SECONDS = 60
     _SENSITIVE_KEYS = frozenset(
         {"token", "ticket", "authorization", "access_token", "jx3api_token"}
     )
@@ -129,9 +132,13 @@ class CacheService:
         self._sqlite = sqlite
         self.image_dir = Path(image_dir)
         self._settings: dict[tuple[str, str], int] = {}
-        self.max_memory_entries = self.DEFAULT_MAX_MEMORY_ENTRIES
+        self.max_memory_bytes = self.DEFAULT_MAX_MEMORY_BYTES
+        self.max_api_entries = self.DEFAULT_MAX_API_ENTRIES
         self.max_image_bytes = self.DEFAULT_MAX_IMAGE_BYTES
-        self._memory: OrderedDict[str, tuple[int, int, str]] = OrderedDict()
+        self._memory: OrderedDict[str, tuple[int, int, bytes, int]] = OrderedDict()
+        self._memory_size_bytes = 0
+        self._api_storage_lock = asyncio.Lock()
+        self._cleanup_task: asyncio.Task | None = None
         self._api_locks: weakref.WeakValueDictionary[str, asyncio.Lock] = (
             weakref.WeakValueDictionary()
         )
@@ -224,13 +231,36 @@ class CacheService:
             "CREATE INDEX IF NOT EXISTS idx_api_cache_endpoint ON api_response_cache(endpoint)"
         )
         await self._sqlite.execute(
+            "CREATE INDEX IF NOT EXISTS idx_api_cache_lru ON api_response_cache(last_accessed_at)"
+        )
+        await self._sqlite.execute(
             "CREATE INDEX IF NOT EXISTS idx_image_cache_name ON image_render_cache(cache_name)"
         )
         await self._load_settings()
         await self._load_limits()
+        async with self._api_storage_lock:
+            await self._enforce_api_limit()
         await self.cleanup_expired()
-        self._enforce_memory_limit()
         await self._enforce_image_limit()
+        if self._cleanup_task is None or self._cleanup_task.done():
+            self._cleanup_task = asyncio.create_task(
+                self._cleanup_loop(), name="jx3-cache-cleanup"
+            )
+
+    async def stop(self):
+        if self._cleanup_task is not None:
+            self._cleanup_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._cleanup_task
+            self._cleanup_task = None
+
+    async def _cleanup_loop(self):
+        while True:
+            await asyncio.sleep(self.CLEANUP_INTERVAL_SECONDS)
+            try:
+                await self.cleanup_expired()
+            except Exception as exc:
+                logger.warning(f"自动清理查询缓存失败：{exc}")
 
     async def _load_settings(self):
         rows = await self._sqlite.select_all("cache_settings")
@@ -242,8 +272,18 @@ class CacheService:
     async def _load_limits(self):
         rows = await self._sqlite.select_all("cache_limits")
         limits = {str(row["limit_name"]): int(row["limit_value"]) for row in rows}
-        self.max_memory_entries = self._validated_memory_limit(
-            limits.get("api_memory_entries", self.DEFAULT_MAX_MEMORY_ENTRIES)
+        memory_limit_mb = self._validated_memory_limit_mb(
+            limits.get(
+                "api_memory_max_mb",
+                self.DEFAULT_MAX_MEMORY_BYTES // 1024 // 1024,
+            )
+        )
+        self.max_memory_bytes = memory_limit_mb * 1024 * 1024
+        self.max_api_entries = self._validated_api_entry_limit(
+            limits.get(
+                "api_max_entries",
+                limits.get("api_memory_entries", self.DEFAULT_MAX_API_ENTRIES),
+            )
         )
         image_limit_mb = self._validated_image_limit_mb(
             limits.get("image_max_mb", self.DEFAULT_MAX_IMAGE_BYTES // 1024 // 1024)
@@ -251,15 +291,27 @@ class CacheService:
         self.max_image_bytes = image_limit_mb * 1024 * 1024
 
     @classmethod
-    def _validated_memory_limit(cls, value: Any) -> int:
+    def _validated_memory_limit_mb(cls, value: Any) -> int:
         if isinstance(value, bool):
-            raise ValueError("接口内存缓存条数必须是整数")
+            raise ValueError("接口内存缓存容量必须是整数 MB")
         try:
             limit = int(value)
         except (TypeError, ValueError) as exc:
-            raise ValueError("接口内存缓存条数必须是整数") from exc
-        if limit < 1 or limit > cls.MAX_MEMORY_ENTRIES_LIMIT:
-            raise ValueError("接口内存缓存条数必须在 1 到 100000 之间")
+            raise ValueError("接口内存缓存容量必须是整数 MB") from exc
+        if limit < 1 or limit > cls.MAX_MEMORY_MB_LIMIT:
+            raise ValueError("接口内存缓存容量必须在 1 到 1024 MB 之间")
+        return limit
+
+    @classmethod
+    def _validated_api_entry_limit(cls, value: Any) -> int:
+        if isinstance(value, bool):
+            raise ValueError("SQLite 接口缓存条数必须是整数")
+        try:
+            limit = int(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("SQLite 接口缓存条数必须是整数") from exc
+        if limit < 1 or limit > cls.MAX_API_ENTRIES_LIMIT:
+            raise ValueError("SQLite 接口缓存条数必须在 1 到 100000 之间")
         return limit
 
     @classmethod
@@ -274,11 +326,18 @@ class CacheService:
             raise ValueError("图片缓存容量必须在 1 到 10240 MB 之间")
         return limit
 
-    async def set_limits(self, api_memory_entries: Any, image_max_mb: Any):
-        memory_limit = self._validated_memory_limit(api_memory_entries)
+    async def set_limits(
+        self,
+        api_memory_max_mb: Any,
+        api_max_entries: Any,
+        image_max_mb: Any,
+    ):
+        memory_limit_mb = self._validated_memory_limit_mb(api_memory_max_mb)
+        api_entry_limit = self._validated_api_entry_limit(api_max_entries)
         image_limit_mb = self._validated_image_limit_mb(image_max_mb)
         for limit_name, limit_value in (
-            ("api_memory_entries", memory_limit),
+            ("api_memory_max_mb", memory_limit_mb),
+            ("api_max_entries", api_entry_limit),
             ("image_max_mb", image_limit_mb),
         ):
             await self._sqlite.execute(
@@ -290,9 +349,11 @@ class CacheService:
                 """,
                 (limit_name, limit_value),
             )
-        self.max_memory_entries = memory_limit
         self.max_image_bytes = image_limit_mb * 1024 * 1024
-        self._enforce_memory_limit()
+        async with self._api_storage_lock:
+            self.max_memory_bytes = memory_limit_mb * 1024 * 1024
+            self.max_api_entries = api_entry_limit
+            await self._enforce_api_limit()
         await self._enforce_image_limit()
 
     def register_image_names(self, names: Iterable[str]):
@@ -418,62 +479,108 @@ class CacheService:
         self,
         cache_key: str,
         endpoint: str,
-        allow_expired: bool = False,
     ) -> tuple[Any | None, int | None, int | None]:
-        now = int(time.time())
-        ttl = self.get_ttl("api", endpoint)
-        memory = self._memory.get(cache_key)
-        if memory is not None:
-            created_at, expires_at, payload = memory
+        async with self._api_storage_lock:
+            now = time.time()
+            ttl = self.get_ttl("api", endpoint)
+            memory = self._memory.get(cache_key)
+            if memory is not None:
+                created_at, expires_at, payload, _ = memory
+            else:
+                row = await self._sqlite.fetch_one(
+                    """
+                    SELECT payload, created_at, expires_at
+                    FROM api_response_cache
+                    WHERE cache_key=? AND endpoint=?
+                    """,
+                    (cache_key, endpoint),
+                )
+                if not row:
+                    return None, None, None
+                created_at = int(row["created_at"])
+                expires_at = int(row["expires_at"])
+                payload = str(row["payload"])
             effective_expiry = min(expires_at, created_at + ttl)
-            if allow_expired and effective_expiry <= now - self.STALE_RETENTION_SECONDS:
-                self._memory.pop(cache_key, None)
-            elif allow_expired or effective_expiry > now:
-                self._memory.move_to_end(cache_key)
-                try:
-                    return json.loads(payload), effective_expiry, created_at
-                except json.JSONDecodeError:
-                    self._memory.pop(cache_key, None)
+            try:
+                data = (
+                    json.loads(payload) if ttl > 0 and effective_expiry > now else None
+                )
+            except json.JSONDecodeError:
+                data = None
+            if data is None:
+                self._forget_memory(cache_key)
+                await self._sqlite.delete(
+                    "api_response_cache", "cache_key=?", (cache_key,)
+                )
+                return None, effective_expiry, created_at
 
-        row = await self._sqlite.fetch_one(
-            """
-            SELECT payload, created_at, expires_at
-            FROM api_response_cache
-            WHERE cache_key=? AND endpoint=?
-            """,
-            (cache_key, endpoint),
-        )
-        if not row:
-            return None, None, None
-        expires_at = int(row["expires_at"])
-        created_at = int(row["created_at"])
-        effective_expiry = min(expires_at, created_at + ttl)
-        if not allow_expired and effective_expiry <= now:
-            return None, effective_expiry, created_at
-        if allow_expired and effective_expiry <= now - self.STALE_RETENTION_SECONDS:
-            await self._sqlite.delete("api_response_cache", "cache_key=?", (cache_key,))
-            return None, effective_expiry, created_at
-        try:
-            data = json.loads(str(row["payload"]))
-        except json.JSONDecodeError:
-            await self._sqlite.delete("api_response_cache", "cache_key=?", (cache_key,))
-            return None, None, None
+            self._remember(cache_key, created_at, expires_at, payload)
+            await self._sqlite.execute(
+                "UPDATE api_response_cache SET last_accessed_at=? WHERE cache_key=?",
+                (now, cache_key),
+            )
+            return data, effective_expiry, created_at
 
-        self._remember(cache_key, created_at, expires_at, str(row["payload"]))
-        await self._sqlite.execute(
-            "UPDATE api_response_cache SET last_accessed_at=? WHERE cache_key=?",
-            (now, cache_key),
-        )
-        return data, effective_expiry, created_at
-
-    def _remember(self, cache_key: str, created_at: int, expires_at: int, payload: str):
-        self._memory[cache_key] = (created_at, expires_at, payload)
+    def _remember(
+        self,
+        cache_key: str,
+        created_at: int,
+        expires_at: int,
+        payload: str | bytes,
+    ):
+        self._forget_memory(cache_key)
+        encoded = payload if isinstance(payload, bytes) else payload.encode("utf-8")
+        size_bytes = len(encoded)
+        if size_bytes > self.max_memory_bytes:
+            return
+        self._memory[cache_key] = (created_at, expires_at, encoded, size_bytes)
+        self._memory_size_bytes += size_bytes
         self._memory.move_to_end(cache_key)
         self._enforce_memory_limit()
 
+    def _forget_memory(self, cache_key: str):
+        removed = self._memory.pop(cache_key, None)
+        if removed is not None:
+            self._memory_size_bytes -= removed[3]
+
+    def _clear_memory(self):
+        self._memory.clear()
+        self._memory_size_bytes = 0
+
+    def _retain_memory_keys(self, retained: set[str]):
+        self._memory = OrderedDict(
+            (key, value) for key, value in self._memory.items() if key in retained
+        )
+        self._memory_size_bytes = sum(value[3] for value in self._memory.values())
+
     def _enforce_memory_limit(self):
-        while len(self._memory) > self.max_memory_entries:
-            self._memory.popitem(last=False)
+        while self._memory_size_bytes > self.max_memory_bytes and self._memory:
+            _, removed = self._memory.popitem(last=False)
+            self._memory_size_bytes -= removed[3]
+
+    async def _enforce_api_limit(self):
+        """Enforce memory bytes and SQLite entries while holding the storage lock."""
+        self._enforce_memory_limit()
+        row = await self._sqlite.fetch_one(
+            "SELECT COUNT(*) AS count FROM api_response_cache"
+        )
+        if int((row or {}).get("count") or 0) <= self.max_api_entries:
+            return
+        await self._sqlite.execute(
+            """
+            DELETE FROM api_response_cache WHERE cache_key IN (
+                SELECT cache_key FROM api_response_cache
+                ORDER BY last_accessed_at DESC, rowid DESC
+                LIMIT -1 OFFSET ?
+            )
+            """,
+            (self.max_api_entries,),
+        )
+        remaining = await self._sqlite.fetch_all(
+            "SELECT cache_key FROM api_response_cache"
+        )
+        retained = {row["cache_key"] for row in remaining}
+        self._retain_memory_keys(retained)
 
     async def _save_api_payload(
         self,
@@ -485,8 +592,9 @@ class CacheService:
         payload = self._json(data)
         now = int(time.time())
         expires_at = now + ttl_seconds
-        await self._sqlite.execute(
-            """
+        async with self._api_storage_lock:
+            await self._sqlite.execute(
+                """
             INSERT INTO api_response_cache(
                 cache_key, endpoint, payload, created_at, expires_at, last_accessed_at
             ) VALUES(?, ?, ?, ?, ?, ?)
@@ -497,9 +605,10 @@ class CacheService:
                 expires_at=excluded.expires_at,
                 last_accessed_at=excluded.last_accessed_at
             """,
-            (cache_key, endpoint, payload, now, expires_at, now),
-        )
-        self._remember(cache_key, now, expires_at, payload)
+                (cache_key, endpoint, payload, now, expires_at, time.time()),
+            )
+            self._remember(cache_key, now, expires_at, payload)
+            await self._enforce_api_limit()
         return now
 
     async def request_api(
@@ -509,7 +618,6 @@ class CacheService:
         requester: Callable[[], Awaitable[Any]],
         is_cacheable: Callable[[Any], bool],
         force_refresh: bool = False,
-        allow_stale: bool = True,
     ) -> tuple[Any, dict[str, Any]]:
         ttl = self.get_ttl("api", endpoint)
         cache_key = self.build_api_key(endpoint, params)
@@ -544,7 +652,9 @@ class CacheService:
         lock = self._api_locks.setdefault(cache_key, asyncio.Lock())
         async with lock:
             if not force_refresh:
-                cached, _, created_at = await self._read_api_payload(cache_key, endpoint)
+                cached, _, created_at = await self._read_api_payload(
+                    cache_key, endpoint
+                )
                 if cached is not None:
                     metadata["hit"] = True
                     metadata["created_at"] = created_at
@@ -553,12 +663,16 @@ class CacheService:
                     ).hexdigest()
                     return cached, metadata
 
-            stale, _, stale_created_at = await self._read_api_payload(
-                cache_key,
-                endpoint,
-                allow_expired=True,
-            )
-            data = await requester()
+            data = None
+            try:
+                data = await requester()
+            finally:
+                if not is_cacheable(data):
+                    async with self._api_storage_lock:
+                        self._forget_memory(cache_key)
+                        await self._sqlite.delete(
+                            "api_response_cache", "cache_key=?", (cache_key,)
+                        )
             if is_cacheable(data):
                 metadata["data_hash"] = hashlib.sha256(
                     self._json(data).encode("utf-8")
@@ -574,15 +688,6 @@ class CacheService:
                     metadata["created_at"] = int(time.time())
                     logger.warning(f"写入接口缓存失败 endpoint={endpoint}: {exc}")
                 return data, metadata
-            if stale is not None and allow_stale:
-                metadata["hit"] = True
-                metadata["stale"] = True
-                metadata["created_at"] = stale_created_at
-                metadata["data_hash"] = hashlib.sha256(
-                    self._json(stale).encode("utf-8")
-                ).hexdigest()
-                logger.warning(f"JX3API 请求失败，使用过期缓存：{endpoint}")
-                return stale, metadata
             return data, metadata
 
     def build_image_key(
@@ -765,35 +870,56 @@ class CacheService:
 
     async def cleanup_expired(self):
         now = int(time.time())
-        self._memory = OrderedDict(
-            (key, value) for key, value in self._memory.items() if value[1] > now
-        )
-        await self._sqlite.delete(
-            "api_response_cache",
-            "expires_at<=?",
-            (now - self.STALE_RETENTION_SECONDS,),
-        )
+        async with self._api_storage_lock:
+            uncached_defaults = sorted(self._NO_CACHE_API_DEFAULTS)
+            placeholders = ",".join("?" for _ in uncached_defaults)
+            await self._sqlite.execute(
+                f"""
+                DELETE FROM api_response_cache
+                WHERE expires_at<=? OR created_at + COALESCE(
+                    (SELECT ttl_seconds FROM cache_settings
+                     WHERE cache_type='api' AND cache_name=api_response_cache.endpoint),
+                    CASE WHEN endpoint IN ({placeholders}) THEN 0 ELSE ? END
+                )<=?
+                """,
+                (now, *uncached_defaults, self.get_ttl("api", "*"), now),
+            )
+            remaining = await self._sqlite.fetch_all(
+                "SELECT cache_key FROM api_response_cache"
+            )
+            retained = {row["cache_key"] for row in remaining}
+            self._retain_memory_keys(retained)
         rows = await self._sqlite.fetch_all(
             "SELECT cache_key, file_name FROM image_render_cache WHERE expires_at<=?",
             (now,),
         )
         for row in rows:
-            await self._delete_image_record(
-                str(row["cache_key"]),
-                self.image_dir / str(row["file_name"]),
-            )
+            cache_key = str(row["cache_key"])
+            async with self.image_lock(cache_key):
+                expired = await self._sqlite.fetch_one(
+                    """
+                    SELECT file_name FROM image_render_cache
+                    WHERE cache_key=? AND expires_at<=?
+                    """,
+                    (cache_key, now),
+                )
+                if expired:
+                    await self._delete_image_record(
+                        cache_key, self.image_dir / str(expired["file_name"])
+                    )
 
     async def clear(self, cache_type: str) -> dict[str, int]:
         if cache_type not in {"api", "image", "all"}:
             raise ValueError("清理类型仅支持 api、image 或 all")
         removed = {"api": 0, "image": 0}
         if cache_type in {"api", "all"}:
-            row = await self._sqlite.fetch_one(
-                "SELECT COUNT(*) AS count FROM api_response_cache"
-            )
-            removed["api"] = int((row or {}).get("count") or 0)
-            await self._sqlite.execute("DELETE FROM api_response_cache")
-            self._memory.clear()
+            async with self._api_storage_lock:
+                row = await self._sqlite.fetch_one(
+                    "SELECT COUNT(*) AS count FROM api_response_cache"
+                )
+                removed["api"] = int((row or {}).get("count") or 0)
+                await self._sqlite.execute("DELETE FROM api_response_cache")
+                self._clear_memory()
         if cache_type in {"image", "all"}:
             rows = await self._sqlite.fetch_all(
                 "SELECT cache_key, file_name FROM image_render_cache"
@@ -814,18 +940,19 @@ class CacheService:
             raise ValueError("缓存项目不能为空")
 
         if cache_type == "api":
-            rows = await self._sqlite.fetch_all(
-                "SELECT cache_key FROM api_response_cache WHERE endpoint=?",
-                (cache_name,),
-            )
-            await self._sqlite.delete(
-                "api_response_cache",
-                "endpoint=?",
-                (cache_name,),
-            )
-            for row in rows:
-                self._memory.pop(str(row["cache_key"]), None)
-            return len(rows)
+            async with self._api_storage_lock:
+                rows = await self._sqlite.fetch_all(
+                    "SELECT cache_key FROM api_response_cache WHERE endpoint=?",
+                    (cache_name,),
+                )
+                await self._sqlite.delete(
+                    "api_response_cache",
+                    "endpoint=?",
+                    (cache_name,),
+                )
+                for row in rows:
+                    self._forget_memory(str(row["cache_key"]))
+                return len(rows)
 
         rows = await self._sqlite.fetch_all(
             """
@@ -892,7 +1019,8 @@ class CacheService:
                 "image": self.get_ttl("image", "*"),
             },
             "limits": {
-                "api_memory_entries": self.max_memory_entries,
+                "api_memory_max_mb": self.max_memory_bytes // 1024 // 1024,
+                "api_max_entries": self.max_api_entries,
                 "image_max_mb": self.max_image_bytes // 1024 // 1024,
             },
             "api": [
@@ -908,7 +1036,9 @@ class CacheService:
                 "api_count": int((api_row or {}).get("count") or 0),
                 "api_size_bytes": int((api_row or {}).get("size_bytes") or 0),
                 "api_memory_count": len(self._memory),
-                "api_memory_limit": self.max_memory_entries,
+                "api_memory_size_bytes": self._memory_size_bytes,
+                "api_memory_limit_bytes": self.max_memory_bytes,
+                "api_entry_limit": self.max_api_entries,
                 "image_count": int((image_row or {}).get("count") or 0),
                 "image_size_bytes": int((image_row or {}).get("size_bytes") or 0),
                 "image_limit_bytes": self.max_image_bytes,

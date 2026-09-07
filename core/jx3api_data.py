@@ -120,7 +120,6 @@ class JX3APIService:
             "/server/status/check",
             {"server": "", "type": "其他"},
             force_refresh=force_refresh,
-            allow_stale=not force_refresh,
         )
         if not isinstance(data, list):
             return []
@@ -250,7 +249,6 @@ class JX3APIService:
         params: Optional[Dict[str, Any]] = None,
         out: Optional[str] = "data",
         force_refresh: bool = False,
-        allow_stale: bool = True,
     ) -> tuple[Any, dict[str, Any]]:
         request_params = params or {}
         if not self._cache:
@@ -279,7 +277,6 @@ class JX3APIService:
                 lambda: self._base_request(api_path, request_params, out),
                 self._is_cacheable_response,
                 force_refresh=force_refresh,
-                allow_stale=allow_stale,
             )
         except Exception as exc:
             logger.warning(f"接口缓存不可用，直接请求 JX3API endpoint={api_path}: {exc}")

@@ -6,18 +6,20 @@ const state = {
   kungfu: [],
   servers: [],
   events: {},
+  free_event_actions: [],
   session_control: { mode: "all", entries: [] },
   legacy_bilei: [],
   token_stats: null,
   cache: {
     defaults: { api: 300, image: 300 },
-    limits: { api_memory_entries: 256, image_max_mb: 512 },
+    limits: { api_memory_max_mb: 16, api_max_entries: 1024, image_max_mb: 512 },
     api: [],
     images: [],
     stats: {},
   },
 };
-const editing = { bindingSession: null, controlSession: null, aliasServer: null, kungfuPzid: null };
+const editing = { bindingSession: null, controlSession: null, aliasServer: null, kungfuPzid: null, subscriptionSession: null };
+let subscriptionSaving = false;
 const restoreConfirmationTimers = new WeakMap();
 let toastTimer;
 
@@ -478,11 +480,63 @@ function renderLegacyBilei() {
   }));
 }
 
+function openSubscriptionEditor(item = null) {
+  if (subscriptionSaving) return;
+  editing.subscriptionSession = item?.session_id ?? null;
+  const form = byId("subscription-form");
+  form.reset();
+  byId("subscription-editor-title").textContent = item ? "编辑推送配置" : "添加推送会话";
+  const sessionInput = byId("subscription-session");
+  sessionInput.value = item?.session_id || "";
+  sessionInput.readOnly = Boolean(item);
+  byId("subscription-enabled").checked = item?.enabled ?? false;
+
+  const selected = new Set(item?.actions || []);
+  const freeActions = new Set(state.free_event_actions);
+  const groups = [
+    { title: "免费事件", free: true },
+    { title: "令牌事件", free: false },
+  ];
+  byId("subscription-events").replaceChildren(...groups.map((group) => {
+    const fieldset = document.createElement("fieldset");
+    fieldset.className = "subscription-event-group";
+    const legend = document.createElement("legend");
+    legend.textContent = group.title;
+    const grid = document.createElement("div");
+    grid.className = "subscription-event-grid";
+    Object.entries(state.events).forEach(([action, name]) => {
+      if (freeActions.has(Number(action)) !== group.free) return;
+      const label = document.createElement("label");
+      label.className = "subscription-choice";
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.name = "subscription_action";
+      input.value = action;
+      input.checked = selected.has(Number(action));
+      const text = document.createElement("span");
+      text.textContent = `${action} ${name}`;
+      label.append(input, text);
+      grid.append(label);
+    });
+    fieldset.append(legend, grid);
+    return fieldset;
+  }));
+  updateSubscriptionSelectionCount();
+  form.hidden = false;
+  form.scrollIntoView({ block: "nearest" });
+  (item ? byId("subscription-enabled") : sessionInput).focus({ preventScroll: true });
+}
+
+function updateSubscriptionSelectionCount() {
+  const count = byId("subscription-events").querySelectorAll("input:checked").length;
+  byId("subscription-selection-count").textContent = `已选择 ${count} 项`;
+}
+
 function renderSubscriptions() {
   const body = byId("subscriptions-body");
   const bindings = bindingMap();
   if (!state.subscriptions.length) {
-    body.replaceChildren(emptyRow(4, "暂无事件订阅会话"));
+    body.replaceChildren(emptyRow(5, "暂无事件订阅会话，点击“添加推送会话”开始配置"));
     return;
   }
   body.replaceChildren(...state.subscriptions.map((item) => {
@@ -491,10 +545,14 @@ function renderSubscriptions() {
     const server = document.createElement("td");
     const enabled = document.createElement("td");
     const actions = document.createElement("td");
+    const controls = document.createElement("td");
     session.dataset.label = "会话 ID";
     server.dataset.label = "绑定区服";
     enabled.dataset.label = "总开关";
     actions.dataset.label = "已订阅事件";
+    controls.dataset.label = "操作";
+    controls.className = "actions";
+    session.className = "subscription-session-cell";
     session.textContent = item.session_id;
     server.textContent = bindings.get(item.session_id) || "未绑定（全部区服）";
     const stateLabel = document.createElement("span");
@@ -514,7 +572,34 @@ function renderSubscriptions() {
       tags.textContent = "无";
     }
     actions.append(tags);
-    row.append(session, server, enabled, actions);
+    controls.append(
+      button("编辑", "", () => openSubscriptionEditor(item)),
+      button("删除", "link-button--danger", async (event) => {
+        if (subscriptionSaving) return;
+        const control = event.currentTarget;
+        control.disabled = true;
+        subscriptionSaving = true;
+        byId("subscription-fields").disabled = true;
+        byId("add-subscription").disabled = true;
+        try {
+          const deleted = await mutate(
+            "subscriptions/delete",
+            { session_id: item.session_id },
+            "会话推送配置已删除",
+          );
+          if (deleted && editing.subscriptionSession === item.session_id) {
+            byId("subscription-form").hidden = true;
+            editing.subscriptionSession = null;
+          }
+        } finally {
+          subscriptionSaving = false;
+          control.disabled = false;
+          byId("subscription-fields").disabled = false;
+          byId("add-subscription").disabled = false;
+        }
+      }),
+    );
+    row.append(session, server, enabled, actions, controls);
     return row;
   }));
 }
@@ -739,17 +824,20 @@ function renderCache() {
   const stats = cache.stats || {};
   const apiDefault = cache.defaults?.api ?? 300;
   const imageDefault = cache.defaults?.image ?? 600;
-  const memoryLimit = cache.limits?.api_memory_entries ?? stats.api_memory_limit ?? 256;
+  const memoryLimitMb = cache.limits?.api_memory_max_mb ?? 16;
+  const apiEntryLimit = cache.limits?.api_max_entries ?? stats.api_entry_limit ?? 256;
   const imageLimitMb = cache.limits?.image_max_mb ?? 512;
-  byId("api-cache-count").textContent = `${stats.api_count || 0} 条`;
+  byId("api-cache-count").textContent = `${stats.api_count || 0} / ${apiEntryLimit} 条`;
   byId("api-cache-size").textContent = formatBytes(stats.api_size_bytes);
   byId("image-cache-count").textContent = `${stats.image_count || 0} 张`;
   byId("image-cache-size").textContent = `${formatBytes(stats.image_size_bytes)} / ${formatBytes(stats.image_limit_bytes)}`;
   byId("api-default-ttl").value = String(apiDefault);
   byId("image-default-ttl").value = String(imageDefault);
-  byId("api-memory-limit").value = String(memoryLimit);
+  byId("api-memory-size-limit").value = String(memoryLimitMb);
+  byId("api-entry-limit").value = String(apiEntryLimit);
   byId("image-size-limit").value = String(imageLimitMb);
-  byId("api-memory-summary").textContent = `${stats.api_memory_count || 0} / ${memoryLimit} 条`;
+  byId("api-memory-summary").textContent = `${formatBytes(stats.api_memory_size_bytes)} / ${formatBytes(stats.api_memory_limit_bytes)}`;
+  byId("api-memory-count").textContent = `${stats.api_memory_count || 0} 条，最久未使用优先淘汰`;
   byId("cache-default-summary").textContent = `${apiDefault} / ${imageDefault} 秒`;
   renderCacheTable("api");
   renderCacheTable("image");
@@ -845,6 +933,52 @@ document.querySelectorAll(".tab").forEach((tab) => {
   });
 });
 
+byId("add-subscription").addEventListener("click", () => openSubscriptionEditor());
+byId("cancel-subscription").addEventListener("click", () => {
+  byId("subscription-form").hidden = true;
+  editing.subscriptionSession = null;
+});
+byId("subscription-events").addEventListener("change", updateSubscriptionSelectionCount);
+byId("subscription-select-all").addEventListener("click", () => {
+  byId("subscription-events").querySelectorAll("input").forEach((input) => { input.checked = true; });
+  updateSubscriptionSelectionCount();
+});
+byId("subscription-clear-all").addEventListener("click", () => {
+  byId("subscription-events").querySelectorAll("input").forEach((input) => { input.checked = false; });
+  updateSubscriptionSelectionCount();
+});
+byId("subscription-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (subscriptionSaving) return;
+  const form = event.currentTarget;
+  const sessionId = (editing.subscriptionSession ?? byId("subscription-session").value).trim();
+  if (!sessionId) {
+    showToast("会话 ID 不能为空", true);
+    byId("subscription-session").focus();
+    return;
+  }
+  const payload = {
+    session_id: sessionId,
+    enabled: byId("subscription-enabled").checked,
+    actions: [...byId("subscription-events").querySelectorAll("input:checked")].map((input) => Number(input.value)),
+    mode: editing.subscriptionSession === null ? "create" : "update",
+  };
+  subscriptionSaving = true;
+  byId("subscription-fields").disabled = true;
+  byId("add-subscription").disabled = true;
+  try {
+    const saved = await mutate("subscriptions/save", payload, "会话推送配置已保存");
+    if (saved) {
+      form.hidden = true;
+      editing.subscriptionSession = null;
+    }
+  } finally {
+    subscriptionSaving = false;
+    byId("subscription-fields").disabled = false;
+    byId("add-subscription").disabled = false;
+  }
+});
+
 byId("binding-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const saved = await mutate("bindings/save", {
@@ -929,7 +1063,8 @@ byId("cache-limit-form").addEventListener("submit", async (event) => {
   submit.disabled = true;
   try {
     await bridge.apiPost("cache/limits/save", {
-      api_memory_entries: Number(byId("api-memory-limit").value),
+      api_memory_max_mb: Number(byId("api-memory-size-limit").value),
+      api_max_entries: Number(byId("api-entry-limit").value),
       image_max_mb: Number(byId("image-size-limit").value),
     });
     await loadData();
