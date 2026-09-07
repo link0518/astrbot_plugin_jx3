@@ -41,6 +41,12 @@
     "default": "",
     "hint": "用于付费事件推送，不填写只推送免费事件。"
   },
+  "tls_verify": {
+    "description": "TLS 证书验证",
+    "type": "bool",
+    "default": true,
+    "hint": "验证 JX3API、JX3BOX 和事件推送连接的 TLS 证书。建议保持开启；仅在受信任的调试环境中临时关闭。"
+  },
   "image_render_quality": {
     "description": "图片渲染质量",
     "type": "object",

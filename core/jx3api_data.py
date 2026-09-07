@@ -86,10 +86,12 @@ class JX3APIService:
         sqlite: AsyncSQLiteDB,
         cache: Optional["CacheService"] = None,
     ):
-        # 实例化 API Client
-        self._api: APIClient = APIClient()
         # 引用插件配置文件
         self._config = config
+        # 仅显式配置为 false 时关闭证书验证，旧配置默认安全开启。
+        self._api: APIClient = APIClient(
+            ssl_verify=self._config.get("tls_verify", True) is not False
+        )
         # 引用sqlite
         self._sql_db = sqlite
         self._cache = cache

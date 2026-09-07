@@ -1101,9 +1101,8 @@ byId("refresh").addEventListener("click", async (event) => {
   const control = event.currentTarget;
   control.disabled = true;
   try {
-    await bridge.apiPost("servers/refresh", {});
     await loadData();
-    showToast("区服目录与页面数据已刷新");
+    showToast("页面数据已刷新");
   } catch (error) {
     showToast(error?.message || "刷新失败", true);
   } finally {

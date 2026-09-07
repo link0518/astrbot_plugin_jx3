@@ -334,6 +334,7 @@ class EventPushService:
         self.session_control = session_control
         self.url = str(config.get("jx3api_wss", "") or DEFAULT_WSS_URL).strip()
         self.token = str(config.get("jx3api_wss_token", "") or "").strip()
+        self.tls_verify = config.get("tls_verify", True) is not False
         self._runner: asyncio.Task | None = None
         self._session: ClientSession | None = None
         self._websocket: aiohttp.ClientWebSocketResponse | None = None
@@ -408,6 +409,7 @@ class EventPushService:
                         connection_url,
                         heartbeat=45,
                         autoping=True,
+                        ssl=self.tls_verify,
                     ) as websocket:
                         self._websocket = websocket
                         retry_count = 0

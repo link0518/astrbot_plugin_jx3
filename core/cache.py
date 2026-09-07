@@ -154,22 +154,29 @@ class CacheService:
 
     @staticmethod
     def _build_asset_signature(roots: Iterable[Path]) -> str:
-        parts: list[str] = []
-        for root in roots:
+        signature = hashlib.sha256()
+        for root_index, root in enumerate(roots):
             path = Path(root)
             if not path.exists():
                 continue
             for item in sorted(
-                candidate for candidate in path.rglob("*") if candidate.is_file()
+                (candidate for candidate in path.rglob("*") if candidate.is_file()),
+                key=lambda candidate: candidate.relative_to(path).as_posix(),
             ):
                 try:
-                    stat = item.stat()
+                    content_hash = hashlib.sha256()
+                    with item.open("rb") as file:
+                        while chunk := file.read(1024 * 1024):
+                            content_hash.update(chunk)
                 except OSError:
                     continue
-                parts.append(
-                    f"{item.relative_to(path)}:{stat.st_size}:{stat.st_mtime_ns}"
-                )
-        return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()
+                relative_path = item.relative_to(path).as_posix()
+                signature.update(str(root_index).encode("ascii"))
+                signature.update(b"\0")
+                signature.update(relative_path.encode("utf-8"))
+                signature.update(b"\0")
+                signature.update(content_hash.digest())
+        return signature.hexdigest()
 
     async def initialize(self):
         self.image_dir.mkdir(parents=True, exist_ok=True)

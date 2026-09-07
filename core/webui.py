@@ -62,7 +62,6 @@ class WebUIService:
             ("aliases/restore", self.restore_aliases, ["POST"], "恢复默认区服别名"),
             ("kungfu/save", self.save_kungfu, ["POST"], "保存心法别名"),
             ("kungfu/restore", self.restore_kungfu, ["POST"], "恢复默认心法别名"),
-            ("servers/refresh", self.refresh_servers, ["POST"], "刷新区服目录"),
             (
                 "session-control/mode",
                 self.save_session_control_mode,
@@ -141,7 +140,7 @@ class WebUIService:
                 "subscriptions": subscriptions,
                 "aliases": aliases,
                 "kungfu": kungfu,
-                "servers": self.server_binding.standard_servers(),
+                "servers": [item["server"] for item in aliases],
                 "events": {str(action): name for action, name in EVENT_NAMES.items()},
                 "free_event_actions": sorted(FREE_EVENT_ACTIONS),
                 "session_control": session_control,
@@ -243,13 +242,6 @@ class WebUIService:
         except (RuntimeError, ValueError) as exc:
             return error_response(str(exc), status_code=500)
         return json_response({"restored": restored})
-
-    async def refresh_servers(self):
-        servers = await self.jx3api.server_list(force_refresh=True)
-        if not servers:
-            return error_response("区服目录刷新失败", status_code=502)
-        await self.server_binding.update_server_catalog(servers)
-        return json_response({"servers": self.server_binding.standard_servers()})
 
     async def save_session_control_mode(self):
         try:

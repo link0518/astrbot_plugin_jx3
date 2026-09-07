@@ -26,7 +26,7 @@ class APIClient:
     3. 支持异步上下文管理器 (Async Context Manager)。
     """
 
-    def __init__(self, base_timeout: int = 10, ssl_verify: bool = False):
+    def __init__(self, base_timeout: int = 10, ssl_verify: bool = True):
         self.base_timeout = base_timeout
         self.ssl_verify = ssl_verify
         self._session: Optional[ClientSession] = None
