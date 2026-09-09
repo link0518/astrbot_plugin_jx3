@@ -1,5 +1,10 @@
 ## 更新记录
 
+### version: 3.6.8（2026-09-10）：
+
+- 修复群名抓取失效：不再用 `event.get_platform_name()=="aiocqhttp"` 判断平台（AstrBot 返回的是实例名，实际为 default），改为探测 `bot.api.call_action` 能力（aiocqhttp 即具备），任一消息事件即缓存连接供「抓取群名」批量补抓使用；抓取失败日志提升为 warning 便于观察。
+- 群名展示扩展到事件推送与区服绑定的会话列（sessionCell 双行紧凑式，行高不变），最近活跃的群保持群名 + 群号展示；移除 3.6.7 临时诊断代码。
+
 ### version: 3.6.7（2026-09-10）：
 
 - 新增授权管理「诊断」按钮（最近活跃的群右上角）：调用 access/diagnostics 返回 access_entries / group_names / access_sessions 三张表的当前内容与缺失候选清单，便于排查群名未写入数据库的根因。

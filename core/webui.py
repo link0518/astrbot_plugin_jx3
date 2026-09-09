@@ -78,7 +78,6 @@ class WebUIService:
             ("access/entries/add", self.add_access_entry, ["POST"], "添加使用范围名单条目"),
             ("access/entries/delete", self.delete_access_entry, ["POST"], "删除使用范围名单条目"),
             ("access/groups/names/refresh", self.refresh_group_names, ["POST"], "批量补抓缺失的群名"),
-            ("access/diagnostics", self.access_diagnostics, ["GET"], "诊断授权管理数据状态"),
         )
         for path, handler, methods, description in routes:
             context.register_web_api(
@@ -129,6 +128,22 @@ class WebUIService:
                 "entries": await self.access_control.list_entries(),
                 "recent_groups": await self.access_control.list_recent_groups(),
             }
+            # 给事件推送 / 区服绑定补群名，单次查询复用给两份列表。
+            session_ids = {
+                *(item.get("session_id") for item in subscriptions),
+                *(item.get("session_id") for item in bindings),
+            }
+            session_names = await self.access_control.get_session_group_names(
+                list(session_ids)
+            )
+            for item in subscriptions:
+                item["group_name"] = session_names.get(
+                    item.get("session_id") or "", ""
+                )
+            for item in bindings:
+                item["group_name"] = session_names.get(
+                    item.get("session_id") or "", ""
+                )
         return json_response(
             {
                 "bindings": bindings,
@@ -173,12 +188,6 @@ class WebUIService:
         except ValueError as exc:
             return error_response(str(exc), status_code=400)
         return json_response({"saved": True})
-
-    async def access_diagnostics(self):
-        """诊断授权管理三张表（access_entries / group_names / access_sessions）的当前状态。"""
-        if self.access_control is None:
-            return error_response("使用范围服务未启用", status_code=503)
-        return json_response(await self.access_control.diagnostics())
 
     async def refresh_group_names(self):
         """批量补抓缺失的群名（通过插件侧缓存的 QQ 连接）。"""

@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0" />
     <title>剑网三插件管理</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="./style.css?v=3.6.7" />
+    <link rel="stylesheet" href="./style.css?v=3.6.8" />
   </head>
   <body>
     <main class="shell">
@@ -55,7 +55,7 @@
 
       <section class="panel is-active" id="access-panel" role="tabpanel">
         <div class="section-intro">
-          <div><h2>授权管理模式 <span class="version-badge" title="前端资源版本号（用于识别浏览器缓存）">v3.6.7</span></h2><p>控制本插件在哪些会话可用。默认“全部开放”不影响现有部署；切换为白名单或黑名单后，按下方名单对群生效，私聊是否可用由独立开关决定。</p></div>
+          <div><h2>授权管理模式 <span class="version-badge" title="前端资源版本号（用于识别浏览器缓存）">v3.6.8</span></h2><p>控制本插件在哪些会话可用。默认“全部开放”不影响现有部署；切换为白名单或黑名单后，按下方名单对群生效，私聊是否可用由独立开关决定。</p></div>
         </div>
         <div class="mode-grid" role="radiogroup" aria-label="授权管理模式">
           <label class="mode-card">
@@ -105,10 +105,8 @@
           <div class="section-intro section-intro--actions">
             <div><h2>最近活跃的群</h2><p>群内触发过插件指令的会话会记录在这里（数据仅本插件可见），可一键加入名单，白名单模式下无需手动抄群号。</p></div>
             <button class="button button--secondary" id="access-refresh-names" type="button">抓取群名</button>
-            <button class="button button--secondary" id="access-diagnostics" type="button">诊断</button>
           </div>
         </div>
-        <pre id="access-diag-output" class="diag-output" hidden></pre>
         <div class="recent-list" id="access-recent-body"></div>
       </section>
 
@@ -299,6 +297,6 @@
     <datalist id="session-options"></datalist>
     <datalist id="access-key-options"></datalist>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="./app.js?v=3.6.7"></script>
+    <script type="module" src="./app.js?v=3.6.9"></script>
   </body>
 </html>

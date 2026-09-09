@@ -279,6 +279,38 @@ class AccessControlService:
                 mapping.setdefault(key, name)
         return mapping
 
+    async def get_session_group_names(
+        self, session_ids: list[str]
+    ) -> dict[str, str]:
+        """按 session_id 批量查群名：经 access_sessions 关联 group_id，再到
+        group_names 抓名字。供事件推送 / 区服绑定列表展示用。"""
+        ids: list[str] = []
+        seen: set[str] = set()
+        for raw in session_ids:
+            sid = self._clean(raw)
+            if sid and sid not in seen:
+                seen.add(sid)
+                ids.append(sid)
+        if not ids:
+            return {}
+        placeholders = ",".join("?" for _ in ids)
+        rows = await self.sql.fetch_all(
+            f"""
+            SELECT s.session_id, COALESCE(g.name, '') AS name
+            FROM access_sessions s
+            LEFT JOIN group_names g ON s.group_id = g.group_id
+            WHERE s.session_id IN ({placeholders})
+            """,
+            tuple(ids),
+        )
+        result: dict[str, str] = {}
+        for row in rows:
+            sid = self._clean(row.get("session_id"))
+            name = self._clean(row.get("name"))
+            if sid and name:
+                result[sid] = name
+        return result
+
     async def list_groups_missing_names(self, limit: int = 80) -> list[str]:
         """缺失群名的群号候选：活跃记录 + 名单里的纯数字群号，按最近活跃排序。"""
         limit = max(1, min(int(limit), 200))
@@ -320,49 +352,6 @@ class AccessControlService:
             "UPDATE access_sessions SET group_name=? WHERE group_id=? AND group_name=''",
             (name, group_id),
         )
-
-    async def diagnostics(self) -> dict[str, Any]:
-        """管理页诊断用：返回名单、群名表、活跃记录与缺失候选的当前状态。"""
-        entries = await self.sql.fetch_all(
-            "SELECT key, note, updated_at FROM access_entries ORDER BY updated_at DESC"
-        )
-        names_rows = await self.sql.fetch_all(
-            "SELECT group_id, name, updated_at FROM group_names ORDER BY updated_at DESC"
-        )
-        session_rows = await self.sql.fetch_all(
-            "SELECT group_id, session_id, group_name, kind, updated_at "
-            "FROM access_sessions ORDER BY updated_at DESC LIMIT 60"
-        )
-        missing = await self.list_groups_missing_names(200)
-        return {
-            "entries": [
-                {
-                    "key": self._clean(r.get("key")),
-                    "note": self._clean(r.get("note")),
-                    "updated_at": str(r.get("updated_at") or ""),
-                }
-                for r in entries
-            ],
-            "group_names": [
-                {
-                    "group_id": self._clean(r.get("group_id")),
-                    "name": self._clean(r.get("name")),
-                    "updated_at": str(r.get("updated_at") or ""),
-                }
-                for r in names_rows
-            ],
-            "sessions": [
-                {
-                    "group_id": self._clean(r.get("group_id")),
-                    "session_id": self._clean(r.get("session_id")),
-                    "group_name": self._clean(r.get("group_name")),
-                    "kind": self._clean(r.get("kind")),
-                    "updated_at": str(r.get("updated_at") or ""),
-                }
-                for r in session_rows
-            ],
-            "missing_candidates": missing,
-        }
 
     async def list_recent_groups(self, limit: int = 60) -> list[dict[str, str]]:
         """最近触发过本插件指令的群（每个群取最新一次会话）。"""

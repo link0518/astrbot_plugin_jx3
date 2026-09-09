@@ -205,6 +205,28 @@ function bindingMap() {
   return new Map(state.bindings.map((item) => [item.session_id, item.server]));
 }
 
+// 群名优先 + 会话 ID 兜底的双行紧凑单元格（事件推送 / 区服绑定 复用）。
+function sessionCell(item, label = "会话") {
+  const cell = document.createElement("td");
+  cell.dataset.label = label;
+  const main = document.createElement("div");
+  main.className = "cell-main";
+  main.textContent = item.group_name || item.session_id;
+  cell.append(main);
+  if (item.group_name && item.group_name !== item.session_id) {
+    const sub = document.createElement("div");
+    sub.className = "cell-sub";
+    sub.textContent = item.session_id;
+    cell.append(sub);
+  } else if (/^(default|aiocqhttp):(Group|Guild)Message:/.test(item.session_id)) {
+    const sub = document.createElement("div");
+    sub.className = "cell-sub";
+    sub.textContent = "尚未获取到群名";
+    cell.append(sub);
+  }
+  return cell;
+}
+
 function renderSummary() {
   byId("access-entry-count").textContent = String(state.access.entries.length);
 }
@@ -247,13 +269,11 @@ function renderBindings() {
   }
   body.replaceChildren(...state.bindings.map((item) => {
     const row = document.createElement("tr");
-    const session = document.createElement("td");
+    const session = sessionCell(item, "会话 ID");
     const server = document.createElement("td");
     const actions = document.createElement("td");
-    session.dataset.label = "会话 ID";
     server.dataset.label = "绑定区服";
     actions.dataset.label = "操作";
-    session.textContent = item.session_id;
     actions.className = "actions";
     if (editing.bindingSession === item.session_id) {
       row.classList.add("is-editing");
@@ -434,19 +454,17 @@ function renderSubscriptions() {
   }
   body.replaceChildren(...state.subscriptions.map((item) => {
     const row = document.createElement("tr");
-    const session = document.createElement("td");
+    const session = sessionCell(item, "会话 ID");
+    session.classList.add("subscription-session-cell");
     const server = document.createElement("td");
     const enabled = document.createElement("td");
     const actions = document.createElement("td");
     const controls = document.createElement("td");
-    session.dataset.label = "会话 ID";
     server.dataset.label = "绑定区服";
     enabled.dataset.label = "总开关";
     actions.dataset.label = "已订阅事件";
     controls.dataset.label = "操作";
     controls.className = "actions";
-    session.className = "subscription-session-cell";
-    session.textContent = item.session_id;
     server.textContent = bindings.get(item.session_id) || "未绑定（全部区服）";
     const stateLabel = document.createElement("span");
     stateLabel.className = `state ${item.enabled ? "state--on" : "state--off"}`;
@@ -691,10 +709,6 @@ function renderAccessKeyOptions() {
 function renderAccessRecent() {
   const body = byId("access-recent-body");
   if (!state.access.recent_groups.length) {
-    const empty = document.createElement("p");
-    empty.className = "recent-empty";
-    empty.textContent = "暂无记录 —— 群内触发过任意插件指令后，该群会出现在这里，可直接加入名单。";
-    body.replaceChildren(empty);
     return;
   }
   const listed = new Set(state.access.entries.map((item) => item.key));
@@ -986,22 +1000,6 @@ byId("binding-form").addEventListener("submit", async (event) => {
     server: byId("binding-server").value,
   }, "绑定信息已保存");
   if (saved) event.currentTarget.reset();
-});
-
-byId("access-diagnostics").addEventListener("click", async (event) => {
-  const control = event.currentTarget;
-  const output = byId("access-diag-output");
-  control.disabled = true;
-  try {
-    const res = await bridge.apiGet("access/diagnostics");
-    output.hidden = false;
-    output.textContent = JSON.stringify(res, null, 2);
-  } catch (error) {
-    output.hidden = false;
-    output.textContent = `诊断失败：${error?.message || error}`;
-  } finally {
-    control.disabled = false;
-  }
 });
 
 byId("access-refresh-names").addEventListener("click", async (event) => {
