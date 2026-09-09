@@ -28,7 +28,7 @@ PLUGIN_NAME = "astrbot_plugin_jx3"
 @register("astrbot_plugin_jx3", 
           "fxdyz", 
           "聚合剑网三游戏数据，提供查询、图片渲染、本地避雷和实时事件推送。",
-          "3.6.3",
+          "3.6.4",
           "https://github.com/link0518/astrbot_plugin_jx3"
 )
 class Jx3ApiPlugin(Star):
@@ -522,11 +522,6 @@ class Jx3ApiPlugin(Star):
         # 只允许 coroutine
         return await handler(*call_args)
 
-
-    @filter.event_message_type(
-        filter.EventMessageType.ALL,
-        priority=maxsize - 10,
-    )
     async def _resolve_group_name(self, event: AstrMessageEvent, group_id: str) -> str:
         """解析群名供管理页展示：仅 aiocqhttp 平台调 get_group_info，
         成功缓存 24h、失败缓存 10min；失败静默返回空串，绝不阻塞指令主流程。"""
@@ -575,6 +570,10 @@ class Jx3ApiPlugin(Star):
             await asyncio.sleep(0.05)  # 温和限速，避免连续请求
         return updated
 
+    @filter.event_message_type(
+        filter.EventMessageType.ALL,
+        priority=maxsize - 10,
+    )
     async def on_all_message(self, event: AstrMessageEvent):
         """解析所有消息"""
         if not self.command_map:
