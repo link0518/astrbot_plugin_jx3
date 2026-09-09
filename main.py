@@ -27,7 +27,7 @@ PLUGIN_NAME = "astrbot_plugin_jx3"
 @register("astrbot_plugin_jx3", 
           "fxdyz", 
           "聚合剑网三游戏数据，提供查询、图片渲染、本地避雷和实时事件推送。",
-          "3.6.1",
+          "3.6.2",
           "https://github.com/link0518/astrbot_plugin_jx3"
 )
 class Jx3ApiPlugin(Star):
@@ -63,6 +63,9 @@ class Jx3ApiPlugin(Star):
         # 键 -> 发起时刻(time.monotonic),渲染/发图慢时防止连发重复触发。
         self._pending_tasks: dict[tuple, float] = {}
         self._pending_ttl = 90.0
+        # 群名缓存: {group_id: (name, monotonic 时间)}，24h 过期后重抓。
+        self._group_name_cache: dict[str, tuple[str, float]] = {}
+        self._group_name_ttl = 86400.0
 
         logger.info("jx3api插件初始化完成")
 
@@ -520,6 +523,29 @@ class Jx3ApiPlugin(Star):
         filter.EventMessageType.ALL,
         priority=maxsize - 10,
     )
+    async def _resolve_group_name(self, event: AstrMessageEvent, group_id: str) -> str:
+        """解析群名供管理页展示：仅 aiocqhttp 平台调 get_group_info，
+        进程内缓存 24h；失败或非该平台静默返回空串，绝不阻塞指令主流程。"""
+        if not group_id:
+            return ""
+        now = time.monotonic()
+        cached = self._group_name_cache.get(group_id)
+        if cached is not None and now - cached[1] < self._group_name_ttl:
+            return cached[0]
+        name = ""
+        bot = getattr(event, "bot", None)
+        if bot is not None and event.get_platform_name() == "aiocqhttp":
+            try:
+                info = await bot.api.call_action(
+                    "get_group_info", group_id=int(group_id)
+                )
+                name = str((info or {}).get("group_name") or "").strip()[:64]
+            except Exception as exc:
+                logger.debug(f"获取群名失败（不影响指令执行）：group={group_id}, {exc}")
+        # 失败也缓存空结果，避免接口异常时每条消息都重试。
+        self._group_name_cache[group_id] = (name, now)
+        return name
+
     async def on_all_message(self, event: AstrMessageEvent):
         """解析所有消息"""
         if not self.command_map:
@@ -536,7 +562,10 @@ class Jx3ApiPlugin(Star):
         # 记录会话来源（管理页据此列出“最近活跃的群”），
         # 再按当前使用范围模式判定本会话/本群是否允许使用插件。
         group_id = event.get_group_id() or ""
-        await self.access_control.record_usage(event.unified_msg_origin, group_id)
+        await self.access_control.record_usage(
+            event.unified_msg_origin, group_id,
+            await self._resolve_group_name(event, group_id),
+        )
         allowed, deny_reason = self.access_control.is_allowed(
             event.unified_msg_origin, group_id
         )

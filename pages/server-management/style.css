@@ -203,3 +203,7 @@ tbody tr.is-editing { background: color-mix(in srgb, var(--accent-soft) 62%, tra
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
 }
+
+/* 双行会话单元格：群名为主、ID 为辅 */
+.cell-main { font-weight: 700; }
+.cell-sub { color: var(--muted); font-size: 11px; line-height: 1.5; }

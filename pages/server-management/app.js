@@ -634,10 +634,24 @@ function renderAccessEntries() {
     const key = document.createElement("td");
     const note = document.createElement("td");
     const actions = document.createElement("td");
-    key.dataset.label = "会话 ID / 群号";
+    key.dataset.label = "会话";
     note.dataset.label = "备注";
     actions.dataset.label = "操作";
-    key.textContent = item.key;
+    const keyMain = document.createElement("div");
+    keyMain.className = "cell-main";
+    keyMain.textContent = item.group_name || item.key;
+    key.append(keyMain);
+    if (item.group_name) {
+      const keySub = document.createElement("div");
+      keySub.className = "cell-sub";
+      keySub.textContent = item.key;
+      key.append(keySub);
+    } else if (/^[\w-]+:(Group|Guild)Message:/.test(item.key)) {
+      const keySub = document.createElement("div");
+      keySub.className = "cell-sub";
+      keySub.textContent = "尚未获取到群名";
+      key.append(keySub);
+    }
     note.textContent = item.note || "—";
     actions.className = "actions";
     actions.append(
@@ -688,9 +702,10 @@ function renderAccessRecent() {
     const meta = document.createElement("div");
     meta.className = "recent-item__meta";
     const group = document.createElement("strong");
-    group.textContent = item.group_id;
+    group.textContent = item.group_name || item.group_id;
     const detail = document.createElement("span");
-    detail.textContent = `${item.session_id} · ${item.updated_at}`;
+    detail.textContent = `${item.group_id} · ${item.updated_at}`;
+    group.title = item.group_name ? item.group_id : "";
     meta.append(group, detail);
     const addButton = button("加入名单", "", async () => {
       await mutate("access/entries/add", { key: item.group_id, note: "" }, "已加入名单");

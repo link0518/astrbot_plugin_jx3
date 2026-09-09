@@ -66,6 +66,13 @@ class AccessControlService:
             )
             """
         )
+        # 旧库迁移：补充群名列（群内首次触发指令时经平台接口抓取缓存）。
+        try:
+            await self.sql.execute(
+                "ALTER TABLE access_sessions ADD COLUMN group_name TEXT NOT NULL DEFAULT ''"
+            )
+        except Exception:
+            pass  # 列已存在
         await self._load()
 
     async def _load(self):
@@ -149,10 +156,12 @@ class AccessControlService:
             "SELECT key, note, updated_at FROM access_entries "
             "ORDER BY updated_at DESC, key"
         )
+        names = await self._name_map()
         return [
             {
                 "key": self._clean(row.get("key")),
                 "note": self._clean(row.get("note")),
+                "group_name": names.get(self._clean(row.get("key")), ""),
                 "updated_at": str(row.get("updated_at") or ""),
             }
             for row in rows
@@ -190,32 +199,56 @@ class AccessControlService:
     # 活跃会话记录（供管理页识别群、供推送侧判断会话类型）
     # ======================
 
-    async def record_usage(self, session_id: Any, group_id: Any):
-        """记录一次插件指令来源会话。群消息记录 kind=group 与群号，
+    async def record_usage(
+        self, session_id: Any, group_id: Any, group_name: str = ""
+    ):
+        """记录一次插件指令来源会话。群消息记录 kind=group、群号与群名，
         私聊记录 kind=private；管理页可据此列出“最近活跃的群”。"""
         session_id = self._clean(session_id)
         if not session_id or len(session_id) > 512:
             return
         group_id = self._clean(group_id)
+        group_name = self._clean(group_name)[:64]
         kind = "group" if group_id else "private"
+        # 群名仅在抓到时覆盖，避免接口失败把已有名字抹掉。
         await self.sql.execute(
             """
-            INSERT INTO access_sessions (session_id, kind, group_id, updated_at)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            INSERT INTO access_sessions (session_id, kind, group_id, group_name, updated_at)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
             ON CONFLICT(session_id) DO UPDATE
             SET kind=excluded.kind,
                 group_id=excluded.group_id,
+                group_name=CASE WHEN excluded.group_name<>''
+                                THEN excluded.group_name
+                                ELSE access_sessions.group_name END,
                 updated_at=CURRENT_TIMESTAMP
             """,
-            (session_id, kind, group_id),
+            (session_id, kind, group_id, group_name),
         )
+
+    async def _name_map(self) -> dict[str, str]:
+        """群号 / 会话 ID 到群名的映射，供管理页名单与最近群展示。"""
+        rows = await self.sql.fetch_all(
+            "SELECT session_id, group_id, group_name FROM access_sessions "
+            "WHERE group_name<>''"
+        )
+        mapping: dict[str, str] = {}
+        for row in rows:
+            name = self._clean(row.get("group_name"))
+            if not name:
+                continue
+            for key in (row.get("group_id"), row.get("session_id")):
+                key = self._clean(key)
+                if key:
+                    mapping.setdefault(key, name)
+        return mapping
 
     async def list_recent_groups(self, limit: int = 60) -> list[dict[str, str]]:
         """最近触发过本插件指令的群（每个群取最新一次会话）。"""
         limit = max(1, min(int(limit), 200))
         rows = await self.sql.fetch_all(
             """
-            SELECT group_id, session_id, updated_at
+            SELECT group_id, session_id, group_name, updated_at
             FROM access_sessions
             WHERE kind='group' AND group_id<>''
               AND session_id=(
@@ -233,6 +266,7 @@ class AccessControlService:
             {
                 "group_id": self._clean(row.get("group_id")),
                 "session_id": self._clean(row.get("session_id")),
+                "group_name": self._clean(row.get("group_name")),
                 "updated_at": str(row.get("updated_at") or ""),
             }
             for row in rows
