@@ -784,8 +784,8 @@ class JX3APIService:
 
 
     async def jueshemingpian(self, server: str, name: str) -> Dict[str, Any]:
-        """名片缓存"""
-        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+        """名片记录"""
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:
             url = data.get("showAvatar")
             if not url:
                 return_data["msg"] = "未获取到名片图片"
@@ -804,7 +804,7 @@ class JX3APIService:
             ]
             
         return await self._request_api(
-            path="/card/cached",
+            path="/card/record",
             params={"server": server, "name": name, "token": self.token},
             processor=processor,
             template=""

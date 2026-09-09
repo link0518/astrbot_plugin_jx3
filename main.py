@@ -268,6 +268,7 @@ class Jx3ApiPlugin(Star):
             "诛恶": self. jx3cmd.zhueevent,
             "名片": self. jx3cmd.jueshemingpian,
             "全名片": self. jx3cmd.shuoyoumingpian,
+            "全部名片": self. jx3cmd.shuoyoumingpian,
             "随机秀": self. jx3cmd.shuijimingpian,
             "奇遇": self. jx3cmd.juesheqiyu,
             "查询": self. jx3cmd.juesheqiyu,
