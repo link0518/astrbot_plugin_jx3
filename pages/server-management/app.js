@@ -7,7 +7,6 @@ const state = {
   servers: [],
   events: {},
   free_event_actions: [],
-  session_control: { mode: "all", entries: [] },
   legacy_bilei: [],
   token_stats: null,
   cache: {
@@ -19,7 +18,7 @@ const state = {
   },
   access: { mode: "all", private_allowed: true, reply_on_deny: false, entries: [], recent_groups: [] },
 };
-const editing = { bindingSession: null, controlSession: null, aliasServer: null, kungfuPzid: null, subscriptionSession: null };
+const editing = { bindingSession: null, aliasServer: null, kungfuPzid: null, subscriptionSession: null };
 let subscriptionSaving = false;
 const restoreConfirmationTimers = new WeakMap();
 let toastTimer;
@@ -231,7 +230,6 @@ function renderSessionOptions() {
   const sessionIds = new Set([
     ...state.bindings.map((item) => item.session_id),
     ...state.subscriptions.map((item) => item.session_id),
-    ...state.session_control.entries.map((item) => item.session_id),
   ]);
   byId("session-options").replaceChildren(...[...sessionIds].sort().map((sessionId) => {
     const option = document.createElement("option");
@@ -240,141 +238,6 @@ function renderSessionOptions() {
   }));
 }
 
-function controlModeCopy(mode) {
-  if (mode === "whitelist") {
-    return "只有白名单中的会话可以使用插件和接收事件推送；白名单为空时不放行任何会话。";
-  }
-  if (mode === "blacklist") {
-    return "黑名单中的会话会被拦截；黑名单为空时放行全部会话。";
-  }
-  return "所有会话都可以使用插件并接收已订阅的事件推送；下方名单暂不生效。";
-}
-
-function controlModeLabel(mode) {
-  if (mode === "whitelist") return "白名单";
-  if (mode === "blacklist") return "黑名单";
-  return "全部会话";
-}
-
-function updateModeSelection(selectedMode) {
-  const activeMode = state.session_control?.mode || "all";
-  document.querySelectorAll(".mode-option").forEach((option) => {
-    const input = option.querySelector('input[name="control_mode"]');
-    option.classList.toggle("is-selected", input?.value === selectedMode);
-    option.classList.toggle("is-active-mode", input?.value === activeMode);
-  });
-  const saveButton = byId("control-mode-save");
-  saveButton.textContent = selectedMode === activeMode
-    ? "当前模式已生效"
-    : `切换为${controlModeLabel(selectedMode)}`;
-}
-
-function renderSessionControl() {
-  const control = state.session_control || { mode: "all", entries: [] };
-  document.querySelectorAll('input[name="control_mode"]').forEach((input) => {
-    input.checked = input.value === control.mode;
-  });
-  updateModeSelection(control.mode);
-  byId("control-mode-label").textContent = controlModeLabel(control.mode);
-  byId("control-mode-hint").textContent = controlModeCopy(control.mode);
-
-  const body = byId("control-entries-body");
-  if (!control.entries.length) {
-    body.replaceChildren(emptyRow(4, "暂无白名单或黑名单会话"));
-    return;
-  }
-
-  body.replaceChildren(...control.entries.map((item) => {
-    const row = document.createElement("tr");
-    const session = document.createElement("td");
-    const listType = document.createElement("td");
-    const remark = document.createElement("td");
-    const actions = document.createElement("td");
-    session.dataset.label = "会话 ID";
-    listType.dataset.label = "名单类型";
-    remark.dataset.label = "备注";
-    actions.dataset.label = "操作";
-    actions.className = "actions";
-    session.textContent = item.session_id;
-
-    if (editing.controlSession === item.session_id) {
-      row.classList.add("is-editing");
-      const typeSelect = document.createElement("select");
-      typeSelect.className = "inline-editor inline-editor--compact";
-      typeSelect.setAttribute("aria-label", `${item.session_id}的名单类型`);
-      typeSelect.append(
-        new Option("白名单", "whitelist"),
-        new Option("黑名单", "blacklist"),
-      );
-      typeSelect.value = item.list_type;
-
-      const remarkInput = document.createElement("input");
-      remarkInput.className = "inline-editor";
-      remarkInput.maxLength = 200;
-      remarkInput.value = item.remark || "";
-      remarkInput.placeholder = "备注（可选）";
-      remarkInput.setAttribute("aria-label", `${item.session_id}的备注`);
-
-      const saveButton = button("保存", "", async () => {
-        typeSelect.disabled = true;
-        remarkInput.disabled = true;
-        saveButton.disabled = true;
-        cancelButton.disabled = true;
-        editing.controlSession = null;
-        const saved = await mutate(
-          "session-control/save",
-          { session_id: item.session_id, list_type: typeSelect.value, remark: remarkInput.value },
-          "会话名单已保存",
-        );
-        if (!saved) {
-          editing.controlSession = item.session_id;
-          renderSessionControl();
-        }
-      });
-      const cancelButton = button("取消", "", () => {
-        editing.controlSession = null;
-        renderSessionControl();
-      });
-      remarkInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          saveButton.click();
-        } else if (event.key === "Escape") {
-          event.preventDefault();
-          cancelButton.click();
-        }
-      });
-      remark.append(remarkInput);
-      listType.append(typeSelect);
-      actions.append(saveButton, cancelButton);
-      queueMicrotask(() => typeSelect.focus());
-    } else {
-      const badge = document.createElement("span");
-      badge.className = `list-badge list-badge--${item.list_type}`;
-      badge.textContent = item.list_type === "whitelist" ? "白名单" : "黑名单";
-      listType.append(badge);
-      remark.textContent = item.remark || "—";
-      actions.append(
-        button("编辑", "", () => {
-          editing.controlSession = item.session_id;
-          renderSessionControl();
-        }),
-        button("删除", "link-button--danger", async (event) => {
-          const deleteButton = event.currentTarget;
-          deleteButton.disabled = true;
-          const deleted = await mutate(
-            "session-control/delete",
-            { session_id: item.session_id },
-            "会话名单已删除",
-          );
-          if (!deleted) deleteButton.disabled = false;
-        }),
-      );
-    }
-    row.append(session, listType, remark, actions);
-    return row;
-  }));
-}
 
 function renderBindings() {
   const body = byId("bindings-body");
@@ -963,7 +826,6 @@ function render() {
   renderTokenStats();
   renderServerOptions();
   renderSessionOptions();
-  renderSessionControl();
   renderLegacyBilei();
   renderBindings();
   renderSubscriptions();
@@ -1109,28 +971,6 @@ byId("binding-form").addEventListener("submit", async (event) => {
   if (saved) event.currentTarget.reset();
 });
 
-document.querySelectorAll('input[name="control_mode"]').forEach((input) => {
-  input.addEventListener("change", () => {
-    updateModeSelection(input.value);
-  });
-});
-
-byId("control-mode-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const selected = new FormData(event.currentTarget).get("control_mode");
-  await mutate("session-control/mode", { mode: selected }, "会话控制模式已保存");
-});
-
-byId("control-entry-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const saved = await mutate("session-control/save", {
-    session_id: byId("control-session").value,
-    list_type: byId("control-list-type").value,
-    remark: byId("control-remark").value,
-  }, "会话名单已保存");
-  if (saved) event.currentTarget.reset();
-});
-
 byId("restore-aliases").addEventListener("click", async (event) => {
   await restoreDefaults(
     event.currentTarget,
@@ -1225,7 +1065,7 @@ async function saveAccessConfig() {
     mode,
     private_allowed: byId("access-private").checked,
     reply_on_deny: byId("access-reply").checked,
-  }, "使用范围配置已保存");
+  }, "授权管理配置已保存");
 }
 
 document.querySelectorAll('input[name="access-mode"]').forEach((radio) => {

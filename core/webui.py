@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from .jx3api_data import JX3APIService
     from .kungfu_alias import KungfuAliasService
     from .server_binding import ServerBindingService
-    from .session_control import SessionControlService
 
 
 class WebUIService:
@@ -29,7 +28,6 @@ class WebUIService:
         event_push: EventPushService,
         server_binding: ServerBindingService,
         kungfu_alias: KungfuAliasService,
-        session_control: SessionControlService,
         bilei: BiLeidata,
         cache: CacheService,
         access_control: AccessControlService | None = None,
@@ -38,7 +36,6 @@ class WebUIService:
         self.event_push = event_push
         self.server_binding = server_binding
         self.kungfu_alias = kungfu_alias
-        self.session_control = session_control
         self.bilei = bilei
         self.cache = cache
         self.access_control = access_control
@@ -65,24 +62,6 @@ class WebUIService:
             ("aliases/restore", self.restore_aliases, ["POST"], "恢复默认区服别名"),
             ("kungfu/save", self.save_kungfu, ["POST"], "保存心法别名"),
             ("kungfu/restore", self.restore_kungfu, ["POST"], "恢复默认心法别名"),
-            (
-                "session-control/mode",
-                self.save_session_control_mode,
-                ["POST"],
-                "保存会话控制模式",
-            ),
-            (
-                "session-control/save",
-                self.save_session_control_entry,
-                ["POST"],
-                "保存会话控制名单",
-            ),
-            (
-                "session-control/delete",
-                self.delete_session_control_entry,
-                ["POST"],
-                "删除会话控制名单",
-            ),
             (
                 "bilei/legacy/migrate",
                 self.migrate_legacy_bilei,
@@ -126,7 +105,6 @@ class WebUIService:
             subscriptions,
             aliases,
             kungfu,
-            session_control,
             legacy_bilei,
             token_stats,
             cache,
@@ -135,7 +113,6 @@ class WebUIService:
             self.event_push.list_subscription_statuses(),
             self.server_binding.list_aliases(),
             self.kungfu_alias.list_kungfu(),
-            self.session_control.get_state(),
             self.bilei.list_legacy_records(),
             self.jx3api.token_stats(),
             self.cache.dashboard(),
@@ -157,7 +134,6 @@ class WebUIService:
                 "servers": [item["server"] for item in aliases],
                 "events": {str(action): name for action, name in EVENT_NAMES.items()},
                 "free_event_actions": sorted(FREE_EVENT_ACTIONS),
-                "session_control": session_control,
                 "legacy_bilei": legacy_bilei,
                 "token_stats": token_stats,
                 "cache": cache,
@@ -297,34 +273,6 @@ class WebUIService:
         except (RuntimeError, ValueError) as exc:
             return error_response(str(exc), status_code=500)
         return json_response({"restored": restored})
-
-    async def save_session_control_mode(self):
-        try:
-            payload = await self._json_payload()
-            await self.session_control.set_mode(payload.get("mode"))
-        except ValueError as exc:
-            return error_response(str(exc), status_code=400)
-        return json_response({"saved": True})
-
-    async def save_session_control_entry(self):
-        try:
-            payload = await self._json_payload()
-            await self.session_control.save_entry(
-                payload.get("session_id"),
-                payload.get("list_type"),
-                payload.get("remark"),
-            )
-        except ValueError as exc:
-            return error_response(str(exc), status_code=400)
-        return json_response({"saved": True})
-
-    async def delete_session_control_entry(self):
-        try:
-            payload = await self._json_payload()
-            await self.session_control.delete_entry(payload.get("session_id"))
-        except ValueError as exc:
-            return error_response(str(exc), status_code=400)
-        return json_response({"deleted": True})
 
     async def migrate_legacy_bilei(self):
         try:

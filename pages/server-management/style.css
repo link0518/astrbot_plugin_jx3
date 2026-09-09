@@ -66,20 +66,6 @@ h1 { margin: 0; font-size: clamp(26px, 3vw, 36px); line-height: 1.2; letter-spac
 .tab.is-active::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--accent); content: ""; }
 .panel { margin-top: 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
 .panel[hidden] { display: none; }
-.control-mode { background: var(--surface-subtle); border-bottom: 1px solid var(--border); }
-.control-mode__intro { display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 0; padding-bottom: 16px; }
-.current-mode { display: grid; flex: 0 0 auto; min-width: 210px; gap: 2px; padding: 13px 17px; border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border)); border-radius: 10px; background: var(--accent-soft); box-shadow: inset 4px 0 0 var(--accent); }
-.current-mode span { color: var(--muted); font-size: 12px; font-weight: 700; }
-.current-mode strong { color: var(--accent); font-size: 20px; line-height: 1.35; }
-.mode-options { display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)) auto; align-items: stretch; gap: 12px; padding: 0 22px 22px; }
-.mode-option { position: relative; display: flex; grid-template-columns: none; align-items: flex-start; gap: 10px; min-height: 76px; padding: 14px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); cursor: pointer; font-size: 14px; }
-.mode-option:hover, .mode-option.is-selected { border-color: color-mix(in srgb, var(--accent) 58%, var(--border)); background: var(--accent-soft); }
-.mode-option.is-active-mode::after { position: absolute; top: 8px; right: 8px; padding: 2px 7px; border-radius: 999px; background: var(--accent); color: #fff; content: "当前"; font-size: 11px; font-weight: 700; }
-.mode-option input { flex: 0 0 auto; width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); box-shadow: none; }
-.mode-option span { display: grid; gap: 3px; }
-.mode-option strong { color: var(--text); font-size: 14px; }
-.mode-option small { color: var(--muted); font-size: 12px; font-weight: 500; line-height: 1.4; }
-.mode-options .button { align-self: center; }
 .editor { display: grid; grid-template-columns: minmax(260px, 1.35fr) minmax(210px, 1fr) auto; align-items: end; gap: 16px; padding: 22px; background: var(--surface-subtle); border-bottom: 1px solid var(--border); }
 .editor--control { grid-template-columns: minmax(250px, 1.5fr) minmax(150px, .7fr) minmax(190px, 1fr) auto; }
 label { display: grid; gap: 7px; color: var(--text); font-size: 13px; font-weight: 650; }
@@ -144,9 +130,6 @@ tbody tr.is-editing { background: color-mix(in srgb, var(--accent-soft) 62%, tra
 .link-button:disabled { cursor: wait; opacity: .55; }
 .link-button--danger { color: var(--danger); }
 .link-button--armed { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); font-weight: 750; }
-.list-badge { display: inline-flex; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; }
-.list-badge--whitelist { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
-.list-badge--blacklist { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
 .state { display: inline-flex; align-items: center; gap: 7px; font-weight: 650; }
 .state::before { width: 8px; height: 8px; border-radius: 50%; background: currentColor; content: ""; }
 .state--on { color: var(--success); }
@@ -203,10 +186,6 @@ tbody tr.is-editing { background: color-mix(in srgb, var(--accent-soft) 62%, tra
   .mode-grid, .access-toggles { grid-template-columns: 1fr; }
   .recent-item { min-width: 100%; }
   .recent-item__meta span { max-width: 100%; white-space: normal; }
-  .mode-options { grid-template-columns: 1fr; }
-  .mode-options .button { width: 100%; }
-  .control-mode__intro { align-items: stretch; flex-direction: column; }
-  .current-mode { min-width: 0; }
   .table-wrap { overflow: visible; }
   table, tbody, tr, td { display: block; width: 100%; }
   thead { display: none; }

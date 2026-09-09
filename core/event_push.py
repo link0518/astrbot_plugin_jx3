@@ -15,7 +15,6 @@ from astrbot.api.star import Context
 
 from .server_binding import ServerBindingService
 from .access_control import AccessControlService
-from .session_control import SessionControlService
 from .sqlite import AsyncSQLiteDB
 
 DEFAULT_WSS_URL = "wss://socket.nicemoe.cn"
@@ -326,14 +325,12 @@ class EventPushService:
         config: AstrBotConfig,
         sqlite: AsyncSQLiteDB,
         server_binding: ServerBindingService,
-        session_control: SessionControlService,
         access_control: Optional[AccessControlService] = None,
     ):
         self.context = context
         self.config = config
         self.sql = sqlite
         self.server_binding = server_binding
-        self.session_control = session_control
         self.access_control = access_control
         self.url = str(config.get("jx3api_wss", "") or DEFAULT_WSS_URL).strip()
         self.token = str(config.get("jx3api_wss_token", "") or "").strip()
@@ -564,7 +561,6 @@ class EventPushService:
         return [
             (str(row["session_id"]), str(row.get("server") or "").strip())
             for row in rows
-            if self.session_control.is_allowed(row["session_id"])
         ]
 
     async def list_subscription_statuses(self) -> list[dict[str, Any]]:

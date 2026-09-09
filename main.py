@@ -16,7 +16,6 @@ from .core.bilei_data import BiLeidata
 from .core.kungfu_alias import KungfuAliasService
 from .core.server_binding import ServerBindingService
 from .core.access_control import AccessControlService
-from .core.session_control import SessionControlService
 from .core.webui import WebUIService
 from .core.message import MessageBuilder
 from .core.fun_basic import load_as_base64
@@ -28,7 +27,7 @@ PLUGIN_NAME = "astrbot_plugin_jx3"
 @register("astrbot_plugin_jx3", 
           "fxdyz", 
           "聚合剑网三游戏数据，提供查询、图片渲染、本地避雷和实时事件推送。",
-          "3.6.0",
+          "3.6.1",
           "https://github.com/link0518/astrbot_plugin_jx3"
 )
 class Jx3ApiPlugin(Star):
@@ -78,7 +77,6 @@ class Jx3ApiPlugin(Star):
             await self.init_trade_item_cache_data()
             await self.kungfu_alias.initialize()
             await self.server_binding.initialize()
-            await self.session_control.initialize()
 
             # 获取区服目录，用于识别完整参数与区服别名。
             await self.server_binding.update_server_catalog(
@@ -192,13 +190,11 @@ class Jx3ApiPlugin(Star):
             self.server_alias_seed_path,
         )
         self.access_control = AccessControlService(self.local_sql_db)
-        self.session_control = SessionControlService(self.local_sql_db)
         self.event_push = EventPushService(
             cast(Context, self.context),
             self.conf,
             self.local_sql_db,
             self.server_binding,
-            self.session_control,
             self.access_control,
         )
         self.webui = WebUIService(
@@ -206,7 +202,6 @@ class Jx3ApiPlugin(Star):
             self.event_push,
             self.server_binding,
             self.kungfu_alias,
-            self.session_control,
             self.bilei,
             self.cache,
             self.access_control,
@@ -556,14 +551,6 @@ class Jx3ApiPlugin(Star):
         # 一旦确认是本插件指令,立即阻止后续插件和默认 LLM 继续处理。
         event.stop_event()
         event.should_call_llm(True)
-
-        # 会话控制（上游）：被拦截的会话直接忽略
-        if not self.session_control.is_allowed(event.unified_msg_origin):
-            logger.info(
-                f"会话控制已拦截插件指令：command={cmd}, "
-                f"session={event.unified_msg_origin}"
-            )
-            return
 
         # 在途去重:渲染发图较慢,用户连发同一指令时提示一次即可,
         # 避免同一查询被重复触发、排队堆积。按「会话+发送者+指令+参数」去重,
