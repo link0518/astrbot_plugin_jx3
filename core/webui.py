@@ -78,6 +78,7 @@ class WebUIService:
             ("access/entries/add", self.add_access_entry, ["POST"], "添加使用范围名单条目"),
             ("access/entries/delete", self.delete_access_entry, ["POST"], "删除使用范围名单条目"),
             ("access/groups/names/refresh", self.refresh_group_names, ["POST"], "批量补抓缺失的群名"),
+            ("access/diagnostics", self.access_diagnostics, ["GET"], "诊断授权管理数据状态"),
         )
         for path, handler, methods, description in routes:
             context.register_web_api(
@@ -172,6 +173,12 @@ class WebUIService:
         except ValueError as exc:
             return error_response(str(exc), status_code=400)
         return json_response({"saved": True})
+
+    async def access_diagnostics(self):
+        """诊断授权管理三张表（access_entries / group_names / access_sessions）的当前状态。"""
+        if self.access_control is None:
+            return error_response("使用范围服务未启用", status_code=503)
+        return json_response(await self.access_control.diagnostics())
 
     async def refresh_group_names(self):
         """批量补抓缺失的群名（通过插件侧缓存的 QQ 连接）。"""

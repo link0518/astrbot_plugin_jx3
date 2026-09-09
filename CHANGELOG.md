@@ -1,5 +1,9 @@
 ## 更新记录
 
+### version: 3.6.7（2026-09-10）：
+
+- 新增授权管理「诊断」按钮（最近活跃的群右上角）：调用 access/diagnostics 返回 access_entries / group_names / access_sessions 三张表的当前内容与缺失候选清单，便于排查群名未写入数据库的根因。
+
 ### version: 3.6.6（2026-09-10）：
 
 - 强制禁用管理页浏览器缓存：index.html 头部加 no-store / no-cache / Expires=0 元标记，JS/CSS 引用升级到 ?v=3.6.6 并在面板标题旁加版本号徽标便于确认。

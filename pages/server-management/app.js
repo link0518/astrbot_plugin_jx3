@@ -988,6 +988,22 @@ byId("binding-form").addEventListener("submit", async (event) => {
   if (saved) event.currentTarget.reset();
 });
 
+byId("access-diagnostics").addEventListener("click", async (event) => {
+  const control = event.currentTarget;
+  const output = byId("access-diag-output");
+  control.disabled = true;
+  try {
+    const res = await bridge.apiGet("access/diagnostics");
+    output.hidden = false;
+    output.textContent = JSON.stringify(res, null, 2);
+  } catch (error) {
+    output.hidden = false;
+    output.textContent = `诊断失败：${error?.message || error}`;
+  } finally {
+    control.disabled = false;
+  }
+});
+
 byId("access-refresh-names").addEventListener("click", async (event) => {
   const control = event.currentTarget;
   control.disabled = true;
