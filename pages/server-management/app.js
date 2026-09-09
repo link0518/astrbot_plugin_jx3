@@ -639,19 +639,21 @@ function renderAccessEntries() {
     actions.dataset.label = "操作";
     const keyMain = document.createElement("div");
     keyMain.className = "cell-main";
-    keyMain.textContent = item.group_name || item.key;
+    // 优先级: 群名(自动抓) > 备注(用户填) > 群号/会话ID
+    keyMain.textContent = item.group_name || item.note || item.key;
     key.append(keyMain);
+    const keySub = document.createElement("div");
+    keySub.className = "cell-sub";
     if (item.group_name) {
-      const keySub = document.createElement("div");
-      keySub.className = "cell-sub";
+      keySub.textContent = item.note ? `${item.note} · ${item.key}` : item.key;
+    } else if (item.note) {
       keySub.textContent = item.key;
-      key.append(keySub);
     } else if (/^[\w-]+:(Group|Guild)Message:/.test(item.key)) {
-      const keySub = document.createElement("div");
-      keySub.className = "cell-sub";
       keySub.textContent = "尚未获取到群名";
-      key.append(keySub);
+    } else {
+      keySub.textContent = "";
     }
+    if (keySub.textContent) key.append(keySub);
     note.textContent = item.note || "—";
     actions.className = "actions";
     actions.append(

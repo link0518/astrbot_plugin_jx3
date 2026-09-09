@@ -3,9 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>剑网三插件管理</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="./style.css?v=3.6.5" />
+    <link rel="stylesheet" href="./style.css?v=3.6.6" />
   </head>
   <body>
     <main class="shell">
@@ -52,7 +55,7 @@
 
       <section class="panel is-active" id="access-panel" role="tabpanel">
         <div class="section-intro">
-          <div><h2>授权管理模式</h2><p>控制本插件在哪些会话可用。默认“全部开放”不影响现有部署；切换为白名单或黑名单后，按下方名单对群生效，私聊是否可用由独立开关决定。</p></div>
+          <div><h2>授权管理模式 <span class="version-badge" title="前端资源版本号（用于识别浏览器缓存）">v3.6.6</span></h2><p>控制本插件在哪些会话可用。默认“全部开放”不影响现有部署；切换为白名单或黑名单后，按下方名单对群生效，私聊是否可用由独立开关决定。</p></div>
         </div>
         <div class="mode-grid" role="radiogroup" aria-label="授权管理模式">
           <label class="mode-card">
@@ -294,6 +297,6 @@
     <datalist id="session-options"></datalist>
     <datalist id="access-key-options"></datalist>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="./app.js?v=3.6.5"></script>
+    <script type="module" src="./app.js?v=3.6.6"></script>
   </body>
 </html>

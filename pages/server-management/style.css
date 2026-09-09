@@ -207,3 +207,5 @@ tbody tr.is-editing { background: color-mix(in srgb, var(--accent-soft) 62%, tra
 /* 双行会话单元格：群名为主、ID 为辅 */
 .cell-main { font-weight: 700; }
 .cell-sub { color: var(--muted); font-size: 11px; line-height: 1.5; }
+
+.version-badge { display: inline-block; margin-left: 8px; padding: 1px 7px; border-radius: 999px; background: #eef5ff; color: #3b82f6; font-size: 11px; font-weight: 600; vertical-align: 2px; }
