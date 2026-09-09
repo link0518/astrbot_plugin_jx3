@@ -13,6 +13,7 @@ class KungfuAliasService:
     def __init__(self, sqlite: AsyncSQLiteDB, seed_path: Path):
         self.sql = sqlite
         self.seed_path = seed_path
+        self._kungfu_lookup: dict[str, str] = {}
 
     async def initialize(self):
         await self.sql.execute(
@@ -29,8 +30,21 @@ class KungfuAliasService:
             """
         )
         await self._seed_defaults()
+        await self._reload_cache()
 
     async def _seed_defaults(self):
+        records = self._load_seed_defaults()
+        for values in records:
+            await self.sql.execute(
+                """
+                INSERT OR IGNORE INTO kungfu
+                    (pzid, name, name1, name2, name3, name4, name5)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                values,
+            )
+
+    def _load_seed_defaults(self) -> list[tuple[Any, ...]]:
         try:
             records = json.loads(self.seed_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
@@ -39,21 +53,41 @@ class KungfuAliasService:
         if not isinstance(records, list):
             raise RuntimeError("心法种子数据必须是数组")
 
+        normalized_records: list[tuple[Any, ...]] = []
+        seen_pzids: set[int] = set()
         for record in records:
             if not isinstance(record, dict):
                 continue
             pzid = self._parse_pzid(record.get("pzid"))
+            if pzid in seen_pzids:
+                continue
+            seen_pzids.add(pzid)
             name = self._clean(record.get("name"))
             aliases = self._normalize_aliases(name, record.get("aliases") or [])
             values = [*aliases, *([None] * (self.MAX_ALIASES - len(aliases)))]
-            await self.sql.execute(
+            normalized_records.append((pzid, name, *values))
+        return normalized_records
+
+    async def restore_defaults(self) -> int:
+        """使用随插件分发的 JSON 种子完整重写心法表。"""
+        records = self._load_seed_defaults()
+        statements: list[tuple[str, tuple[Any, ...]]] = [
+            ("DELETE FROM kungfu", ()),
+        ]
+        statements.extend(
+            (
                 """
-                INSERT OR IGNORE INTO kungfu
+                INSERT INTO kungfu
                     (pzid, name, name1, name2, name3, name4, name5)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
-                (pzid, name, *values),
+                values,
             )
+            for values in records
+        )
+        await self.sql.execute_transaction(statements)
+        await self._reload_cache()
+        return len(records)
 
     async def list_kungfu(self) -> list[dict[str, Any]]:
         rows = await self.sql.fetch_all(
@@ -73,17 +107,21 @@ class KungfuAliasService:
             for row in rows
         ]
 
-    async def save(self, pzid: Any, name: Any, aliases: Iterable[Any]):
+    async def save_aliases(self, pzid: Any, aliases: Iterable[Any]):
+        """只更新已有心法的别名，不允许修改 ID 和标准名称。"""
         normalized_pzid = self._parse_pzid(pzid)
-        normalized_name = self._clean(name)
-        if not normalized_name:
-            raise ValueError("标准心法名不能为空")
-        if len(normalized_name) > 64:
-            raise ValueError("标准心法名过长")
+        rows = await self.list_kungfu()
+        current = next(
+            (row for row in rows if row["pzid"] == normalized_pzid),
+            None,
+        )
+        if current is None:
+            raise ValueError("心法不存在")
 
+        normalized_name = current["name"]
         normalized_aliases = self._normalize_aliases(normalized_name, aliases)
         occupied: dict[str, str] = {}
-        for row in await self.list_kungfu():
+        for row in rows:
             if row["pzid"] == normalized_pzid:
                 continue
             for value in [row["name"], *row["aliases"]]:
@@ -100,18 +138,42 @@ class KungfuAliasService:
         ]
         await self.sql.execute(
             """
-            INSERT INTO kungfu (pzid, name, name1, name2, name3, name4, name5)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(pzid) DO UPDATE SET
-                name=excluded.name,
-                name1=excluded.name1,
-                name2=excluded.name2,
-                name3=excluded.name3,
-                name4=excluded.name4,
-                name5=excluded.name5
+            UPDATE kungfu
+            SET name1=?, name2=?, name3=?, name4=?, name5=?
+            WHERE pzid=?
             """,
-            (normalized_pzid, normalized_name, *values),
+            (*values, normalized_pzid),
         )
+        await self._reload_cache()
+
+    async def _reload_cache(self):
+        """Refresh the canonical kungfu name and alias lookup cache.
+
+        Returns:
+            None.
+        """
+        rows = await self.list_kungfu()
+        lookup = {
+            self._key(row["name"]): row["name"]
+            for row in rows
+            if row["name"]
+        }
+        for row in rows:
+            for alias in row["aliases"]:
+                lookup.setdefault(self._key(alias), row["name"])
+        self._kungfu_lookup = lookup
+
+    def resolve_kungfu(self, value: Any) -> str:
+        """Resolve a canonical kungfu name or alias to its canonical name.
+
+        Args:
+            value: Canonical kungfu name or configured alias.
+
+        Returns:
+            Canonical kungfu name when matched; otherwise the cleaned input.
+        """
+        kungfu = self._clean(value)
+        return self._kungfu_lookup.get(self._key(kungfu), kungfu)
 
     def _normalize_aliases(self, name: str, aliases: Iterable[Any]) -> list[str]:
         result: list[str] = []

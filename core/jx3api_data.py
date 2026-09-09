@@ -1,8 +1,11 @@
 import json
 import html
 import re
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List, Union
+import hashlib
+import asyncio
+import time
+from datetime import datetime
+from typing import TYPE_CHECKING, Dict, Any, Optional, List, Union
 from inspect import isawaitable
 from typing import Any, Awaitable, Callable, Dict, Optional
 
@@ -14,32 +17,98 @@ from .request import APIClient, APIErrorResponse
 from .sqlite import AsyncSQLiteDB
 from .fun_basic import load_template,gold_to_parts,week_to_num,compare_date_str,format_time,format_remaining
 
+if TYPE_CHECKING:
+    from .cache import CacheService
 
 
+ROLE_RANK_NAMES = {
+    "名士五十强",
+    "老江湖五十强",
+    "兵甲藏家五十强",
+    "名师五十强",
+    "阵营英雄五十强",
+    "薪火相传五十强",
+    "庐园广记一百强",
+}
+TONG_RANK_NAMES0 = {
+    "赛季恶人五十强",
+    "赛季浩气五十强",
+    "本周恶人五十强",
+    "本周浩气五十强",
+}
+TONG_RANK_NAMES1 = {
+    "浩气神兵宝甲五十强",
+    "恶人神兵宝甲五十强",
+    "浩气爱心帮会五十强",
+    "恶人爱心帮会五十强",
+}
+TONG_RANK_NAMES2 = {
+    "上周恶人五十强",
+    "上周浩气五十强",
+}
+
+GUILD_RANK_OPTIONS = {
+    "1": "浩气神兵宝甲五十强",
+    "2": "恶人神兵宝甲五十强",
+    "3": "浩气爱心帮会五十强",
+    "4": "恶人爱心帮会五十强",
+}
+CAMP_RANK_OPTIONS = {
+    "1": "赛季恶人五十强",
+    "2": "赛季浩气五十强",
+    "3": "上周恶人五十强",
+    "4": "上周浩气五十强",
+    "5": "本周恶人五十强",
+    "6": "本周浩气五十强",
+}
+OTHER_RANK_OPTIONS = {
+    "1": "名士五十强",
+    "2": "老江湖五十强",
+    "3": "兵甲藏家五十强",
+    "4": "名师五十强",
+    "5": "阵营英雄五十强",
+    "6": "薪火相传五十强",
+    "7": "庐园广记一百强",
+}
+
+RANK_NAMES = frozenset().union(
+    ROLE_RANK_NAMES,
+    TONG_RANK_NAMES0,
+    TONG_RANK_NAMES1,
+    TONG_RANK_NAMES2,
+)
 
 
 class JX3APIService:
-    def __init__(self, config: AstrBotConfig, sqlite: AsyncSQLiteDB, cache_sqlite: Optional[AsyncSQLiteDB] = None):
-        # 实例化 API Client
-        self._api: APIClient = APIClient()
+    def __init__(
+        self,
+        config: AstrBotConfig,
+        sqlite: AsyncSQLiteDB,
+        cache: Optional["CacheService"] = None,
+    ):
         # 引用插件配置文件
         self._config = config
+        # 仅显式配置为 false 时关闭证书验证，旧配置默认安全开启。
+        self._api: APIClient = APIClient(
+            ssl_verify=self._config.get("tls_verify", True) is not False
+        )
         # 引用sqlite
         self._sql_db = sqlite
-        self._cache_db = cache_sqlite or sqlite
-
+        self._cache = cache
+        self._token_stats_cache: tuple[float, Dict[str, Any]] | None = None
+        self._token_stats_lock = asyncio.Lock()
         # 获取配置中的 Token
         self.token = self._config.get("jx3api_token", "")
         if  self.token == "":
             logger.warning("获取配置token失败，请正确填写token,否则部分功能无法正常使用")
         else:
-            logger.debug(f"获取配置token成功。{self.token}")
+            logger.debug(f"获取配置token成功。")
         # 获取配置中的 ticket
         self.ticket = self._config.get("jx3api_ticket", "")
         if  self.ticket == "":
             logger.warning("获取配置ticket失败，请正确填写ticket,否则部分功能无法正常使用")
         else:
-            logger.debug(f"获取配置ticket成功。{self.ticket}")
+            logger.debug(f"获取配置ticket成功。")
         
 
     async def close(self):
@@ -47,11 +116,12 @@ class JX3APIService:
         if self._api:
             await self._api.close()
 
-    async def server_list(self) -> list[str]:
+    async def server_list(self, force_refresh: bool = False) -> list[str]:
         """获取当前有效区服名称，供会话绑定和参数消歧使用。"""
-        data = await self._base_request(
+        data, _ = await self._cached_request(
             "/server/status/check",
             {"server": "", "type": "其他"},
+            force_refresh=force_refresh,
         )
         if not isinstance(data, list):
             return []
@@ -62,6 +132,69 @@ class JX3APIService:
                 if isinstance(item, dict) and item.get("server")
             }
         )
+
+    async def token_stats(self) -> Optional[Dict[str, Any]]:
+        """读取令牌统计；短时内存复用，避免 WebUI 保存配置时重复请求。"""
+        if not str(self.token or "").strip():
+            return None
+        now = time.monotonic()
+        if self._token_stats_cache and self._token_stats_cache[0] > now:
+            return dict(self._token_stats_cache[1])
+
+        async with self._token_stats_lock:
+            now = time.monotonic()
+            if self._token_stats_cache and self._token_stats_cache[0] > now:
+                return dict(self._token_stats_cache[1])
+            result = await self._fetch_token_stats()
+            if result is not None:
+                self._token_stats_cache = (now + 30, dict(result))
+            return result
+
+    async def _fetch_token_stats(self) -> Optional[Dict[str, Any]]:
+        """查询当前配置 JX3API Token 的等级、用量及有效状态。"""
+        if not str(self.token or "").strip():
+            return None
+
+        async def requester():
+            return await self._api.post(
+                "https://www.jx3api.com/token/stats",
+                data={"token": self.token},
+                out_key="data",
+                success_codes=(200, "200"),
+                return_error=True,
+            )
+
+        try:
+            data = await requester()
+        except Exception as exc:
+            logger.warning(f"查询 JX3API Token 统计失败: {exc}")
+            return None
+
+        if isinstance(data, APIErrorResponse):
+            logger.warning(
+                f"JX3API Token 统计返回错误: "
+                f"code={data.code}, msg={data.message or '未知错误'}"
+            )
+            return None
+        if not isinstance(data, dict):
+            return None
+
+        def nonnegative_int(value: Any) -> Optional[int]:
+            if isinstance(value, bool):
+                return None
+            try:
+                number = int(value)
+            except (TypeError, ValueError):
+                return None
+            return number if number >= 0 else None
+
+        valid = data.get("valid")
+        return {
+            "level": nonnegative_int(data.get("level")),
+            "used": nonnegative_int(data.get("used")),
+            "remaining": nonnegative_int(data.get("remaining")),
+            "valid": valid if isinstance(valid, bool) else None,
+        }
 
 
     def _init_return_data(self) -> Dict[str, Any]:
@@ -108,6 +241,54 @@ class JX3APIService:
             logger.error(f"基础请求调用出错 ({api_path}): {e}")
             return None
 
+    @staticmethod
+    def _is_cacheable_response(data: Any) -> bool:
+        return data is not None and not isinstance(data, APIErrorResponse)
+
+    async def _cached_request(
+        self,
+        api_path: str,
+        params: Optional[Dict[str, Any]] = None,
+        out: Optional[str] = "data",
+        force_refresh: bool = False,
+    ) -> tuple[Any, dict[str, Any]]:
+        request_params = params or {}
+        if not self._cache:
+            return await self._base_request(api_path, request_params, out), {
+                "endpoint": api_path,
+                "hit": False,
+                "stale": False,
+                "ttl_seconds": 0,
+            }
+
+        cache_params = dict(request_params)
+        credential_values = [
+            str(value)
+            for key, value in request_params.items()
+            if str(key).lower() in {"token", "ticket"} and value
+        ]
+        if credential_values:
+            cache_params["__credential_scope"] = hashlib.sha256(
+                "|".join(credential_values).encode("utf-8")
+            ).hexdigest()
+
+        try:
+            return await self._cache.request_api(
+                api_path,
+                cache_params,
+                lambda: self._base_request(api_path, request_params, out),
+                self._is_cacheable_response,
+                force_refresh=force_refresh,
+            )
+        except Exception as exc:
+            logger.warning(f"接口缓存不可用，直接请求 JX3API endpoint={api_path}: {exc}")
+            return await self._base_request(api_path, request_params, out), {
+                "endpoint": api_path,
+                "hit": False,
+                "stale": False,
+                "ttl_seconds": 0,
+            }
+
 
     async def _request_api(
         self,
@@ -121,7 +302,8 @@ class JX3APIService:
         """通用接口请求与模板处理。"""
         return_data = self._init_return_data()
 
-        data = await self._base_request(path, params)
+        data, cache_metadata = await self._cached_request(path, params)
+        return_data["_cache"] = cache_metadata
         if isinstance(data, APIErrorResponse):
             return_data["msg"] = data.message or "获取接口信息失败"
             return return_data
@@ -355,10 +537,11 @@ class JX3APIService:
         )  
             
 
-    async def yanhuachaxun(self, server: str, name:str ) -> Dict[str, Any]:
+    async def yanhuachaxun(self, server: str, name: str, limit: int) -> Dict[str, Any]:
         """烟花记录"""
         # 数据处理
         async def processor(data: Any, return_data: Dict[str, Any]) -> None:
+            data = data[:limit]
             for item in data:
                 item["time"] = format_time(item.get("time"))
 
@@ -415,7 +598,13 @@ class JX3APIService:
     async def zhanji(self, name: str, server:str, mode:str) -> Dict[str, Any]:
         """战绩"""
         # 数据处理
-        async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:
+            performance_key = {
+                "22": "2v2",
+                "33": "3v3",
+                "55": "5v5",
+            }.get(str(mode), "3v3")
+            data["currentPerformance"] = data["performance"][performance_key]
             return_data["data"] = data
             
         return await self._request_api(
@@ -457,34 +646,193 @@ class JX3APIService:
             template="mingjiantongji.html"
         )         
 
+    async def kuafumingjian(self, server: str, mode: int = 1) -> Dict[str, Any]:
+        """跨服名剑榜。"""
+        mode_names = {0: "2v2", 1: "3v3", 2: "5v5"}
+
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:
+            items = data.get("data") or []
+            if not isinstance(items, list):
+                items = []
+
+            return_data["data"] = {
+                "items": [item for item in items if isinstance(item, dict)],
+                "name": data.get("name") or "跨服名剑榜",
+                "server": data.get("server") or server or "全区",
+                "mode_name": mode_names[mode],
+                "update_time": format_time(data.get("time")),
+            }
+
+        return await self._request_api(
+            path="/rank/arena",
+            params={"server": server, "mode": mode, "token": self.token},
+            processor=processor,
+            template="kuafumingjian.html",
+        )
+
+    async def wulinzhengba(self, server: str, camp: int = 1) -> Dict[str, Any]:
+        """武林争霸赛帮会榜。"""
+        camp_names = {1: "浩气盟", 2: "恶人谷"}
+
+        def format_match_time(value: Any) -> str:
+            try:
+                total_seconds = int(value)
+            except (TypeError, ValueError):
+                return ""
+            if total_seconds < 0:
+                return ""
+
+            hours, remainder = divmod(total_seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            if hours:
+                return f"{hours}时{minutes:02d}分{seconds:02d}秒"
+            return f"{minutes}分{seconds:02d}秒"
+
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:
+            items = data.get("data") or []
+            if not isinstance(items, list):
+                items = []
+
+            rank_items = []
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                rank_item = item.copy()
+                rank_item["lastMatchTimeText"] = format_match_time(
+                    item.get("lastMatchTime")
+                )
+                rank_items.append(rank_item)
+
+            return_data["data"] = {
+                "items": rank_items,
+                "name": data.get("name") or "武林争霸赛",
+                "server": data.get("server") or server or "全区",
+                "camp_name": camp_names[camp],
+                "update_time": format_time(data.get("time")),
+            }
+
+        return await self._request_api(
+            path="/rank/championship",
+            params={"server": server, "camp": camp, "token": self.token},
+            processor=processor,
+            template="wulinzhengba.html",
+        )
+
+    async def _bounty_rank(self,server: str,path: str,fallback_name: str,show_hostile_count: bool,) -> Dict[str, Any]:
+        """处理捕快荣誉和江湖浪客共用的榜单结构。"""
+
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:
+            items = data.get("data") or []
+            if not isinstance(items, list):
+                items = []
+
+            return_data["data"] = {
+                "items": [item for item in items if isinstance(item, dict)],
+                "name": data.get("name") or fallback_name,
+                "server": data.get("server") or server or "全区",
+                "show_hostile_count": show_hostile_count,
+                "update_time": format_time(data.get("time")),
+            }
+
+        return await self._request_api(
+            path=path,
+            params={"server": server, "token": self.token},
+            processor=processor,
+            template="bounty_rank.html",
+        )
+
+    async def bukairongyu(self, server: str) -> Dict[str, Any]:
+        """捕快荣誉榜。"""
+        return await self._bounty_rank(
+            server=server,
+            path="/rank/constable",
+            fallback_name="捕快荣誉榜",
+            show_hostile_count=False,
+        )
+
+    async def jianghulangke(self, server: str) -> Dict[str, Any]:
+        """江湖浪客榜。"""
+        return await self._bounty_rank(
+            server=server,
+            path="/rank/outlaw",
+            fallback_name="江湖浪客榜",
+            show_hostile_count=True,
+        )
+
+    async def juedoutiaozhan(self,server: str,mode: int = 1,) -> Dict[str, Any]:
+        """决斗挑战榜。"""
+        mode_names = {1: "公开", 2: "私密"}
+
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:
+            items = data.get("data") or []
+            if not isinstance(items, list):
+                items = []
+
+            now_timestamp = int(datetime.now().timestamp())
+            rank_items = []
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                rank_item = item.copy()
+                try:
+                    timeout = int(item.get("timeOut"))
+                except (TypeError, ValueError):
+                    remaining_time = ""
+                else:
+                    remaining_time = (
+                        format_remaining(timeout)
+                        if timeout > now_timestamp
+                        else "已结束"
+                    )
+                rank_item["remainingTime"] = remaining_time
+                rank_items.append(rank_item)
+
+            return_data["data"] = {
+                "items": rank_items,
+                "name": data.get("name") or "决斗挑战榜",
+                "server": data.get("server") or server or "全区",
+                "mode_name": mode_names[mode],
+                "update_time": format_time(data.get("time")),
+            }
+
+        return await self._request_api(
+            path="/rank/wanted",
+            params={"server": server, "mode": mode, "token": self.token},
+            processor=processor,
+            template="juedoutiaozhan.html",
+        )
+
+
+    async def banghui_rank_menu(self) -> Dict[str, str]:
+        """帮会排行榜选择内容。"""
+        return GUILD_RANK_OPTIONS.copy()
+
+    async def zhenying_rank_menu(self) -> Dict[str, str]:
+        """阵营排行榜选择内容。"""
+        return CAMP_RANK_OPTIONS.copy()
+
+    async def qita_rank_menu(self) -> Dict[str, str]:
+        """其他排行榜选择内容。"""
+        return OTHER_RANK_OPTIONS.copy()
+
+    async def rank_statistical_select(self, server: str, selected: Dict[str, Any],) -> Dict[str, Any]:
+        """排行榜次轮：根据单项选择数据查询对应榜单。"""
+        if not isinstance(selected, dict) or len(selected) != 1:
+            return_data = self._init_return_data()
+            return_data["msg"] = "排行榜选项数据格式异常"
+            return return_data
+
+        rank_name = str(next(iter(selected.values())) or "").strip()
+        if rank_name not in RANK_NAMES:
+            return_data = self._init_return_data()
+            return_data["msg"] = "无效排行榜选项"
+            return return_data
+
+        return await self.rank_statistical(rank_name, server)
 
     async def rank_statistical(self, name: str, server: str) -> Dict[str, Any]:
         """排行榜单"""
-        ROLE_RANK_NAMES = {
-            "名士五十强",
-            "老江湖五十强",
-            "兵甲藏家五十强",
-            "名师五十强",
-            "阵营英雄五十强",
-            "薪火相传五十强",
-            "庐园广记一百强",
-        }
-        TONG_RANK_NAMES0 = {
-            "赛季恶人五十强",
-            "赛季浩气五十强",
-            "本周恶人五十强",
-            "本周浩气五十强",
-        }
-        TONG_RANK_NAMES1 = {
-            "浩气神兵宝甲五十强",
-            "恶人神兵宝甲五十强",
-            "浩气爱心帮会五十强",
-            "恶人爱心帮会五十强",
-        }
-        TONG_RANK_NAMES2 = {
-            "上周恶人五十强",
-            "上周浩气五十强",
-        }
+
         if name in ROLE_RANK_NAMES:
             template_name = "rank_role.html"
         elif name in TONG_RANK_NAMES0:
@@ -496,7 +844,11 @@ class JX3APIService:
 
         # 数据处理
         async def processor(data: Any, return_data: Dict[str, Any]) -> None:   
-            items = data.get("data", [])
+            items = data.get("data") or []
+            if isinstance(items, list):
+                items = items[:50]
+            else:
+                items = []
 
             return_data["data"] = {
                 "items": items,
@@ -1065,6 +1417,60 @@ class JX3APIService:
             processor=processor,
             template="chengjiu.html"
         ) 
+
+
+    async def zili_menu(self) -> Dict[str, str]:
+        """资历选择内容。"""
+        return {
+            "1": "总览",
+            "2": "杂闻",
+            "3": "武学",
+            "4": "修为",
+            "5": "装备",
+            "6": "技艺",
+            "7": "阅读",
+            "8": "任务",
+            "9": "足迹",
+            "10": "战斗",
+            "11": "声望",
+            "12": "秘境",
+            "13": "帮会",
+            "14": "阵营",
+            "15": "节日",
+            "16": "活动",
+            "17": "风雨江湖路",
+            "18": "家园",
+            "19": "剑侠录"
+        }
+
+
+    async def zili(self,server: str,name: str,selected: Dict[str, Any],) -> Dict[str, Any]:
+        """资历分布"""
+        if not isinstance(selected, dict) or len(selected) != 1:
+            return_data = self._init_return_data()
+            return_data["msg"] = "资历选项数据格式异常"
+            return return_data
+
+        selected_name = str(next(iter(selected.values())) or "").strip()
+        selected_subclass = "" if selected_name == "总览" else selected_name
+
+        async def processor(data: Any, return_data: Dict[str, Any]) -> None:
+            statistics = data.get("data") or {}
+            categories = statistics.get("total") or {}
+            if not isinstance(categories, dict) or not categories:
+                raise ValueError("接口未返回资历统计")
+
+            # 查询总览时 total 为“大类 -> 小类 -> 统计”；指定 subclass 后，
+            # JX3API 会去掉大类这一层，total 直接变成“小类 -> 统计”。
+            data["subclass"] = selected_subclass
+            return_data["data"] = data
+
+        return await self._request_api(
+            path="/tuilan/achievement",
+            params={"server": server,"name": name,"class": 1,"subclass": selected_subclass,"ticket": self.ticket,"token": self.token,},
+            processor=processor,
+            template="zili.html",
+        )
 
 
     async def jueshe(self,server: str, name: str, history:int) -> Dict[str, Any]:

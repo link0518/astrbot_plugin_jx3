@@ -12,27 +12,27 @@
       <header class="page-header">
         <div>
           <h1>剑网三插件管理</h1>
-          <p>管理会话区服绑定、事件订阅状态、区服别名与心法别名。</p>
+          <p>管理会话访问范围、查询缓存、避雷迁移、事件推送、区服绑定及别名。</p>
         </div>
         <button class="button button--secondary" id="refresh" type="button">刷新数据</button>
       </header>
 
-      <section class="summary" aria-label="数据概览">
-        <div class="summary__item">
-          <span>已绑定会话</span>
-          <strong id="binding-count">—</strong>
+      <section class="token-summary" aria-label="JX3API 令牌统计">
+        <div class="token-stat">
+          <span>令牌等级</span>
+          <strong id="token-level">—</strong>
         </div>
-        <div class="summary__item">
-          <span>事件推送会话</span>
-          <strong id="subscription-count">—</strong>
+        <div class="token-stat">
+          <span>已用次数</span>
+          <strong id="token-used">—</strong>
         </div>
-        <div class="summary__item">
-          <span>区服别名</span>
-          <strong id="alias-count">—</strong>
+        <div class="token-stat">
+          <span>剩余次数</span>
+          <strong id="token-remaining">—</strong>
         </div>
-        <div class="summary__item">
-          <span>心法条目</span>
-          <strong id="kungfu-count">—</strong>
+        <div class="token-stat">
+          <span>令牌状态</span>
+          <strong class="token-status" id="token-valid">未获取</strong>
         </div>
         <div class="summary__item">
           <span>使用范围名单</span>
@@ -41,14 +41,164 @@
       </section>
 
       <nav class="tabs" aria-label="管理分类" role="tablist">
-        <button class="tab is-active" type="button" role="tab" aria-selected="true" data-tab="bindings">会话绑定</button>
-        <button class="tab" type="button" role="tab" aria-selected="false" data-tab="subscriptions">事件订阅</button>
+        <button class="tab is-active" type="button" role="tab" aria-selected="true" data-tab="session-control">会话控制</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-tab="subscriptions">事件推送</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-tab="bindings">区服绑定</button>
         <button class="tab" type="button" role="tab" aria-selected="false" data-tab="aliases">区服别名</button>
         <button class="tab" type="button" role="tab" aria-selected="false" data-tab="kungfu">心法别名</button>
         <button class="tab" type="button" role="tab" aria-selected="false" data-tab="access">使用范围</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-tab="cache">缓存管理</button>
+        <button class="tab" type="button" role="tab" aria-selected="false" data-tab="bilei-migration">避雷迁移</button>
       </nav>
 
-      <section class="panel is-active" id="bindings-panel" role="tabpanel">
+      <section class="panel is-active" id="session-control-panel" role="tabpanel">
+        <form class="control-mode" id="control-mode-form">
+          <div class="section-intro control-mode__intro">
+            <div>
+              <h2>会话访问模式</h2>
+              <p id="control-mode-hint">所有会话都可以使用插件并接收已订阅的事件推送。</p>
+            </div>
+            <div class="current-mode" aria-live="polite">
+              <span>当前生效模式</span>
+              <strong id="control-mode-label">全部会话</strong>
+            </div>
+          </div>
+          <div class="mode-options" role="radiogroup" aria-label="会话访问模式">
+            <label class="mode-option">
+              <input type="radio" name="control_mode" value="all" />
+              <span><strong>全部会话</strong><small>不限制任何会话，默认模式</small></span>
+            </label>
+            <label class="mode-option">
+              <input type="radio" name="control_mode" value="whitelist" />
+              <span><strong>白名单</strong><small>只允许白名单中的会话</small></span>
+            </label>
+            <label class="mode-option">
+              <input type="radio" name="control_mode" value="blacklist" />
+              <span><strong>黑名单</strong><small>只拦截黑名单中的会话</small></span>
+            </label>
+            <button class="button button--primary" id="control-mode-save" type="submit">保存模式</button>
+          </div>
+        </form>
+
+        <form class="editor editor--control" id="control-entry-form">
+          <label>
+            <span>会话 ID</span>
+            <input id="control-session" name="session_id" list="session-options" maxlength="512" placeholder="可选择已有会话或直接输入" required />
+            <datalist id="session-options"></datalist>
+          </label>
+          <label>
+            <span>名单类型</span>
+            <select id="control-list-type" name="list_type" required>
+              <option value="whitelist">白名单</option>
+              <option value="blacklist">黑名单</option>
+            </select>
+          </label>
+          <label>
+            <span>备注（可选）</span>
+            <input id="control-remark" name="remark" maxlength="200" placeholder="例如：测试会话" />
+          </label>
+          <button class="button button--primary" type="submit">添加会话</button>
+        </form>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>会话 ID</th><th>名单类型</th><th>备注</th><th class="actions">操作</th></tr></thead>
+            <tbody id="control-entries-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="cache-panel" role="tabpanel" hidden>
+        <div class="section-intro section-intro--actions">
+          <div>
+            <h2>查询与图片缓存</h2>
+            <p>接口数据以 JSON 保存到 SQLite，渲染图片保存到插件数据目录。图片命中时会直接发送，不再请求其上游接口；缓存时间使用秒，填写 0 可关闭对应缓存。每 60 秒自动清理过期缓存，接口请求失败时不使用过期数据。</p>
+          </div>
+          <div class="cache-clear-actions">
+            <button class="button button--secondary" id="clear-api-cache" type="button">清空接口缓存</button>
+            <button class="button button--secondary" id="clear-image-cache" type="button">清空图片缓存</button>
+          </div>
+        </div>
+
+        <div class="cache-summary" aria-label="缓存统计">
+          <div class="cache-stat"><span>接口缓存（SQLite）</span><strong id="api-cache-count">0 / 256 条</strong><small id="api-cache-size">0 B</small></div>
+          <div class="cache-stat"><span>图片缓存</span><strong id="image-cache-count">0 张</strong><small id="image-cache-size">0 B</small></div>
+          <div class="cache-stat"><span>接口内存缓存</span><strong id="api-memory-summary">0 B / 16 MB</strong><small id="api-memory-count">0 条，最久未使用优先淘汰</small></div>
+          <div class="cache-stat"><span>默认缓存时间</span><strong id="cache-default-summary">300 / 600 秒</strong><small>接口 / 图片</small></div>
+        </div>
+
+        <form class="cache-defaults" id="cache-default-form">
+          <label>
+            <span>接口数据默认缓存时间（秒）</span>
+            <input id="api-default-ttl" type="number" min="0" max="2592000" step="1" required />
+          </label>
+          <label>
+            <span>图片默认缓存时间（秒）</span>
+            <input id="image-default-ttl" type="number" min="0" max="2592000" step="1" required />
+          </label>
+          <button class="button button--primary" type="submit">保存默认时间</button>
+        </form>
+
+        <form class="cache-defaults cache-limits" id="cache-limit-form">
+          <label>
+            <span>接口内存缓存最大容量（MB）</span>
+            <input id="api-memory-size-limit" type="number" min="1" max="1024" step="1" required />
+          </label>
+          <label>
+            <span>SQLite 接口缓存最大条数</span>
+            <input id="api-entry-limit" type="number" min="1" max="100000" step="1" required />
+          </label>
+          <label>
+            <span>图片缓存最大容量（MB）</span>
+            <input id="image-size-limit" type="number" min="1" max="10240" step="1" required />
+          </label>
+          <button class="button button--primary" type="submit">保存容量限制</button>
+        </form>
+
+        <details class="cache-group" open>
+          <summary>JX3API 接口数据缓存</summary>
+          <div class="cache-toolbar">
+            <input id="api-cache-filter" type="search" placeholder="筛选接口路径" aria-label="筛选接口路径" />
+            <span>单项设置优先；恢复后通常继承全局时间，“安全默认”项目恢复为 0 秒。</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>接口路径</th><th>缓存时间（秒）</th><th>配置状态</th><th class="actions">操作</th></tr></thead>
+              <tbody id="api-cache-settings-body"></tbody>
+            </table>
+          </div>
+        </details>
+
+        <details class="cache-group" open>
+          <summary>渲染图片缓存</summary>
+          <div class="cache-toolbar">
+            <input id="image-cache-filter" type="search" placeholder="筛选图片指令" aria-label="筛选图片指令" />
+            <span>图片缓存时间决定最终结果的新鲜度；过期后才重新请求数据并渲染。</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>图片指令</th><th>缓存时间（秒）</th><th>配置状态</th><th class="actions">操作</th></tr></thead>
+              <tbody id="image-cache-settings-body"></tbody>
+            </table>
+          </div>
+        </details>
+      </section>
+
+      <section class="panel" id="bilei-migration-panel" role="tabpanel" hidden>
+        <div class="section-intro">
+          <div>
+            <h2>迁移旧避雷数据</h2>
+            <p>旧版记录暂存在历史公共数据区。请为每条记录选择或输入目标会话，迁移后该记录仅能在目标会话中访问。剩余 <strong id="legacy-bilei-count">0</strong> 条。</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>避雷名称</th><th>避雷备注</th><th>时间</th><th>记录人</th><th>目标会话</th><th class="actions">操作</th></tr></thead>
+            <tbody id="legacy-bilei-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="bindings-panel" role="tabpanel" hidden>
         <form class="editor" id="binding-form">
           <label>
             <span>会话 ID</span>
@@ -56,9 +206,11 @@
           </label>
           <label>
             <span>绑定区服</span>
-            <input id="binding-server" name="server" maxlength="64" list="server-options" placeholder="选择或输入标准区服名/别名" required />
+            <select id="binding-server" name="server" required>
+              <option value="" selected disabled>请选择标准区服</option>
+            </select>
           </label>
-          <button class="button button--primary" type="submit">保存绑定</button>
+          <button class="button button--primary" type="submit">添加绑定</button>
         </form>
         <div class="table-wrap">
           <table>
@@ -69,29 +221,51 @@
       </section>
 
       <section class="panel" id="subscriptions-panel" role="tabpanel" hidden>
-        <div class="section-intro">
-          <div><h2>所有会话事件状态</h2><p>总开关和已订阅事件均来自本地订阅表。</p></div>
+        <div class="section-intro section-intro--actions">
+          <div><h2>会话事件推送</h2><p>为会话配置推送总开关和订阅事件，保存后立即生效。推送仍受会话访问模式及绑定区服限制；删除仅移除该会话的推送配置。</p></div>
+          <button class="button button--primary" id="add-subscription" type="button">添加推送会话</button>
         </div>
+        <form class="subscription-editor" id="subscription-form" hidden>
+          <fieldset id="subscription-fields">
+            <legend id="subscription-editor-title">添加推送会话</legend>
+            <div class="subscription-settings">
+              <label>
+                <span>会话 ID</span>
+                <input id="subscription-session" name="session_id" list="session-options" maxlength="512" placeholder="选择已有会话或输入完整会话 ID" required />
+              </label>
+              <label class="subscription-choice">
+                <input id="subscription-enabled" type="checkbox" />
+                <span>开启事件推送</span>
+              </label>
+            </div>
+            <p class="subscription-hint">关闭总开关会保留事件选择；未选择事件时不会收到推送。令牌事件需在插件配置中填写事件版令牌。</p>
+            <div class="subscription-toolbar">
+              <strong id="subscription-selection-count" aria-live="polite">已选择 0 项</strong>
+              <div>
+                <button class="link-button" id="subscription-select-all" type="button">全选</button>
+                <button class="link-button" id="subscription-clear-all" type="button">清空选择</button>
+              </div>
+            </div>
+            <div id="subscription-events"></div>
+            <div class="subscription-form-actions">
+              <button class="button button--primary" type="submit">保存推送配置</button>
+              <button class="button button--secondary" id="cancel-subscription" type="button">取消</button>
+            </div>
+          </fieldset>
+        </form>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>会话 ID</th><th>绑定区服</th><th>总开关</th><th>已订阅事件</th></tr></thead>
+            <thead><tr><th>会话 ID</th><th>绑定区服</th><th>总开关</th><th>已订阅事件</th><th class="actions">操作</th></tr></thead>
             <tbody id="subscriptions-body"></tbody>
           </table>
         </div>
       </section>
 
       <section class="panel" id="aliases-panel" role="tabpanel" hidden>
-        <form class="editor editor--aliases" id="alias-form">
-          <label>
-            <span>标准区服名</span>
-            <input id="alias-server" name="server" maxlength="64" list="server-options" placeholder="例如：梦江南" required />
-          </label>
-          <label>
-            <span>别名（多个别名用逗号分隔）</span>
-            <input id="alias-values" name="aliases" placeholder="例如：梦江、梦江南服、MJ" />
-          </label>
-          <button class="button button--primary" type="submit">保存别名</button>
-        </form>
+        <div class="section-intro section-intro--actions">
+          <div><h2>区服别名</h2><p>标准区服名称为只读；点击对应行的“编辑”可修改别名，恢复默认会使用内置 JSON 覆盖当前配置。</p></div>
+          <button class="button button--secondary" id="restore-aliases" type="button">恢复默认</button>
+        </div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>标准区服名</th><th>别名</th><th class="actions">操作</th></tr></thead>
@@ -101,24 +275,13 @@
       </section>
 
       <section class="panel" id="kungfu-panel" role="tabpanel" hidden>
-        <form class="editor editor--kungfu" id="kungfu-form">
-          <label>
-            <span>心法 ID（JX3BOX 配装 ID）</span>
-            <input id="kungfu-pzid" name="pzid" type="number" min="1" step="1" placeholder="例如：10014" required />
-          </label>
-          <label>
-            <span>标准心法名</span>
-            <input id="kungfu-name" name="name" maxlength="64" placeholder="例如：紫霞功" required />
-          </label>
-          <label>
-            <span>别名（最多 5 个，用逗号分隔）</span>
-            <input id="kungfu-aliases" name="aliases" placeholder="例如：气纯、紫霞" />
-          </label>
-          <button class="button button--primary" type="submit">保存心法</button>
-        </form>
+        <div class="section-intro section-intro--actions">
+          <div><h2>心法别名</h2><p>标准心法名称为只读；点击对应行的“编辑”可修改最多 5 个别名，恢复默认会使用内置 JSON 覆盖当前配置。</p></div>
+          <button class="button button--secondary" id="restore-kungfu" type="button">恢复默认</button>
+        </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>心法 ID</th><th>标准心法名</th><th>别名</th><th class="actions">操作</th></tr></thead>
+            <thead><tr><th>标准心法名</th><th>别名</th><th class="actions">操作</th></tr></thead>
             <tbody id="kungfu-body"></tbody>
           </table>
         </div>
@@ -179,7 +342,7 @@
       </section>
     </main>
 
-    <datalist id="server-options"></datalist>
+    <datalist id="session-options"></datalist>
     <datalist id="access-key-options"></datalist>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script type="module" src="./app.js"></script>
