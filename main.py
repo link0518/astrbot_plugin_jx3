@@ -1,3 +1,4 @@
+import asyncio
 import inspect
 import time
 from pathlib import Path
@@ -27,7 +28,7 @@ PLUGIN_NAME = "astrbot_plugin_jx3"
 @register("astrbot_plugin_jx3", 
           "fxdyz", 
           "聚合剑网三游戏数据，提供查询、图片渲染、本地避雷和实时事件推送。",
-          "3.6.2",
+          "3.6.3",
           "https://github.com/link0518/astrbot_plugin_jx3"
 )
 class Jx3ApiPlugin(Star):
@@ -63,9 +64,11 @@ class Jx3ApiPlugin(Star):
         # 键 -> 发起时刻(time.monotonic),渲染/发图慢时防止连发重复触发。
         self._pending_tasks: dict[tuple, float] = {}
         self._pending_ttl = 90.0
-        # 群名缓存: {group_id: (name, monotonic 时间)}，24h 过期后重抓。
+        # 群名缓存: {group_id: (name, monotonic 时间)}，成功 24h、失败 10min 过期。
         self._group_name_cache: dict[str, tuple[str, float]] = {}
         self._group_name_ttl = 86400.0
+        self._group_name_fail_ttl = 600.0
+        self._aiocqhttp_bot = None
 
         logger.info("jx3api插件初始化完成")
 
@@ -208,6 +211,7 @@ class Jx3ApiPlugin(Star):
             self.bilei,
             self.cache,
             self.access_control,
+            self.backfill_group_names,
         )
         self.jx3cmd = MessageBuilder(
             self.jx3api,
@@ -525,16 +529,20 @@ class Jx3ApiPlugin(Star):
     )
     async def _resolve_group_name(self, event: AstrMessageEvent, group_id: str) -> str:
         """解析群名供管理页展示：仅 aiocqhttp 平台调 get_group_info，
-        进程内缓存 24h；失败或非该平台静默返回空串，绝不阻塞指令主流程。"""
+        成功缓存 24h、失败缓存 10min；失败静默返回空串，绝不阻塞指令主流程。"""
         if not group_id:
             return ""
         now = time.monotonic()
         cached = self._group_name_cache.get(group_id)
-        if cached is not None and now - cached[1] < self._group_name_ttl:
-            return cached[0]
+        if cached is not None:
+            name, ts = cached
+            ttl = self._group_name_ttl if name else self._group_name_fail_ttl
+            if now - ts < ttl:
+                return name
         name = ""
         bot = getattr(event, "bot", None)
         if bot is not None and event.get_platform_name() == "aiocqhttp":
+            self._aiocqhttp_bot = bot
             try:
                 info = await bot.api.call_action(
                     "get_group_info", group_id=int(group_id)
@@ -542,9 +550,30 @@ class Jx3ApiPlugin(Star):
                 name = str((info or {}).get("group_name") or "").strip()[:64]
             except Exception as exc:
                 logger.debug(f"获取群名失败（不影响指令执行）：group={group_id}, {exc}")
-        # 失败也缓存空结果，避免接口异常时每条消息都重试。
         self._group_name_cache[group_id] = (name, now)
         return name
+
+    async def backfill_group_names(self, limit: int = 80) -> int:
+        """批量补抓缺失的群名（管理页「抓取群名」按钮），返回更新数。"""
+        bot = self._aiocqhttp_bot
+        if bot is None:
+            raise RuntimeError("暂未获取到 QQ 连接，请先在任一群里触发一次插件指令再试")
+        group_ids = await self.access_control.list_groups_missing_names(limit)
+        updated = 0
+        for group_id in group_ids:
+            try:
+                info = await bot.api.call_action(
+                    "get_group_info", group_id=int(group_id)
+                )
+                name = str((info or {}).get("group_name") or "").strip()[:64]
+            except Exception:
+                continue
+            if name:
+                await self.access_control.update_group_name(group_id, name)
+                self._group_name_cache[group_id] = (name, time.monotonic())
+                updated += 1
+            await asyncio.sleep(0.05)  # 温和限速，避免连续请求
+        return updated
 
     async def on_all_message(self, event: AstrMessageEvent):
         """解析所有消息"""

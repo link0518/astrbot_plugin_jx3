@@ -243,6 +243,37 @@ class AccessControlService:
                     mapping.setdefault(key, name)
         return mapping
 
+    async def list_groups_missing_names(self, limit: int = 80) -> list[str]:
+        """缺失群名的群号（按最近活跃排序），供批量补抓。"""
+        limit = max(1, min(int(limit), 200))
+        rows = await self.sql.fetch_all(
+            """
+            SELECT group_id, MAX(updated_at) AS latest
+            FROM access_sessions
+            WHERE kind='group' AND group_id<>'' AND group_name=''
+            GROUP BY group_id
+            ORDER BY latest DESC
+            LIMIT ?
+            """,
+            (limit,),
+        )
+        return [
+            self._clean(row.get("group_id"))
+            for row in rows
+            if self._clean(row.get("group_id"))
+        ]
+
+    async def update_group_name(self, group_id: Any, name: str):
+        """回填某群全部会话记录的群名。"""
+        group_id = self._clean(group_id)
+        name = self._clean(name)[:64]
+        if not group_id or not name:
+            return
+        await self.sql.execute(
+            "UPDATE access_sessions SET group_name=? WHERE group_id=?",
+            (name, group_id),
+        )
+
     async def list_recent_groups(self, limit: int = 60) -> list[dict[str, str]]:
         """最近触发过本插件指令的群（每个群取最新一次会话）。"""
         limit = max(1, min(int(limit), 200))

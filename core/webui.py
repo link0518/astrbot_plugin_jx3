@@ -31,6 +31,7 @@ class WebUIService:
         bilei: BiLeidata,
         cache: CacheService,
         access_control: AccessControlService | None = None,
+        group_name_backfill=None,
     ):
         self.jx3api = jx3api
         self.event_push = event_push
@@ -39,6 +40,7 @@ class WebUIService:
         self.bilei = bilei
         self.cache = cache
         self.access_control = access_control
+        self.group_name_backfill = group_name_backfill
 
     def register(self, context: Context, plugin_name: str):
         routes = (
@@ -75,6 +77,7 @@ class WebUIService:
             ("access/config", self.save_access_config, ["POST"], "保存插件使用范围配置"),
             ("access/entries/add", self.add_access_entry, ["POST"], "添加使用范围名单条目"),
             ("access/entries/delete", self.delete_access_entry, ["POST"], "删除使用范围名单条目"),
+            ("access/groups/names/refresh", self.refresh_group_names, ["POST"], "批量补抓缺失的群名"),
         )
         for path, handler, methods, description in routes:
             context.register_web_api(
@@ -169,6 +172,16 @@ class WebUIService:
         except ValueError as exc:
             return error_response(str(exc), status_code=400)
         return json_response({"saved": True})
+
+    async def refresh_group_names(self):
+        """批量补抓缺失的群名（通过插件侧缓存的 QQ 连接）。"""
+        if self.group_name_backfill is None:
+            return error_response("群名抓取不可用", status_code=503)
+        try:
+            updated = await self.group_name_backfill()
+        except RuntimeError as exc:
+            return error_response(str(exc), status_code=400)
+        return json_response({"updated": updated})
 
     async def delete_access_entry(self):
         """删除一条使用范围名单条目。"""

@@ -986,6 +986,21 @@ byId("binding-form").addEventListener("submit", async (event) => {
   if (saved) event.currentTarget.reset();
 });
 
+byId("access-refresh-names").addEventListener("click", async (event) => {
+  const control = event.currentTarget;
+  control.disabled = true;
+  try {
+    const res = await bridge.apiPost("access/groups/names/refresh", {});
+    const updated = Number(res?.updated ?? res?.data?.updated ?? 0);
+    showToast(updated > 0 ? `已更新 ${updated} 个群名` : "没有缺失群名的群");
+    await loadData();
+  } catch (error) {
+    showToast(error?.message || "群名抓取失败", true);
+  } finally {
+    control.disabled = false;
+  }
+});
+
 byId("restore-aliases").addEventListener("click", async (event) => {
   await restoreDefaults(
     event.currentTarget,
