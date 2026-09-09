@@ -73,6 +73,26 @@ class AccessControlService:
             )
         except Exception:
             pass  # 列已存在
+        # 群名独立表：名单里的群即使从未触发过指令也能存群名。
+        await self.sql.execute(
+            """
+            CREATE TABLE IF NOT EXISTS group_names (
+                group_id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        # 旧数据迁移：把 access_sessions 里已抓到的群名搬到 group_names。
+        await self.sql.execute(
+            """
+            INSERT OR IGNORE INTO group_names (group_id, name, updated_at)
+            SELECT group_id, MAX(group_name), MAX(updated_at)
+            FROM access_sessions
+            WHERE kind='group' AND group_id<>'' AND group_name<>''
+            GROUP BY group_id
+            """
+        )
         await self._load()
 
     async def _load(self):
@@ -225,52 +245,79 @@ class AccessControlService:
             """,
             (session_id, kind, group_id, group_name),
         )
+        if group_id and group_name:
+            await self._upsert_group_name(group_id, group_name)
+
+    async def _upsert_group_name(self, group_id: str, name: str):
+        await self.sql.execute(
+            """
+            INSERT INTO group_names (group_id, name, updated_at)
+            VALUES (?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(group_id) DO UPDATE
+            SET name=excluded.name, updated_at=CURRENT_TIMESTAMP
+            """,
+            (group_id, name),
+        )
 
     async def _name_map(self) -> dict[str, str]:
-        """群号 / 会话 ID 到群名的映射，供管理页名单与最近群展示。"""
-        rows = await self.sql.fetch_all(
-            "SELECT session_id, group_id, group_name FROM access_sessions "
-            "WHERE group_name<>''"
-        )
+        """群号（含名单键）到群名的映射，供管理页名单与最近群展示。"""
         mapping: dict[str, str] = {}
+        rows = await self.sql.fetch_all("SELECT group_id, name FROM group_names")
         for row in rows:
+            group_id = self._clean(row.get("group_id"))
+            name = self._clean(row.get("name"))
+            if group_id and name:
+                mapping[group_id] = name
+        # 兼容旧数据：会话 ID 也作为键（名单可能存完整会话 ID）。
+        rows = await self.sql.fetch_all(
+            "SELECT session_id, group_name FROM access_sessions WHERE group_name<>''"
+        )
+        for row in rows:
+            key = self._clean(row.get("session_id"))
             name = self._clean(row.get("group_name"))
-            if not name:
-                continue
-            for key in (row.get("group_id"), row.get("session_id")):
-                key = self._clean(key)
-                if key:
-                    mapping.setdefault(key, name)
+            if key and name:
+                mapping.setdefault(key, name)
         return mapping
 
     async def list_groups_missing_names(self, limit: int = 80) -> list[str]:
-        """缺失群名的群号（按最近活跃排序），供批量补抓。"""
+        """缺失群名的群号候选：活跃记录 + 名单里的纯数字群号，按最近活跃排序。"""
         limit = max(1, min(int(limit), 200))
         rows = await self.sql.fetch_all(
             """
             SELECT group_id, MAX(updated_at) AS latest
-            FROM access_sessions
-            WHERE kind='group' AND group_id<>'' AND group_name=''
+            FROM (
+                SELECT group_id, updated_at FROM access_sessions
+                WHERE kind='group' AND group_id<>''
+                UNION ALL
+                SELECT key AS group_id, updated_at FROM access_entries
+                WHERE key GLOB '[0-9]*' AND length(key)<=20
+            )
             GROUP BY group_id
             ORDER BY latest DESC
             LIMIT ?
             """,
             (limit,),
         )
-        return [
+        candidates = [
             self._clean(row.get("group_id"))
             for row in rows
             if self._clean(row.get("group_id"))
         ]
+        known = {
+            self._clean(row.get("group_id"))
+            for row in await self.sql.fetch_all("SELECT group_id FROM group_names")
+        }
+        return [group_id for group_id in candidates if group_id not in known]
 
     async def update_group_name(self, group_id: Any, name: str):
-        """回填某群全部会话记录的群名。"""
+        """回填群名到独立群名表，并同时更新活跃记录（若有）。"""
         group_id = self._clean(group_id)
         name = self._clean(name)[:64]
         if not group_id or not name:
             return
+        await self._upsert_group_name(group_id, name)
         await self.sql.execute(
-            "UPDATE access_sessions SET group_name=? WHERE group_id=?",
+            "UPDATE access_sessions SET group_name=? WHERE group_id=? AND group_name=''",
             (name, group_id),
         )
 

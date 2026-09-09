@@ -28,7 +28,7 @@ PLUGIN_NAME = "astrbot_plugin_jx3"
 @register("astrbot_plugin_jx3", 
           "fxdyz", 
           "聚合剑网三游戏数据，提供查询、图片渲染、本地避雷和实时事件推送。",
-          "3.6.4",
+          "3.6.5",
           "https://github.com/link0518/astrbot_plugin_jx3"
 )
 class Jx3ApiPlugin(Star):
@@ -548,13 +548,14 @@ class Jx3ApiPlugin(Star):
         self._group_name_cache[group_id] = (name, now)
         return name
 
-    async def backfill_group_names(self, limit: int = 80) -> int:
-        """批量补抓缺失的群名（管理页「抓取群名」按钮），返回更新数。"""
+    async def backfill_group_names(self, limit: int = 80) -> dict:
+        """批量补抓缺失的群名（管理页「抓取群名」按钮）。
+        返回 {"updated": 成功数, "missing": 缺失数, "failed": 失败数}。"""
         bot = self._aiocqhttp_bot
         if bot is None:
             raise RuntimeError("暂未获取到 QQ 连接，请先在任一群里触发一次插件指令再试")
         group_ids = await self.access_control.list_groups_missing_names(limit)
-        updated = 0
+        updated, failed = 0, 0
         for group_id in group_ids:
             try:
                 info = await bot.api.call_action(
@@ -562,13 +563,15 @@ class Jx3ApiPlugin(Star):
                 )
                 name = str((info or {}).get("group_name") or "").strip()[:64]
             except Exception:
-                continue
+                name = ""
             if name:
                 await self.access_control.update_group_name(group_id, name)
                 self._group_name_cache[group_id] = (name, time.monotonic())
                 updated += 1
+            else:
+                failed += 1
             await asyncio.sleep(0.05)  # 温和限速，避免连续请求
-        return updated
+        return {"updated": updated, "missing": len(group_ids), "failed": failed}
 
     @filter.event_message_type(
         filter.EventMessageType.ALL,

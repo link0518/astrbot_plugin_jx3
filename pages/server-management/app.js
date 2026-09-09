@@ -991,8 +991,17 @@ byId("access-refresh-names").addEventListener("click", async (event) => {
   control.disabled = true;
   try {
     const res = await bridge.apiPost("access/groups/names/refresh", {});
-    const updated = Number(res?.updated ?? res?.data?.updated ?? 0);
-    showToast(updated > 0 ? `已更新 ${updated} 个群名` : "没有缺失群名的群");
+    const r = res ?? {};
+    const missing = Number(r.missing ?? 0);
+    const updated = Number(r.updated ?? 0);
+    const failed = Number(r.failed ?? 0);
+    if (!missing) {
+      showToast("没有缺失群名的群");
+    } else if (updated) {
+      showToast(`已更新 ${updated}/${missing} 个群名` + (failed ? `，${failed} 个抓取失败` : ""));
+    } else {
+      showToast(`${missing} 个群待抓取，但全部失败，请稍后重试`, true);
+    }
     await loadData();
   } catch (error) {
     showToast(error?.message || "群名抓取失败", true);
