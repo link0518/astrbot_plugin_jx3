@@ -296,6 +296,7 @@ class Jx3ApiPlugin(Star):
             "全名片": self. jx3cmd.shuoyoumingpian,
             "全部名片": self. jx3cmd.shuoyoumingpian,
             "随机秀": self. jx3cmd.shuijimingpian,
+            "随机名片": self. jx3cmd.shuijimingpian,
             "奇遇": self. jx3cmd.juesheqiyu,
             "查询": self. jx3cmd.juesheqiyu,
             "未出": self. jx3cmd.weizuoqiyu,
@@ -658,6 +659,52 @@ class Jx3ApiPlugin(Star):
             ret = await self._call_with_auto_args(handler, event, args)
             if ret is not None:
                 yield ret
+        except ValueError as e:
+            logger.warning(f"指令参数校验失败: {cmd}, error={e}")
+            err_msg = str(e)
+            if "缺少参数" in err_msg:
+                param_labels = {
+                    "server": "区服",
+                    "name": "角色名",
+                    "Name": "名称",
+                    "role": "角色名",
+                    "kungfu": "心法",
+                    "uid": "UID",
+                    "adventureName": "奇遇名",
+                    "force": "门派",
+                    "body": "体型",
+                    "limit": "数量",
+                    "num": "天数",
+                    "mode": "模式",
+                }
+                bound_server = await self.server_binding.get_binding(
+                    event.unified_msg_origin
+                )
+
+                # 动态生成格式示范
+                sig_params = [
+                    p for p in inspect.signature(handler).parameters.values()
+                    if p.name not in {"self", "event"}
+                ]
+                fmt_parts = [cmd]
+                for p in sig_params:
+                    p_label = param_labels.get(p.name, p.name)
+                    if p.name == "server" and bound_server:
+                        continue
+                    if p.default is not inspect._empty:
+                        fmt_parts.append(f"[{p_label}]")
+                    else:
+                        fmt_parts.append(f"<{p_label}>")
+                usage = " ".join(fmt_parts)
+
+                has_server_param = any(p.name == "server" for p in sig_params)
+                if not bound_server and has_server_param:
+                    msg = f"【{cmd}】缺少参数\n格式：{usage}，或先发送「绑定区服 <区服名>」"
+                else:
+                    msg = f"【{cmd}】缺少参数\n格式：{usage}"
+                yield event.plain_result(msg)
+            else:
+                yield event.plain_result(f"参数错误：{err_msg}")
         except Exception as e:
             logger.exception(f"指令执行失败: {cmd}, error={e}")
             yield event.plain_result("参数错误或执行失败")
