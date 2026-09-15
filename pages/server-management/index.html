@@ -253,6 +253,25 @@
         </details>
       </section>
 
+      <section class="panel" id="errors-panel" role="tabpanel" hidden>
+        <div class="section-intro section-intro--actions">
+          <div>
+            <h2>错误日志</h2>
+            <p>记录插件运行中的未处理异常（指令处理与事件推送，推送侧已脱敏令牌），用于定位线上问题。数据仅本插件可见，最多保留 200 条。</p>
+          </div>
+          <div class="cache-clear-actions">
+            <button class="button button--secondary" id="refresh-errors" type="button">刷新</button>
+            <button class="button button--secondary" id="clear-errors" type="button">清空日志</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>时间</th><th>来源</th><th>摘要</th><th>详情</th></tr></thead>
+            <tbody id="errors-body"></tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="panel" id="bilei-migration-panel" role="tabpanel" hidden>
         <div class="section-intro">
           <div>
