@@ -32,6 +32,7 @@ class WebUIService:
         cache: CacheService,
         access_control: AccessControlService | None = None,
         group_name_backfill=None,
+        command_stats=None,
     ):
         self.jx3api = jx3api
         self.event_push = event_push
@@ -41,6 +42,7 @@ class WebUIService:
         self.cache = cache
         self.access_control = access_control
         self.group_name_backfill = group_name_backfill
+        self.command_stats = command_stats
 
     def register(self, context: Context, plugin_name: str):
         routes = (
@@ -78,6 +80,8 @@ class WebUIService:
             ("access/entries/add", self.add_access_entry, ["POST"], "添加使用范围名单条目"),
             ("access/entries/delete", self.delete_access_entry, ["POST"], "删除使用范围名单条目"),
             ("access/groups/names/refresh", self.refresh_group_names, ["POST"], "批量补抓缺失的群名"),
+            ("stats", self.command_stats_summary, ["GET"], "读取指令使用统计"),
+            ("stats/clear", self.clear_command_stats, ["POST"], "清空指令使用统计"),
         )
         for path, handler, methods, description in routes:
             context.register_web_api(
@@ -159,6 +163,23 @@ class WebUIService:
                 "access": access,
             }
         )
+
+    async def command_stats_summary(self):
+        """读取指令使用统计，?days=N 指定统计窗口（默认 7 天）。"""
+        if self.command_stats is None:
+            return error_response("指令统计服务未启用", status_code=503)
+        try:
+            days = int(request.args.get("days", "7"))
+        except (TypeError, ValueError):
+            days = 7
+        return json_response(await self.command_stats.summary(days))
+
+    async def clear_command_stats(self):
+        """清空全部指令统计数据。"""
+        if self.command_stats is None:
+            return error_response("指令统计服务未启用", status_code=503)
+        removed = await self.command_stats.clear()
+        return json_response({"cleared": True, "removed": removed})
 
     async def save_access_config(self):
         """保存插件使用范围配置（模式、私聊开关、拒绝提示开关）。"""

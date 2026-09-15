@@ -17,6 +17,7 @@ from .core.bilei_data import BiLeidata
 from .core.kungfu_alias import KungfuAliasService
 from .core.server_binding import ServerBindingService
 from .core.access_control import AccessControlService
+from .core.command_stats import CommandStatsService
 from .core.webui import WebUIService
 from .core.message import MessageBuilder
 from .core.fun_basic import load_as_base64
@@ -92,6 +93,9 @@ class Jx3ApiPlugin(Star):
 
             # 初始化使用范围控制（需先于事件推送启动）
             await self.access_control.initialize()
+
+            # 指令使用统计（建表 + 过期清理）
+            await self.command_stats.initialize()
 
             # 开启实时事件通道
             await self.event_push.initialize()
@@ -197,6 +201,7 @@ class Jx3ApiPlugin(Star):
             self.server_alias_seed_path,
         )
         self.access_control = AccessControlService(self.local_sql_db)
+        self.command_stats = CommandStatsService(self.local_sql_db)
         self.event_push = EventPushService(
             cast(Context, self.context),
             self.conf,
@@ -213,6 +218,7 @@ class Jx3ApiPlugin(Star):
             self.cache,
             self.access_control,
             self.backfill_group_names,
+            self.command_stats,
         )
         self.jx3cmd = MessageBuilder(
             self.jx3api,
@@ -651,6 +657,11 @@ class Jx3ApiPlugin(Star):
             return
         self._pending_tasks[key] = now
 
+        # 指令使用统计：记录耗时与成败（ValueError 视为用户输入问题，不计失败）。
+        command_started = now
+        command_ok = True
+        command_error = ""
+
         command_token = None
         try:
             args = await self._prepare_server_args(handler, event, args)
@@ -706,6 +717,8 @@ class Jx3ApiPlugin(Star):
             else:
                 yield event.plain_result(f"参数错误：{err_msg}")
         except Exception as e:
+            command_ok = False
+            command_error = f"{type(e).__name__}: {e}"
             logger.exception(f"指令执行失败: {cmd}, error={e}")
             yield event.plain_result("参数错误或执行失败")
         finally:
@@ -715,6 +728,14 @@ class Jx3ApiPlugin(Star):
                 self._pending_tasks.pop(key, None)
             if command_token is not None:
                 self.cache.leave_command(command_token)
+            # 统计写入内部静默容错，绝不影响消息发送。
+            await self.command_stats.record(
+                cmd,
+                event.unified_msg_origin,
+                int((time.monotonic() - command_started) * 1000),
+                command_ok,
+                command_error,
+            )
 
     async def bind_server(
         self,

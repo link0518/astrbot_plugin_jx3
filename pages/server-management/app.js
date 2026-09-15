@@ -17,7 +17,9 @@ const state = {
     stats: {},
   },
   access: { mode: "all", private_allowed: true, reply_on_deny: false, entries: [], recent_groups: [] },
+  command_stats: null,
 };
+let statsDays = 7;
 const editing = { bindingSession: null, aliasServer: null, kungfuPzid: null, subscriptionSession: null };
 let subscriptionSaving = false;
 const restoreConfirmationTimers = new WeakMap();
@@ -851,6 +853,112 @@ function renderCache() {
   renderCacheTable("image");
 }
 
+function formatDurationMs(value) {
+  const ms = Number(value);
+  if (!Number.isFinite(ms) || ms < 0) return "—";
+  return ms >= 1000 ? `${(ms / 1000).toFixed(1)} s` : `${ms} ms`;
+}
+
+function statsRow(cells) {
+  const row = document.createElement("tr");
+  cells.forEach((text) => {
+    const cell = document.createElement("td");
+    cell.textContent = text;
+    row.append(cell);
+  });
+  return row;
+}
+
+function renderStats() {
+  const stats = state.command_stats;
+  const daysLabel = `近 ${statsDays} 天`;
+  byId("stats-range-label").textContent = daysLabel;
+
+  const fill = (bodyId, rows, emptyMessage, colCount) => {
+    const body = byId(bodyId);
+    body.replaceChildren();
+    if (!rows || !rows.length) {
+      body.append(emptyRow(colCount, emptyMessage));
+      return;
+    }
+    rows.forEach((row) => body.append(row));
+  };
+
+  if (!stats) {
+    byId("stats-total").textContent = "—";
+    byId("stats-success-rate").textContent = "—";
+    byId("stats-fail-count").textContent = "统计不可用";
+    byId("stats-avg-ms").textContent = "—";
+    fill("stats-top-body", null, "暂无数据", 5);
+    fill("stats-slow-body", null, "暂无数据", 4);
+    fill("stats-fail-body", null, "暂无数据", 4);
+    fill("stats-errors-body", null, "暂无数据", 4);
+    return;
+  }
+
+  byId("stats-total").textContent = stats.total.toLocaleString("zh-CN");
+  byId("stats-success-rate").textContent =
+    stats.success_rate === null ? "—" : `${stats.success_rate}%`;
+  byId("stats-fail-count").textContent = `失败 ${stats.fail_count} 次`;
+  byId("stats-avg-ms").textContent = stats.total
+    ? formatDurationMs(stats.avg_ms)
+    : "—";
+
+  fill(
+    "stats-top-body",
+    stats.top_commands.map((item) =>
+      statsRow([
+        item.command,
+        String(item.calls),
+        String(item.ok_count),
+        String(item.fail_count),
+        formatDurationMs(item.avg_ms),
+      ]),
+    ),
+    `${daysLabel}内没有指令调用记录`,
+    5,
+  );
+  fill(
+    "stats-slow-body",
+    stats.slowest.map((item) =>
+      statsRow([
+        item.command,
+        String(item.calls),
+        formatDurationMs(item.avg_ms),
+        formatDurationMs(item.max_ms),
+      ]),
+    ),
+    "暂无足够数据（至少调用 2 次）",
+    4,
+  );
+  fill(
+    "stats-fail-body",
+    stats.failure_top.map((item) =>
+      statsRow([
+        item.command,
+        String(item.calls),
+        String(item.fail_count),
+        `${item.fail_rate}%`,
+      ]),
+    ),
+    `${daysLabel}内没有失败记录`,
+    4,
+  );
+  fill(
+    "stats-errors-body",
+    stats.recent_errors.map((item) =>
+      statsRow([
+        new Date(item.created_at * 1000).toLocaleString("zh-CN", { hour12: false }),
+        item.command,
+        item.session_id || "—",
+        item.error || "—",
+      ]),
+    ),
+    "暂无失败记录",
+    4,
+  );
+}
+
 function render() {
   renderTokenStats();
   renderServerOptions();
@@ -1109,6 +1217,40 @@ byId("clear-api-cache").addEventListener("click", (event) => {
 });
 byId("clear-image-cache").addEventListener("click", (event) => {
   clearCache("image", event.currentTarget);
+});
+
+byId("stats-days").addEventListener("change", async (event) => {
+  statsDays = Number(event.currentTarget.value) || 7;
+  await loadStats();
+});
+
+byId("clear-stats").addEventListener("click", async (event) => {
+  const control = event.currentTarget;
+  // 页内两步确认（iframe 沙箱无 allow-modals，原生 confirm 不可用）。
+  if (control.dataset.armed !== "1") {
+    control.dataset.armed = "1";
+    control.classList.add("button--danger");
+    control.textContent = "再次点击确认";
+    setTimeout(() => {
+      control.dataset.armed = "";
+      control.classList.remove("button--danger");
+      control.textContent = "清空统计";
+    }, 3000);
+    return;
+  }
+  control.dataset.armed = "";
+  control.disabled = true;
+  try {
+    const result = await bridge.apiPost("stats/clear", {});
+    await loadStats();
+    showToast(`统计数据已清空，共删除 ${result?.removed ?? 0} 条记录`);
+  } catch (error) {
+    showToast(error?.message || "清空统计失败", true);
+  } finally {
+    control.disabled = false;
+    control.classList.remove("button--danger");
+    control.textContent = "清空统计";
+  }
 });
 
 async function saveAccessConfig() {
