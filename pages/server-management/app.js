@@ -962,6 +962,10 @@ function renderStats() {
 function renderErrors() {
   const body = byId("errors-body");
   body.replaceChildren();
+  if (state.error_log === null) {
+    body.append(emptyRow(4, "错误日志加载失败，可点击右上角「刷新」重试"));
+    return;
+  }
   const rows = state.error_log || [];
   if (!rows.length) {
     body.append(emptyRow(4, "暂无错误记录"));
@@ -1001,7 +1005,10 @@ function render() {
 async function loadStats() {
   // 统计拉取失败不影响其他管理数据展示。
   try {
-    state.command_stats = await bridge.apiGet(`stats?days=${statsDays}`);
+    const result = await bridge.apiGet(`stats?days=${statsDays}`);
+    // 服务未启用时后端可能返回错误体而非 reject，校验字段形状防把错误体当数据渲染。
+    state.command_stats =
+      result && Number.isFinite(result.total) ? result : null;
   } catch {
     state.command_stats = null;
   }
@@ -1009,12 +1016,12 @@ async function loadStats() {
 }
 
 async function loadErrors() {
-  // 错误日志拉取失败不影响其他管理数据展示。
+  // 错误日志拉取失败不影响其他管理数据展示；失败置 null 以与「无记录」区分。
   try {
     const result = await bridge.apiGet("errors");
-    state.error_log = result?.errors || [];
+    state.error_log = Array.isArray(result?.errors) ? result.errors : null;
   } catch {
-    state.error_log = [];
+    state.error_log = null;
   }
   renderErrors();
 }

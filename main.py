@@ -99,9 +99,12 @@ class Jx3ApiPlugin(Star):
             await self.event_push.initialize()
 
         except Exception as e:
-            if self.event_push is not None:
-                await self.event_push.stop()
-            await self.cache.stop()
+            # 初始化中途失败时，已 connect 的数据库、已创建的会话都要释放，
+            # 否则插件加载失败后资源一直挂到进程重启。
+            try:
+                await self.terminate()
+            except Exception:
+                logger.exception("初始化失败后的资源清理异常")
             logger.exception("功能模块初始化失败")
             raise
 

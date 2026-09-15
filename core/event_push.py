@@ -450,8 +450,17 @@ class EventPushService:
                     self._websocket = None
                     if heartbeat_task:
                         heartbeat_task.cancel()
-                        with contextlib.suppress(asyncio.CancelledError):
+                        try:
                             await heartbeat_task
+                        except asyncio.CancelledError:
+                            pass
+                        except Exception as exc:
+                            # 心跳在连接断开时随 socket 一起失败属正常路径，
+                            # 不能让异常逃逸出 finally 杀死重连循环；
+                            # 只记类型名，避免异常文本带入连接参数里的令牌。
+                            logger.debug(
+                                f"JX3API 事件通道心跳任务退出异常：{type(exc).__name__}"
+                            )
 
                 if self._stopping.is_set():
                     break
