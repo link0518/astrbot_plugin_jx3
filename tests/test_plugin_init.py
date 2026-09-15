@@ -1,8 +1,8 @@
 """插件实例化冒烟测试：完整构造 Jx3ApiPlugin 必须成功。
 
- AstrBot 加载器的 try/except TypeError 回退会吞掉 __init__ 内部
-抛出的 TypeError（转而报 "missing config"），任何构造链路上的
-签名错误只有实例化测试能拦住。3.7.0 曾因此线上加载失败。
+AstrBot 加载器的 try/except TypeError 回退会吞掉 __init__ 内部
+抛出的 TypeError（转而报 "missing config"），构造链路上的
+签名错误只有实例化测试能拦住。
 """
 
 import pytest

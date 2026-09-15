@@ -138,7 +138,7 @@ web_mod.error_response = error_response
 
 
 class _StubMultiDict:
-    """镜像 AstrBot v4.27.5 PluginMultiDict：get 取同名键的最后一个值。"""
+    """键值对列表，get 取同名键的最后一个值。"""
 
     def __init__(self, pairs=()):
         self._pairs = list(pairs)
@@ -154,12 +154,7 @@ class _StubMultiDict:
 
 
 class _StubPluginRequest:
-    """镜像 AstrBot v4.27.5 PluginRequest（FastAPI 兼容层）的请求 API。
-
-    只提供真实对象具备的接口（query/json/path_params 等），**刻意不提供**
-    Quart 风格的 request.args —— 插件代码一旦误用，测试阶段立刻
-    AttributeError，而不是上线后 handler 500 才暴露。
-    """
+    """插件 Web 请求桩，接口对齐 PluginRequest（query/json/path_params）。"""
 
     def __init__(self):
         self.query = _StubMultiDict()
@@ -174,7 +169,7 @@ class _StubPluginRequest:
         return self.json_payload if self.json_payload is not None else default
 
     def set_query(self, **params):
-        """测试辅助：整体替换查询参数。"""
+        """整体替换查询参数。"""
         self.query = _StubMultiDict(list(params.items()))
 
 

@@ -1,9 +1,4 @@
-"""WebUI handler 级测试：以 AstrBot v4.27.5 PluginRequest 契约为准。
-
-背景：v4.27.5 的插件请求对象是 FastAPI 兼容层（astrbot/api/web.py 的
-PluginRequest），查询参数走 ``request.query``（PluginMultiDict），没有
-Quart 风格的 ``request.args``。曾因此导致统计接口线上 500。
-"""
+"""WebUI handler 级测试：统计接口参数解析与请求桩接口面。"""
 
 import pytest
 
@@ -64,7 +59,7 @@ class TestStatsSummaryHandler:
 
 
 class TestRequestStubContract:
-    """请求桩必须忠于 v4.27.5：有 query/json，没有 Quart 的 args。"""
+    """请求桩接口面：提供 query/json，不提供 args。"""
 
     def test_stub_has_no_args_attr(self):
         assert not hasattr(webui_mod.request, "args")

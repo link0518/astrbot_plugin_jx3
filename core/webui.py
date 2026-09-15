@@ -173,8 +173,7 @@ class WebUIService:
         if self.command_stats is None:
             return error_response("指令统计服务未启用", status_code=503)
         try:
-            # 注意：AstrBot v4+ 的插件请求对象是 FastAPI 兼容层（PluginRequest），
-            # 查询参数走 .query（PluginMultiDict），没有 Quart 风格的 .args。
+            # 查询参数从 PluginRequest.query 读取
             days = int(request.query.get("days", "7"))
         except (TypeError, ValueError):
             days = 7

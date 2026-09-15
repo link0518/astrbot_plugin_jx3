@@ -1,11 +1,7 @@
 """管理页静态完整性守卫。
 
-把两类已在生产上踩过的前端 bug 固化为 CI 拦截：
-1. app.js 通过 byId() 引用的元素 id 必须存在于 index.html
-   （3.7.0/3.7.1 曾因 errors-panel 未落盘导致模块加载中断）；
-2. bridge.apiGet/apiPost 的端点不允许内联查询串——AstrBot 桥接会把
-   端点按 "/" 分段后 encodeURIComponent，"?days=7" 会被编码进路径导致 404
-   （3.7.2 指令统计页签因此无法加载）。
+1. app.js 通过 byId() 引用的元素 id 必须存在于 index.html；
+2. bridge.apiGet/apiPost 的端点不允许内联查询串（桥接按 "/" 分段后逐段编码）。
 """
 
 import re
