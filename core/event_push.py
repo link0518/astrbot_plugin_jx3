@@ -326,12 +326,14 @@ class EventPushService:
         sqlite: AsyncSQLiteDB,
         server_binding: ServerBindingService,
         access_control: Optional[AccessControlService] = None,
+        error_log=None,
     ):
         self.context = context
         self.config = config
         self.sql = sqlite
         self.server_binding = server_binding
         self.access_control = access_control
+        self.error_log = error_log
         self.url = str(config.get("jx3api_wss", "") or DEFAULT_WSS_URL).strip()
         self.token = str(config.get("jx3api_wss_token", "") or "").strip()
         self.tls_verify = config.get("tls_verify", True) is not False
@@ -439,6 +441,11 @@ class EventPushService:
                             f"JX3API 事件通道连接异常："
                             f"{type(exc).__name__}: {error_text}"
                         )
+                        if self.error_log is not None:
+                            await self.error_log.record(
+                                "推送",
+                                f"事件通道连接异常：{type(exc).__name__}: {error_text}",
+                            )
                 finally:
                     self._websocket = None
                     if heartbeat_task:
@@ -542,6 +549,12 @@ class EventPushService:
                     f"JX3API 事件推送失败：action={action}, "
                     f"session={session_id}, error={result}"
                 )
+                if self.error_log is not None:
+                    await self.error_log.record(
+                        "推送",
+                        f"事件投递失败（{EVENT_NAMES.get(action, action)}）：{result}",
+                        f"session={session_id}",
+                    )
 
     async def _send_message(self, session_id: str, text: str):
         message_chain = MessageChain().message(text)

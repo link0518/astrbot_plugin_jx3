@@ -82,6 +82,8 @@ class WebUIService:
             ("access/groups/names/refresh", self.refresh_group_names, ["POST"], "批量补抓缺失的群名"),
             ("stats", self.command_stats_summary, ["GET"], "读取指令使用统计"),
             ("stats/clear", self.clear_command_stats, ["POST"], "清空指令使用统计"),
+            ("errors", self.list_errors, ["GET"], "读取最近错误日志"),
+            ("errors/clear", self.clear_errors, ["POST"], "清空错误日志"),
         )
         for path, handler, methods, description in routes:
             context.register_web_api(

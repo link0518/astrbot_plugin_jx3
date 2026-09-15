@@ -18,6 +18,7 @@ from .core.kungfu_alias import KungfuAliasService
 from .core.server_binding import ServerBindingService
 from .core.access_control import AccessControlService
 from .core.command_stats import CommandStatsService
+from .core.error_log import ErrorLogService
 from .core.webui import WebUIService
 from .core.message import MessageBuilder
 from .core.fun_basic import load_as_base64
@@ -96,6 +97,9 @@ class Jx3ApiPlugin(Star):
 
             # 指令使用统计（建表 + 过期清理）
             await self.command_stats.initialize()
+
+            # 错误日志面板（建表 + 裁剪 + 回填缓冲）
+            await self.error_log.initialize()
 
             # 开启实时事件通道
             await self.event_push.initialize()
@@ -202,12 +206,14 @@ class Jx3ApiPlugin(Star):
         )
         self.access_control = AccessControlService(self.local_sql_db)
         self.command_stats = CommandStatsService(self.local_sql_db)
+        self.error_log = ErrorLogService(self.local_sql_db)
         self.event_push = EventPushService(
             cast(Context, self.context),
             self.conf,
             self.local_sql_db,
             self.server_binding,
             self.access_control,
+            self.error_log,
         )
         self.webui = WebUIService(
             self.jx3api,
@@ -219,6 +225,7 @@ class Jx3ApiPlugin(Star):
             self.access_control,
             self.backfill_group_names,
             self.command_stats,
+            self.error_log,
         )
         self.jx3cmd = MessageBuilder(
             self.jx3api,
@@ -720,6 +727,12 @@ class Jx3ApiPlugin(Star):
             command_ok = False
             command_error = f"{type(e).__name__}: {e}"
             logger.exception(f"指令执行失败: {cmd}, error={e}")
+            # 错误面板：记录指令名与参数（参数可能含角色名等业务数据，不含凭据）。
+            await self.error_log.record(
+                "指令",
+                f"{cmd}: {command_error}"[:200],
+                f"参数: {' '.join(str(a) for a in args)}",
+            )
             yield event.plain_result("参数错误或执行失败")
         finally:
             # 指令结束(无论成败)立刻释放,允许再次触发;

@@ -959,6 +959,26 @@ function renderStats() {
   );
 }
 
+function renderErrors() {
+  const body = byId("errors-body");
+  body.replaceChildren();
+  const rows = state.error_log || [];
+  if (!rows.length) {
+    body.append(emptyRow(4, "暂无错误记录"));
+    return;
+  }
+  rows.forEach((item) => {
+    body.append(
+      statsRow([
+        new Date(item.created_at * 1000).toLocaleString("zh-CN", { hour12: false }),
+        item.source || "—",
+        item.summary || "—",
+        item.detail || "—",
+      ]),
+    );
+  });
+}
+
 function render() {
   renderTokenStats();
   renderServerOptions();
@@ -974,12 +994,36 @@ function render() {
   renderAccessRecent();
   renderSummary();
   renderCache();
+  renderStats();
+  renderErrors();
+}
+
+async function loadStats() {
+  // 统计拉取失败不影响其他管理数据展示。
+  try {
+    state.command_stats = await bridge.apiGet(`stats?days=${statsDays}`);
+  } catch {
+    state.command_stats = null;
+  }
+  renderStats();
+}
+
+async function loadErrors() {
+  // 错误日志拉取失败不影响其他管理数据展示。
+  try {
+    const result = await bridge.apiGet("errors");
+    state.error_log = result?.errors || [];
+  } catch {
+    state.error_log = [];
+  }
+  renderErrors();
 }
 
 async function loadData() {
   const data = await bridge.apiGet("dashboard");
   Object.assign(state, data);
   render();
+  await Promise.all([loadStats(), loadErrors()]);
 }
 
 async function mutate(endpoint, payload, successMessage) {
@@ -1276,6 +1320,40 @@ byId("access-form").addEventListener("submit", async (event) => {
     note: byId("access-note").value,
   }, "名单条目已保存");
   if (saved) event.currentTarget.reset();
+});
+
+byId("refresh-errors").addEventListener("click", async () => {
+  await loadErrors();
+  showToast("错误日志已刷新");
+});
+
+byId("clear-errors").addEventListener("click", async (event) => {
+  const control = event.currentTarget;
+  // 页内两步确认（iframe 沙箱无 allow-modals，原生 confirm 不可用）。
+  if (control.dataset.armed !== "1") {
+    control.dataset.armed = "1";
+    control.classList.add("button--danger");
+    control.textContent = "再次点击确认";
+    setTimeout(() => {
+      control.dataset.armed = "";
+      control.classList.remove("button--danger");
+      control.textContent = "清空日志";
+    }, 3000);
+    return;
+  }
+  control.dataset.armed = "";
+  control.disabled = true;
+  try {
+    const result = await bridge.apiPost("errors/clear", {});
+    await loadErrors();
+    showToast(`错误日志已清空，共删除 ${result?.removed ?? 0} 条记录`);
+  } catch (error) {
+    showToast(error?.message || "清空日志失败", true);
+  } finally {
+    control.disabled = false;
+    control.classList.remove("button--danger");
+    control.textContent = "清空日志";
+  }
 });
 
 byId("refresh").addEventListener("click", async (event) => {
