@@ -1,5 +1,12 @@
 ## 更新记录
 
+### version: 3.7.0（2026-09-15）：
+
+- 管理页新增「指令统计」页签：自动记录每条指令的调用次数、耗时与成败（用户参数错误不计入失败，数据保留 90 天），展示调用排行、平均耗时 Top 10、失败率 Top 10 与最近失败记录，支持 7/30/90 天窗口切换与一键清空。
+- 管理页新增「错误日志」页签：集中收集指令执行异常与事件推送的连接、投递异常（内存保留 50 条、数据库保留 200 条），支持刷新与清空，排查问题无需再翻 AstrBot 日志。
+- 代码结构重构：`core/jx3api_data.py`（2279 行）按业务域拆分为 `core/jx3api/` 分包（base/ranks/qiyu/role/trade/misc 六个 mixin 组合，对外接口与行为完全不变，原文件保留兼容转发）；群名解析逻辑下沉到独立的 `core/group_info.py`，main.py 只保留事件路由。
+- 工程化：新增 pytest 单元测试套件（stub AstrBot 依赖，覆盖指令解析、区服参数补齐、授权矩阵、缓存、模板组装等共 217 例）与 GitHub Actions CI；`requirements.txt` 依赖加版本上下限；项目级 `.gitignore` 不再忽略 `tests/`。
+
 ### version: 3.6.8（2026-09-10）：
 
 - 修复群名抓取失效：不再用 `event.get_platform_name()=="aiocqhttp"` 判断平台（AstrBot 返回的是实例名，实际为 default），改为探测 `bot.api.call_action` 能力（aiocqhttp 即具备），任一消息事件即缓存连接供「抓取群名」批量补抓使用；抓取失败日志提升为 warning 便于观察。
