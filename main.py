@@ -1,4 +1,3 @@
-import asyncio
 import inspect
 import time
 from pathlib import Path
@@ -19,6 +18,7 @@ from .core.server_binding import ServerBindingService
 from .core.access_control import AccessControlService
 from .core.command_stats import CommandStatsService
 from .core.error_log import ErrorLogService
+from .core.group_info import GroupInfoService
 from .core.webui import WebUIService
 from .core.message import MessageBuilder
 from .core.fun_basic import load_as_base64
@@ -66,12 +66,6 @@ class Jx3ApiPlugin(Star):
         # 键 -> 发起时刻(time.monotonic),渲染/发图慢时防止连发重复触发。
         self._pending_tasks: dict[tuple, float] = {}
         self._pending_ttl = 90.0
-        # 群名缓存: {group_id: (name, monotonic 时间)}，成功 24h、失败 10min 过期。
-        self._group_name_cache: dict[str, tuple[str, float]] = {}
-        self._group_name_ttl = 86400.0
-        self._group_name_fail_ttl = 600.0
-        self._aiocqhttp_bot = None
-        self._aiocqhttp_self_id = None
 
         logger.info("jx3api插件初始化完成")
 
@@ -207,6 +201,7 @@ class Jx3ApiPlugin(Star):
         self.access_control = AccessControlService(self.local_sql_db)
         self.command_stats = CommandStatsService(self.local_sql_db)
         self.error_log = ErrorLogService(self.local_sql_db)
+        self.group_info = GroupInfoService(self.access_control)
         self.event_push = EventPushService(
             cast(Context, self.context),
             self.conf,
@@ -223,7 +218,7 @@ class Jx3ApiPlugin(Star):
             self.bilei,
             self.cache,
             self.access_control,
-            self.backfill_group_names,
+            self.group_info.backfill,
             self.command_stats,
             self.error_log,
         )
@@ -537,81 +532,6 @@ class Jx3ApiPlugin(Star):
         # 只允许 coroutine
         return await handler(*call_args)
 
-    @staticmethod
-    def _bot_call_action(bot):
-        """探测 bot 的 call_action：aiocqhttp 直接挂在 bot 上（无 .api 层），
-        个别实现可能挂在 bot.api 上，两级兼容，取不到返回 None。"""
-        action = getattr(bot, "call_action", None)
-        if callable(action):
-            return action
-        api = getattr(bot, "api", None)
-        action = getattr(api, "call_action", None)
-        return action if callable(action) else None
-
-    async def _resolve_group_name(self, event: AstrMessageEvent, group_id: str) -> str:
-        """解析群名供管理页展示。
-        不依赖平台名判断（AstrBot 实例名可能是 default/任意自定义名），
-        改为探测 bot.call_action 能力（aiocqhttp 即具备）；成功缓存
-        24h、失败缓存 10min；失败静默返回空串，绝不阻塞指令主流程。"""
-        bot = getattr(event, "bot", None)
-        if bot is not None:
-            # 只要消息事件带连接就缓存，供管理页「抓取群名」批量补抓使用。
-            self._aiocqhttp_bot = bot
-            self._aiocqhttp_self_id = getattr(event.message_obj, "self_id", None)
-        if not group_id:
-            return ""
-        now = time.monotonic()
-        cached = self._group_name_cache.get(group_id)
-        if cached is not None:
-            name, ts = cached
-            ttl = self._group_name_ttl if name else self._group_name_fail_ttl
-            if now - ts < ttl:
-                return name
-        name = ""
-        call_action = self._bot_call_action(bot)
-        if call_action is not None:
-            routing = {}
-            if getattr(self, "_aiocqhttp_self_id", None):
-                routing["self_id"] = self._aiocqhttp_self_id
-            try:
-                info = await call_action("get_group_info", group_id=int(group_id), **routing)
-                name = str((info or {}).get("group_name") or "").strip()[:64]
-            except Exception as exc:
-                logger.warning(f"获取群名失败（不影响指令执行）：group={group_id}, {exc}")
-        else:
-            logger.warning(f"获取群名失败：当前连接的 bot 不支持 call_action，group={group_id}")
-        self._group_name_cache[group_id] = (name, now)
-        return name
-
-    async def backfill_group_names(self, limit: int = 80) -> dict:
-        """批量补抓缺失的群名（管理页「抓取群名」按钮）。
-        返回 {"updated": 成功数, "missing": 缺失数, "failed": 失败数}。"""
-        bot = self._aiocqhttp_bot
-        call_action = self._bot_call_action(bot)
-        if call_action is None:
-            raise RuntimeError("暂未获取到 QQ 连接，请先在任意会话（群聊/私聊）发一条消息再试")
-        group_ids = await self.access_control.list_groups_missing_names(limit)
-        updated, failed = 0, 0
-        routing = {}
-        if getattr(self, "_aiocqhttp_self_id", None):
-            routing["self_id"] = self._aiocqhttp_self_id
-        for group_id in group_ids:
-            try:
-                info = await call_action(
-                    "get_group_info", group_id=int(group_id), **routing
-                )
-                name = str((info or {}).get("group_name") or "").strip()[:64]
-            except Exception:
-                name = ""
-            if name:
-                await self.access_control.update_group_name(group_id, name)
-                self._group_name_cache[group_id] = (name, time.monotonic())
-                updated += 1
-            else:
-                failed += 1
-            await asyncio.sleep(0.05)  # 温和限速，避免连续请求
-        return {"updated": updated, "missing": len(group_ids), "failed": failed}
-
     @filter.event_message_type(
         filter.EventMessageType.ALL,
         priority=maxsize - 10,
@@ -634,7 +554,7 @@ class Jx3ApiPlugin(Star):
         group_id = event.get_group_id() or ""
         await self.access_control.record_usage(
             event.unified_msg_origin, group_id,
-            await self._resolve_group_name(event, group_id),
+            await self.group_info.resolve(event, group_id),
         )
         allowed, deny_reason = self.access_control.is_allowed(
             event.unified_msg_origin, group_id
