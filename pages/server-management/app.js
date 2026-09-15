@@ -1005,7 +1005,7 @@ function render() {
 async function loadStats() {
   // 统计拉取失败不影响其他管理数据展示。
   try {
-    const result = await bridge.apiGet(`stats?days=${statsDays}`);
+    const result = await bridge.apiGet("stats", { days: statsDays });
     // 服务未启用时后端可能返回错误体而非 reject，校验字段形状防把错误体当数据渲染。
     state.command_stats =
       result && Number.isFinite(result.total) ? result : null;
