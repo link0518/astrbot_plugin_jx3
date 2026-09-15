@@ -135,7 +135,50 @@ def error_response(message="", *args, **kwargs):
 
 web_mod.json_response = json_response
 web_mod.error_response = error_response
-web_mod.request = types.SimpleNamespace()
+
+
+class _StubMultiDict:
+    """镜像 AstrBot v4.27.5 PluginMultiDict：get 取同名键的最后一个值。"""
+
+    def __init__(self, pairs=()):
+        self._pairs = list(pairs)
+
+    def get(self, key, default=None):
+        for item_key, item_value in reversed(self._pairs):
+            if item_key == key:
+                return item_value
+        return default
+
+    def getlist(self, key):
+        return [value for item_key, value in self._pairs if item_key == key]
+
+
+class _StubPluginRequest:
+    """镜像 AstrBot v4.27.5 PluginRequest（FastAPI 兼容层）的请求 API。
+
+    只提供真实对象具备的接口（query/json/path_params 等），**刻意不提供**
+    Quart 风格的 request.args —— 插件代码一旦误用，测试阶段立刻
+    AttributeError，而不是上线后 handler 500 才暴露。
+    """
+
+    def __init__(self):
+        self.query = _StubMultiDict()
+        self.json_payload = {}
+        self.method = "GET"
+        self.path = "/"
+        self.path_params = {}
+        self.plugin_name = None
+        self.username = None
+
+    async def json(self, default=None):
+        return self.json_payload if self.json_payload is not None else default
+
+    def set_query(self, **params):
+        """测试辅助：整体替换查询参数。"""
+        self.query = _StubMultiDict(list(params.items()))
+
+
+web_mod.request = _StubPluginRequest()
 
 # astrbot.api.message_components ---------------------------------------------
 comp_mod = _module("astrbot.api.message_components")
