@@ -1,4 +1,4 @@
-matplotlib
-aiofiles
-aiosqlite
-aiohttp
+matplotlib>=3.8,<4.0
+aiofiles>=23.0,<26.0
+aiosqlite>=0.19,<2.0
+aiohttp>=3.9,<4.0

@@ -567,7 +567,14 @@ python -m compileall -q .
 git diff --check
 ```
 
-项目级 `.gitignore` 会忽略整个 `tests/`，本地自行维护的测试不会随插件分发。语法检查和差异检查仍不能替代带真实数据的 AstrBot 消息、HTML 渲染、实时事件和外部接口联调；发布前应在具备有效凭据的实际环境中覆盖成功、空数据、断线重连及上游异常路径。
+项目自带 `tests/` 单元测试（pytest），通过 stub 掉 AstrBot / aiocqhttp 依赖在纯 Python 环境运行，覆盖指令解析、区服参数补齐、参数分发、使用范围控制与缓存键/TTL 等纯逻辑。运行方式：
+
+```bash
+pip install pytest pytest-asyncio tzdata
+python -m pytest
+```
+
+仓库已配置 GitHub Actions（`.github/workflows/ci.yml`），push / PR 时自动执行语法检查与测试。单测不能替代带真实数据的 AstrBot 消息、HTML 渲染、实时事件和外部接口联调；发布前仍应在具备有效凭据的实际环境中覆盖成功、空数据、断线重连及上游异常路径。
 
 ## 当前版本状态
 
