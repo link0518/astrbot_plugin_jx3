@@ -89,7 +89,13 @@ api_mod.star = star_mod
 
 
 class Context:
-    pass
+    """AstrBot Context 最小替身：管理页路由注册只记录不执行。"""
+
+    def __init__(self):
+        self.registered_web_apis = []
+
+    def register_web_api(self, path, handler, methods, description):
+        self.registered_web_apis.append((path, handler, methods, description))
 
 
 class Star:

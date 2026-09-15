@@ -33,6 +33,7 @@ class WebUIService:
         access_control: AccessControlService | None = None,
         group_name_backfill=None,
         command_stats=None,
+        error_log=None,
     ):
         self.jx3api = jx3api
         self.event_push = event_push
@@ -43,6 +44,7 @@ class WebUIService:
         self.access_control = access_control
         self.group_name_backfill = group_name_backfill
         self.command_stats = command_stats
+        self.error_log = error_log
 
     def register(self, context: Context, plugin_name: str):
         routes = (
@@ -181,6 +183,19 @@ class WebUIService:
         if self.command_stats is None:
             return error_response("指令统计服务未启用", status_code=503)
         removed = await self.command_stats.clear()
+        return json_response({"cleared": True, "removed": removed})
+
+    async def list_errors(self):
+        """读取最近的错误日志（指令 / 推送等来源）。"""
+        if self.error_log is None:
+            return error_response("错误日志服务未启用", status_code=503)
+        return json_response({"errors": await self.error_log.list_recent()})
+
+    async def clear_errors(self):
+        """清空全部错误日志。"""
+        if self.error_log is None:
+            return error_response("错误日志服务未启用", status_code=503)
+        removed = await self.error_log.clear()
         return json_response({"cleared": True, "removed": removed})
 
     async def save_access_config(self):
