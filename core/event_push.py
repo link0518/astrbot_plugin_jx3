@@ -555,12 +555,15 @@ class EventPushService:
             if isinstance(result, Exception):
                 logger.error(
                     f"JX3API 事件推送失败：action={action}, "
-                    f"session={session_id}, error={result}"
+                    f"session={session_id}, "
+                    f"error={type(result).__name__}: {result}",
+                    exc_info=result,
                 )
                 if self.error_log is not None:
                     await self.error_log.record(
                         "推送",
-                        f"事件投递失败（{EVENT_NAMES.get(action, action)}）：{result}",
+                        f"事件投递失败（{EVENT_NAMES.get(action, action)}）："
+                        f"{type(result).__name__}: {result}",
                         f"session={session_id}",
                     )
 
