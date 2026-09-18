@@ -1,5 +1,9 @@
 ## 更新记录
 
+### version: 3.7.3（2026-09-18）：
+
+- 修复多 QQ 账号共用同一 aiocqhttp 平台时事件推送全部失败（「事件投递失败」，异常为 ApiNotAvailable）：框架按 session 主动发送硬编码 event=None，不向 aiocqhttp 传递 self_id，多连接下「恰好一条连接」的兜底失效。新增会话路由（core/push_router.py）：任意消息事件记录会话对应的 bot 与 self_id，推送时按会话显式携带 self_id 定向发送，多账号同连一个 ws 也能精准投递；拿不到路由（冷启动/非 aiocqhttp）时回退框架默认发送。
+
 ### version: 3.7.2（2026-09-16）：
 
 - 修复管理页「错误日志」页签空白、且切换授权管理模式时报 "can't access property replaceChildren"：3.7.0 的前端面板内容未完整落盘（页签按钮存在、面板整体缺失），已补回完整面板（时间/来源/摘要/详情列表 + 刷新/清空按钮）。

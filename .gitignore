@@ -23,8 +23,33 @@ env/
 .idea/
 .vscode/
 .DS_Store
-.workbuddy
 Thumbs.db
+
+# AI 助手与工作区本地元数据
+.codebuddy/
+.workbuddy/
+
+# 临时探测/调试脚本（可能含服务器地址与凭据信息，禁止提交）
+_probe*
+_ssh_*
+*_probe.py
+*_probe.sh
+*_probe_out.txt
+
+# 本地环境变量与密钥文件
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# 本地运行时数据
+*.db
+*.sqlite
+*.sqlite3
+
+# 本地规划/方案草稿文档
+优化方案.md
 
 # 本地日志和临时文件
 *.log

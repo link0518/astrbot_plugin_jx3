@@ -16,6 +16,7 @@ from astrbot.api.star import Context
 from .server_binding import ServerBindingService
 from .access_control import AccessControlService
 from .sqlite import AsyncSQLiteDB
+from .push_router import PushRouter
 
 DEFAULT_WSS_URL = "wss://socket.nicemoe.cn"
 FREE_EVENT_ACTIONS = frozenset({2001, 2002, 2003, 2004, 2005, 2006})
@@ -327,6 +328,7 @@ class EventPushService:
         server_binding: ServerBindingService,
         access_control: Optional[AccessControlService] = None,
         error_log=None,
+        router: Optional[PushRouter] = None,
     ):
         self.context = context
         self.config = config
@@ -334,6 +336,7 @@ class EventPushService:
         self.server_binding = server_binding
         self.access_control = access_control
         self.error_log = error_log
+        self.router = router
         self.url = str(config.get("jx3api_wss", "") or DEFAULT_WSS_URL).strip()
         self.token = str(config.get("jx3api_wss_token", "") or "").strip()
         self.tls_verify = config.get("tls_verify", True) is not False
@@ -568,6 +571,11 @@ class EventPushService:
                     )
 
     async def _send_message(self, session_id: str, text: str):
+        # 多 QQ 账号共用同一平台时，框架按 session 主动发送会因缺少 self_id
+        # 触发 aiocqhttp 的「单连接兜底」失效；优先走路由定向发送。
+        if self.router is not None:
+            await self.router.send(session_id, text)
+            return
         message_chain = MessageChain().message(text)
         await self.context.send_message(session_id, message_chain)
 

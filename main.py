@@ -19,6 +19,7 @@ from .core.access_control import AccessControlService
 from .core.command_stats import CommandStatsService
 from .core.error_log import ErrorLogService
 from .core.group_info import GroupInfoService
+from .core.push_router import PushRouter
 from .core.webui import WebUIService
 from .core.message import MessageBuilder
 from .core.fun_basic import load_as_base64
@@ -30,7 +31,7 @@ PLUGIN_NAME = "astrbot_plugin_jx3"
 @register("astrbot_plugin_jx3", 
           "fxdyz", 
           "聚合剑网三游戏数据，提供查询、图片渲染、本地避雷和实时事件推送。",
-          "3.7.2",
+          "3.7.3",
           "https://github.com/link0518/astrbot_plugin_jx3"
 )
 class Jx3ApiPlugin(Star):
@@ -205,6 +206,7 @@ class Jx3ApiPlugin(Star):
         self.command_stats = CommandStatsService(self.local_sql_db)
         self.error_log = ErrorLogService(self.local_sql_db)
         self.group_info = GroupInfoService(self.access_control)
+        self.push_router = PushRouter(cast(Context, self.context))
         self.event_push = EventPushService(
             cast(Context, self.context),
             self.conf,
@@ -212,6 +214,7 @@ class Jx3ApiPlugin(Star):
             self.server_binding,
             self.access_control,
             self.error_log,
+            self.push_router,
         )
         self.webui = WebUIService(
             self.jx3api,
@@ -541,6 +544,10 @@ class Jx3ApiPlugin(Star):
     )
     async def on_all_message(self, event: AstrMessageEvent):
         """解析所有消息"""
+        # 任意消息事件先记录会话路由（bot + self_id），供主动推送按会话定向发送；
+        # 对非 aiocqhttp 连接或字段缺失的事件，内部静默跳过。
+        self.push_router.record(event)
+
         if not self.command_map:
             logger.debug("插件尚未初始化完成，忽略消息")
             return
