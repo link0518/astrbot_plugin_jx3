@@ -22,6 +22,61 @@ from ..fun_basic import load_template,gold_to_parts,week_to_num,compare_date_str
 if TYPE_CHECKING:
     from ..cache import CacheService
 
+
+def _zili_to_int(value: Any) -> int:
+    """资历统计里的数值统一成非负整数，异常值按 0 处理。"""
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return 0
+    return number if number > 0 else 0
+
+
+def _zili_blank() -> Dict[str, Any]:
+    return {
+        "completed_points": 0,
+        "total_points": 0,
+        "completed_count": 0,
+        "achievement_count": 0,
+    }
+
+
+def _zili_finalize(stat: Dict[str, Any]) -> Dict[str, Any]:
+    """补上百分比字段，供模板直接渲染。"""
+    total_points = stat.get("total_points") or 0
+    percent = round(stat.get("completed_points", 0) / total_points * 100, 2) if total_points else 0.0
+    stat["percent"] = percent
+    stat["percent_text"] = f"{percent:.2f}%"
+    return stat
+
+
+def _zili_from_node(node: Any) -> Dict[str, Any]:
+    """把 JX3API 单条资历统计转成累加用的基础结构。
+
+    pieces   -> 成就项：total 为总项数，speed 为已完成项数
+    seniority-> 资历点：total 为可获得点数，speed 为已获得点数
+    """
+    stat = _zili_blank()
+    if not isinstance(node, dict):
+        return stat
+
+    pieces = node.get("pieces")
+    if isinstance(pieces, dict):
+        stat["completed_count"] = _zili_to_int(pieces.get("speed"))
+        stat["achievement_count"] = _zili_to_int(pieces.get("total"))
+
+    seniority = node.get("seniority")
+    if isinstance(seniority, dict):
+        stat["completed_points"] = _zili_to_int(seniority.get("speed"))
+        stat["total_points"] = _zili_to_int(seniority.get("total"))
+    return stat
+
+
+def _zili_merge(total: Dict[str, Any], stat: Dict[str, Any]) -> None:
+    for key in ("completed_points", "total_points", "completed_count", "achievement_count"):
+        total[key] = total.get(key, 0) + stat.get(key, 0)
+
+
 class RoleMixin:
     async def zhanji(self, name: str, server:str, mode:str) -> Dict[str, Any]:
         """战绩"""
@@ -230,8 +285,46 @@ class RoleMixin:
 
             # 查询总览时 total 为“大类 -> 小类 -> 统计”；指定 subclass 后，
             # JX3API 会去掉大类这一层，total 直接变成“小类 -> 统计”。
-            data["subclass"] = selected_subclass
-            return_data["data"] = data
+            items: List[Dict[str, Any]] = []
+            summary = _zili_blank()
+
+            if selected_subclass:
+                for sub_name, node in categories.items():
+                    if not isinstance(node, dict):
+                        continue
+                    item = _zili_from_node(node)
+                    item["name"] = str(sub_name)
+                    items.append(_zili_finalize(item))
+                    _zili_merge(summary, item)
+            else:
+                for group_name, group in categories.items():
+                    if not isinstance(group, dict):
+                        continue
+                    group_total = _zili_blank()
+                    for node in group.values():
+                        if isinstance(node, dict):
+                            _zili_merge(group_total, _zili_from_node(node))
+                    group_total["name"] = str(group_name)
+                    items.append(_zili_finalize(group_total))
+                    _zili_merge(summary, group_total)
+
+            summary["name"] = selected_name or "总览"
+            _zili_finalize(summary)
+
+            return_data["data"] = {
+                "title": "资历查询",
+                "role_name": data.get("roleName") or name,
+                "zone": data.get("zoneName") or "",
+                "server": data.get("serverName") or server,
+                "force_name": data.get("forceName") or "",
+                "camp_name": data.get("campName") or "",
+                "tong_name": data.get("tongName") or "无",
+                "subclass": selected_subclass,
+                "updated_at": format_time(data.get("updateTime")),
+                "update_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "summary": summary,
+                "items": items,
+            }
 
         return await self._request_api(
             path="/tuilan/achievement",

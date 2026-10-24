@@ -1,6 +1,7 @@
 import re
 
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -145,6 +146,39 @@ class MessageBuilder:
         }
 
 
+    _IMAGE_SIGNATURES = (
+        b"\xff\xd8\xff",  # JPEG
+        b"\x89PNG\r\n\x1a\n",  # PNG
+        b"GIF87a",
+        b"GIF89a",
+        b"RIFF",  # WebP
+    )
+
+    @classmethod
+    def _looks_like_image(cls, path: Any) -> bool:
+        """校验渲染产物确实是图片文件。
+
+        渲染服务失败时会把错误 JSON 当文件落盘（例如
+        {"code":1,"message":"internal server error: 'x' is undefined"}），
+        若直接当图片发给协议端，QQ 上传会返回 highway error 且看不出真实原因。
+        """
+        try:
+            with open(path, "rb") as fp:
+                head = fp.read(12)
+        except (OSError, TypeError):
+            return False
+        return any(head.startswith(signature) for signature in cls._IMAGE_SIGNATURES)
+
+    @staticmethod
+    def _preview_bytes(path: Any) -> str:
+        """读取渲染产物开头，便于把渲染错误的正文写进日志。"""
+        try:
+            with open(path, "rb") as fp:
+                raw = fp.read(240)
+        except (OSError, TypeError):
+            return ""
+        return raw.decode("utf-8", "replace").strip()
+
     async def html_render(
         self,
         tmpl: str,
@@ -208,6 +242,25 @@ class MessageBuilder:
             return f"{template[:body_end]}{footer}{template[body_end:]}"
         return f"{template}{footer}"
 
+    async def _hit_cached_image(self, cache_key: str, cache_name: str) -> str:
+        """命中缓存时校验产物确实是图片；坏缓存删除后返回空串让调用方重渲染。"""
+        if not self.cache or not cache_key:
+            return ""
+        cached_path = await self.cache.get_image(cache_key, cache_name)
+        if not cached_path:
+            return ""
+        if self._looks_like_image(cached_path):
+            return str(cached_path)
+        logger.warning(
+            f"缓存的渲染结果不是图片，已丢弃并重新渲染: {cached_path} "
+            f"内容开头: {self._preview_bytes(cached_path)[:120]}"
+        )
+        try:
+            Path(cached_path).unlink(missing_ok=True)
+        except OSError as exc:
+            logger.warning(f"删除损坏的图片缓存失败: {exc}")
+        return ""
+
     async def _render_image_file(
         self,
         template: str,
@@ -240,9 +293,9 @@ class MessageBuilder:
                         variant_signature or self.cache.current_command_signature()
                     ),
                 )
-            cached_path = await self.cache.get_image(cache_key, effective_cache_name)
+            cached_path = await self._hit_cached_image(cache_key, effective_cache_name)
             if cached_path:
-                return str(cached_path)
+                return cached_path
 
         async def render_and_save() -> str:
             payload = dict(render_data)
@@ -256,6 +309,15 @@ class MessageBuilder:
                 return_url=False,
                 options=options,
             )
+            if not self._looks_like_image(rendered_path):
+                preview = self._preview_bytes(rendered_path)
+                try:
+                    Path(rendered_path).unlink(missing_ok=True)
+                except OSError:
+                    pass
+                raise RuntimeError(
+                    f"模板渲染未返回图片（{effective_cache_name or 'unknown'}）: {preview[:200]}"
+                )
             if self.cache and cache_key:
                 saved_path = await self.cache.save_image(
                     cache_key,
@@ -274,9 +336,9 @@ class MessageBuilder:
             return await render_and_save()
 
         async with self.cache.image_lock(cache_key):
-            cached_path = await self.cache.get_image(cache_key, effective_cache_name)
+            cached_path = await self._hit_cached_image(cache_key, effective_cache_name)
             if cached_path:
-                return str(cached_path)
+                return cached_path
             return await render_and_save()
 
     def _image_request_identity(
